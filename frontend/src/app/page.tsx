@@ -128,6 +128,7 @@ export default function PremiumHomePage() {
     delay: string;
     duration: string;
   }>>([]);
+  const [videoError, setVideoError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -230,16 +231,19 @@ export default function PremiumHomePage() {
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 text-white overflow-x-hidden">
       {/* Vidéo de fond principale */}
       <div className="fixed inset-0 z-0 overflow-hidden">
-        <video
-          ref={videoRef}
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="absolute w-full h-full object-cover"
-          src="/videos/VD.mp4"
-        />
-        {/* Overlay gradient dynamique */}
+        {!videoError && (
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="absolute w-full h-full object-cover"
+            src="/videos/VD.mp4"
+            onError={() => setVideoError(true)}
+          />
+        )}
+        {/* Overlay gradient (toujours visible; masque la vidéo si absente) */}
         <div className="absolute inset-0 bg-gradient-to-br from-gray-950/85 via-blue-950/50 to-gray-950/85"></div>
         {/* Effets de particules légères */}
         <div className="absolute inset-0">
