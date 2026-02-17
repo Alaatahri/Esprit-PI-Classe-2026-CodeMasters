@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BMP.tn – Frontend public (vitrine)
 
-## Getting Started
+Interface publique : page d’accueil et vitrine de l’application, visible par tous.
 
-First, run the development server:
+- **frontend** (ce dossier) = site vitrine (Next.js) → **http://localhost:3000**
+- **backend-react** = espace admin / tableau de bord → **http://localhost:5173**
+
+## Lancer le frontend public
 
 ```bash
+cd frontend
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Ouvrir dans le navigateur : **http://localhost:3000**
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Tester le frontend (vitrine)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Depuis la racine du projet : `cd frontend`
+2. `npm install` (si pas déjà fait)
+3. `npm run dev`
+4. Aller sur **http://localhost:3000** pour voir la page d’accueil BMP.tn.
 
-## Learn More
+## Lien « Login »
 
-To learn more about Next.js, take a look at the following resources:
+Le bouton **Login** de la barre de navigation redirige vers l’espace admin (backend-react).  
+Par défaut : **http://localhost:5173/login**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Pour changer l’URL de l’admin (ex. en production), créer un fichier `.env.local` :
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```env
+NEXT_PUBLIC_ADMIN_URL=http://localhost:5173
+```
 
-## Deploy on Vercel
+## Vidéo d’arrière-plan
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+La page d’accueil utilise une vidéo de fond. Si le fichier `public/videos/VD.mp4` n’existe pas, un dégradé est affiché à la place (comportement normal).
