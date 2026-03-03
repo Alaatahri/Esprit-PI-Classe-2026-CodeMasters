@@ -22,7 +22,7 @@ Ouvrir dans le navigateur : **http://localhost:3000**
 3. `npm run dev`
 4. Aller sur **http://localhost:3000** pour voir la page d’accueil BMP.tn.
 
-## Lien « Login »
+## Login & Inscription
 
 Le bouton **Login** de la barre de navigation redirige vers l’espace admin (backend-react).  
 Par défaut : **http://localhost:5173/login**
@@ -30,6 +30,7 @@ Par défaut : **http://localhost:5173/login**
 Pour changer l’URL de l’admin (ex. en production), créer un fichier `.env.local` :
 
 ```env
+NEXT_PUBLIC_API_URL=http://localhost:3001/api
 NEXT_PUBLIC_ADMIN_URL=http://localhost:5173
 ```
 
