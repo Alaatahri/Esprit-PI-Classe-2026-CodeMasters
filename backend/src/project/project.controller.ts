@@ -16,6 +16,11 @@ export class ProjectController {
     return this.projectService.findAll();
   }
 
+  @Get('client/:clientId/completed')
+  findCompletedByClient(@Param('clientId') clientId: string) {
+    return this.projectService.findCompletedByClient(clientId);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.projectService.findOne(id);
@@ -24,6 +29,20 @@ export class ProjectController {
   @Put(':id')
   update(@Param('id') id: string, @Body() updateProjectDto: Partial<Project>) {
     return this.projectService.update(id, updateProjectDto);
+  }
+
+  @Post(':id/rate')
+  rateProject(
+    @Param('id') id: string,
+    @Body()
+    rating: {
+      clientRating?: number;
+      clientComment?: string;
+      expertRating?: number;
+      artisanRating?: number;
+    },
+  ) {
+    return this.projectService.rateProject(id, rating);
   }
 
   @Delete(':id')

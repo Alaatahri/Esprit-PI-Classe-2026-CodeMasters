@@ -14,11 +14,13 @@ import {
   X,
   ChevronRight,
   Mail,
+  User,
 } from "lucide-react";
 import { getStoredUser, clearStoredUser, type BMPUser } from "@/lib/auth";
 
 const navItems = [
   { href: "/espace", label: "Mon espace", icon: Home },
+  { href: "/espace/profil", label: "Mon profil", icon: User },
   { href: "/gestion-chantier", label: "Gestion de Chantier", icon: Briefcase },
   { href: "/gestion-devis-facturation", label: "Devis & Facturation", icon: FileText },
   { href: "/gestion-marketplace", label: "Marketplace", icon: ShoppingCart },
