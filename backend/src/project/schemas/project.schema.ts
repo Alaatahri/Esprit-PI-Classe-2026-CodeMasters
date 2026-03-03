@@ -40,6 +40,27 @@ export class Project {
 
   @Prop({ type: Types.ObjectId, ref: 'User' })
   expertId?: Types.ObjectId;
+
+  @Prop({
+    min: 1,
+    max: 5,
+  })
+  clientRating?: number;
+
+  @Prop()
+  clientComment?: string;
+
+  @Prop({
+    min: 1,
+    max: 5,
+  })
+  expertRating?: number;
+
+  @Prop({
+    min: 1,
+    max: 5,
+  })
+  artisanRating?: number;
 }
 
 export const ProjectSchema = SchemaFactory.createForClass(Project);
