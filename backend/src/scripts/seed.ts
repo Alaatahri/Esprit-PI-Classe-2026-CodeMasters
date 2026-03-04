@@ -22,13 +22,14 @@ async function seed() {
     const existingUsers = await userService.findAll();
     const existingProjects = await projectService.findAll();
 
-    let client, expert, artisan, manufacturer, admin;
+    let client, client2, client3, expert, artisan, manufacturer, admin;
     let projects: any[] = [];
 
     // Créer des utilisateurs de test
     if (existingUsers.length === 0) {
       console.log('📝 Creating test users...');
       
+      // Clients de démo
       client = await userService.create({
         nom: 'Ahmed Ben Ali',
         email: 'ahmed@example.com',
@@ -37,6 +38,23 @@ async function seed() {
         telephone: '+216 12 345 678',
       });
 
+      client2 = await userService.create({
+        nom: 'Leila Gharbi',
+        email: 'leila@example.com',
+        mot_de_passe: 'password123',
+        role: 'client',
+        telephone: '+216 21 222 333',
+      });
+
+      client3 = await userService.create({
+        nom: 'Omar Haddad',
+        email: 'omar@example.com',
+        mot_de_passe: 'password123',
+        role: 'client',
+        telephone: '+216 23 444 555',
+      });
+
+      // Expert / artisan / fabricant / admin
       expert = await userService.create({
         nom: 'Sara Trabelsi',
         email: 'sara@example.com',
@@ -71,6 +89,8 @@ async function seed() {
 
       console.log('✅ Users created:', {
         client: client._id,
+        client2: client2._id,
+        client3: client3._id,
         expert: expert._id,
         artisan: artisan._id,
         manufacturer: manufacturer._id,
@@ -78,7 +98,10 @@ async function seed() {
       });
     } else {
       console.log('📋 Using existing users...');
-      client = existingUsers.find(u => u.role === 'client') || existingUsers[0];
+      const clients = existingUsers.filter(u => u.role === 'client');
+      client = clients[0] || existingUsers[0];
+      client2 = clients[1];
+      client3 = clients[2];
       expert = existingUsers.find(u => u.role === 'expert') || existingUsers[0];
       artisan = existingUsers.find(u => u.role === 'artisan');
       manufacturer = existingUsers.find(u => u.role === 'manufacturer');
@@ -87,8 +110,12 @@ async function seed() {
 
     // Créer des projets de test
     if (existingProjects.length === 0) {
-      console.log('\n📝 Creating test projects...');
+      console.log('\n📝 Creating test projects for different clients...');
       
+      const clientForProject1 = client;
+      const clientForProject2 = client2 || client;
+      const clientForProject3 = client3 || client;
+
       const project1 = await projectService.create({
         titre: 'Construction Villa Moderne',
         description: 'Construction d\'une villa moderne de 250m² avec jardin et piscine. Projet incluant 4 chambres, salon, cuisine équipée, et terrasse panoramique.',
@@ -97,7 +124,7 @@ async function seed() {
         budget_estime: 350000,
         statut: 'En cours',
         avancement_global: 45,
-        clientId: new Types.ObjectId(client._id),
+        clientId: new Types.ObjectId(clientForProject1._id),
         expertId: new Types.ObjectId(expert._id),
       });
 
@@ -109,7 +136,7 @@ async function seed() {
         budget_estime: 45000,
         statut: 'En attente',
         avancement_global: 0,
-        clientId: new Types.ObjectId(client._id),
+        clientId: new Types.ObjectId(clientForProject2._id),
       });
 
       const project3 = await projectService.create({
@@ -120,7 +147,7 @@ async function seed() {
         budget_estime: 75000,
         statut: 'Terminé',
         avancement_global: 100,
-        clientId: new Types.ObjectId(client._id),
+        clientId: new Types.ObjectId(clientForProject3._id),
         expertId: new Types.ObjectId(expert._id),
       });
 
@@ -152,6 +179,44 @@ async function seed() {
     } else {
       console.log('📋 Using existing projects...');
       projects = existingProjects;
+
+      // S'assurer qu'il existe quelques projets "En attente" pour tests artisans
+      const demoTitles = [
+        'Projet test – Rénovation salle de bain',
+        'Projet test – Peinture appartement',
+        'Projet test – Petit aménagement extérieur',
+      ];
+
+      const missingDemoTitles = demoTitles.filter(
+        (title) => !projects.find((p) => p.titre === title),
+      );
+
+      if (missingDemoTitles.length > 0 && client) {
+        console.log(
+          `\n📝 Creating additional demo projects for artisan tests (${missingDemoTitles.length})...`,
+        );
+
+        const now = new Date();
+
+        for (const title of missingDemoTitles) {
+          const created = await projectService.create({
+            titre: title,
+            description:
+              'Projet de démo créé par le script de seed pour tester la fonctionnalité de candidature des artisans.',
+            date_debut: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7),
+            date_fin_prevue: new Date(
+              now.getFullYear(),
+              now.getMonth(),
+              now.getDate() + 60,
+            ),
+            budget_estime: 25000,
+            statut: 'En attente',
+            avancement_global: 0,
+            clientId: new Types.ObjectId(client._id),
+          });
+          projects.push(created);
+        }
+      }
     }
 
     // Créer des suivis de projets

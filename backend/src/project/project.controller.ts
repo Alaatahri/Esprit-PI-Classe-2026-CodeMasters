@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Body, Put, Param, Delete } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Headers,
+  Param,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { Project } from './schemas/project.schema';
 
@@ -48,5 +59,22 @@ export class ProjectController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.projectService.remove(id);
+  }
+
+  @Post(':id/apply')
+  applyToProject(
+    @Param('id') id: string,
+    @Body() body: { artisanId?: string },
+    @Query('artisanId') artisanIdFromQuery?: string,
+    @Headers('x-user-id') artisanIdFromHeader?: string,
+  ) {
+    const artisanId =
+      body?.artisanId || artisanIdFromQuery || artisanIdFromHeader;
+
+    if (!artisanId) {
+      throw new BadRequestException('artisanId est requis pour postuler.');
+    }
+
+    return this.projectService.applyToProject(id, artisanId);
   }
 }

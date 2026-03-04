@@ -42,6 +42,7 @@ export class Project {
   expertId?: Types.ObjectId;
 
   @Prop({
+<<<<<<< HEAD
     min: 1,
     max: 5,
   })
@@ -61,6 +62,27 @@ export class Project {
     max: 5,
   })
   artisanRating?: number;
+=======
+    type: [
+      {
+        artisanId: { type: Types.ObjectId, ref: 'User', required: true },
+        statut: {
+          type: String,
+          enum: ['en_attente', 'acceptee', 'refusee'],
+          default: 'en_attente',
+        },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
+    default: [],
+  })
+  applications?: Array<{
+    _id?: Types.ObjectId;
+    artisanId: Types.ObjectId;
+    statut: 'en_attente' | 'acceptee' | 'refusee';
+    createdAt: Date;
+  }>;
+>>>>>>> Alaa-tahri
 }
 
 export const ProjectSchema = SchemaFactory.createForClass(Project);

@@ -11,6 +11,9 @@ import {
   Calculator,
   Package,
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { getStoredUser, type BMPUser } from "@/lib/auth";
 
 const modules = [
   {
@@ -43,6 +46,24 @@ const modules = [
 ];
 
 export default function EspacePage() {
+  const router = useRouter();
+  const [user, setUser] = useState<BMPUser | null>(null);
+
+  useEffect(() => {
+    const stored = getStoredUser();
+    setUser(stored);
+
+    if (stored?.role === "client") {
+      router.replace("/espace/client");
+    } else if (stored?.role === "expert") {
+      router.replace("/espace/expert");
+    } else if (stored?.role === "artisan") {
+      router.replace("/espace/artisan");
+    } else if (stored?.role === "admin") {
+      router.replace("/espace/admin");
+    }
+  }, [router]);
+
   return (
     <div className="space-y-16 lg:space-y-24">
       {/* Welcome hero */}
@@ -67,7 +88,7 @@ export default function EspacePage() {
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
             Bienvenue sur <span className="bg-gradient-to-r from-amber-300 to-yellow-400 bg-clip-text text-transparent">BMP.tn</span>
           </h1>
-          <p className="text-gray-300 max-w-2xl mx-auto text-lg">
+          <p className="text-gray-300 max-w-2xl mx-auto text-lg mb-4">
             Accédez à vos outils de gestion de chantier, devis et marketplace depuis un seul espace.
           </p>
         </div>

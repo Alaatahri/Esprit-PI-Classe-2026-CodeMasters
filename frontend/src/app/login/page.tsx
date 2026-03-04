@@ -16,7 +16,20 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (getStoredUser()) router.replace("/espace");
+    const existing = getStoredUser();
+    if (existing) {
+      const target =
+        existing.role === "client"
+          ? "/espace/client"
+          : existing.role === "expert"
+          ? "/espace/expert"
+          : existing.role === "artisan"
+          ? "/espace/artisan"
+          : existing.role === "admin"
+          ? "/espace/admin"
+          : "/espace";
+      router.replace(target);
+    }
   }, [router]);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -46,8 +59,18 @@ export default function LoginPage() {
         localStorage.setItem("bmp_token", token);
       }
 
-      // Rediriger vers l'espace client (face entreprise) sur le même frontend
-      window.location.href = "/espace";
+      // Rediriger vers l'espace adapté au rôle
+      const target =
+        data.user.role === "client"
+          ? "/espace/client"
+          : data.user.role === "expert"
+          ? "/espace/expert"
+          : data.user.role === "artisan"
+          ? "/espace/artisan"
+          : data.user.role === "admin"
+          ? "/espace/admin"
+          : "/espace";
+      router.push(target);
     } catch (err: unknown) {
       setError(
         err instanceof Error ? err.message : "Erreur de connexion au serveur"
