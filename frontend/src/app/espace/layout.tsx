@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { getStoredUser, clearStoredUser, type BMPUser } from "@/lib/auth";
 
+<<<<<<< HEAD
 const navItems = [
   { href: "/espace", label: "Mon espace", icon: Home },
   { href: "/espace/profil", label: "Mon profil", icon: User },
@@ -25,6 +26,14 @@ const navItems = [
   { href: "/gestion-devis-facturation", label: "Devis & Facturation", icon: FileText },
   { href: "/gestion-marketplace", label: "Marketplace", icon: ShoppingCart },
   { href: "/contact", label: "Contact", icon: Mail },
+=======
+const baseNavItems = [
+  { key: "home", href: "/espace", label: "Mon espace", icon: Home },
+  { key: "chantier", href: "/gestion-chantier", label: "Gestion de Chantier", icon: Briefcase },
+  { key: "devis", href: "/gestion-devis-facturation", label: "Devis & Facturation", icon: FileText },
+  { key: "marketplace", href: "/gestion-marketplace", label: "Marketplace", icon: ShoppingCart },
+  { key: "contact", href: "/contact", label: "Contact", icon: Mail },
+>>>>>>> Alaa-tahri
 ];
 
 export default function EspaceLayout({
@@ -37,6 +46,25 @@ export default function EspaceLayout({
   const [user, setUser] = useState<BMPUser | null>(null);
   const [mounted, setMounted] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const navItems = baseNavItems.map((item) => {
+    if (item.key !== "home") return item;
+
+    if (!user) return item;
+
+    const roleHref =
+      user.role === "client"
+        ? "/espace/client"
+        : user.role === "expert"
+        ? "/espace/expert"
+        : user.role === "artisan"
+        ? "/espace/artisan"
+        : user.role === "admin"
+        ? "/espace/admin"
+        : "/espace";
+
+    return { ...item, href: roleHref };
+  });
 
   useEffect(() => {
     setMounted(true);
@@ -105,6 +133,31 @@ export default function EspaceLayout({
                   </Link>
                 );
               })}
+              {user?.role === "client" && (
+                <>
+                  <Link
+                    href="/espace/client"
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                      pathname?.startsWith("/espace/client") &&
+                      !pathname?.startsWith("/espace/client/nouveau-projet")
+                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                        : "text-gray-400 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    Mes projets
+                  </Link>
+                  <Link
+                    href="/espace/client/nouveau-projet"
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                      pathname?.startsWith("/espace/client/nouveau-projet")
+                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                        : "text-gray-400 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    + Nouveau projet
+                  </Link>
+                </>
+              )}
             </nav>
 
             <div className="flex items-center gap-2 sm:gap-3">
@@ -168,6 +221,26 @@ export default function EspaceLayout({
                   </Link>
                 );
               })}
+              {user?.role === "client" && (
+                <>
+                  <Link
+                    href="/espace/client"
+                    onClick={() => setSidebarOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:bg-white/5 hover:text-amber-300"
+                  >
+                    Mes projets
+                    <ChevronRight className="w-4 h-4 ml-auto opacity-50" />
+                  </Link>
+                  <Link
+                    href="/espace/client/nouveau-projet"
+                    onClick={() => setSidebarOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:bg-white/5 hover:text-amber-300"
+                  >
+                    + Nouveau projet
+                    <ChevronRight className="w-4 h-4 ml-auto opacity-50" />
+                  </Link>
+                </>
+              )}
             </nav>
           </div>
         )}
