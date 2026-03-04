@@ -14,26 +14,15 @@ import {
   X,
   ChevronRight,
   Mail,
-  User,
 } from "lucide-react";
 import { getStoredUser, clearStoredUser, type BMPUser } from "@/lib/auth";
 
-<<<<<<< HEAD
-const navItems = [
-  { href: "/espace", label: "Mon espace", icon: Home },
-  { href: "/espace/profil", label: "Mon profil", icon: User },
-  { href: "/gestion-chantier", label: "Gestion de Chantier", icon: Briefcase },
-  { href: "/gestion-devis-facturation", label: "Devis & Facturation", icon: FileText },
-  { href: "/gestion-marketplace", label: "Marketplace", icon: ShoppingCart },
-  { href: "/contact", label: "Contact", icon: Mail },
-=======
 const baseNavItems = [
   { key: "home", href: "/espace", label: "Mon espace", icon: Home },
   { key: "chantier", href: "/gestion-chantier", label: "Gestion de Chantier", icon: Briefcase },
   { key: "devis", href: "/gestion-devis-facturation", label: "Devis & Facturation", icon: FileText },
   { key: "marketplace", href: "/gestion-marketplace", label: "Marketplace", icon: ShoppingCart },
   { key: "contact", href: "/contact", label: "Contact", icon: Mail },
->>>>>>> Alaa-tahri
 ];
 
 export default function EspaceLayout({
