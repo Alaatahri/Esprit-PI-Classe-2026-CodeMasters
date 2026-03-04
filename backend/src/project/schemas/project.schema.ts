@@ -40,6 +40,27 @@ export class Project {
 
   @Prop({ type: Types.ObjectId, ref: 'User' })
   expertId?: Types.ObjectId;
+
+  @Prop({
+    type: [
+      {
+        artisanId: { type: Types.ObjectId, ref: 'User', required: true },
+        statut: {
+          type: String,
+          enum: ['en_attente', 'acceptee', 'refusee'],
+          default: 'en_attente',
+        },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
+    default: [],
+  })
+  applications?: Array<{
+    _id?: Types.ObjectId;
+    artisanId: Types.ObjectId;
+    statut: 'en_attente' | 'acceptee' | 'refusee';
+    createdAt: Date;
+  }>;
 }
 
 export const ProjectSchema = SchemaFactory.createForClass(Project);
