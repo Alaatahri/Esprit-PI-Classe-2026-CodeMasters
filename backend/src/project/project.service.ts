@@ -37,6 +37,49 @@ export class ProjectService {
       .exec();
   }
 
+  async findAcceptedByArtisan(artisanId: string, limit = 100): Promise<Project[]> {
+    if (!this.isValidObjectId(artisanId)) {
+      throw new BadRequestException('ID artisan invalide.');
+    }
+
+    const artisanObjectId = new Types.ObjectId(artisanId);
+    return this.projectModel
+      .find({
+        applications: {
+          $elemMatch: {
+            artisanId: artisanObjectId,
+            statut: 'acceptee',
+          },
+        },
+      })
+      .sort({ updatedAt: -1 })
+      .limit(limit)
+      .lean()
+      .exec();
+  }
+
+  async findCompletedByArtisan(artisanId: string, limit = 100): Promise<Project[]> {
+    if (!this.isValidObjectId(artisanId)) {
+      throw new BadRequestException('ID artisan invalide.');
+    }
+
+    const artisanObjectId = new Types.ObjectId(artisanId);
+    return this.projectModel
+      .find({
+        statut: 'Terminé',
+        applications: {
+          $elemMatch: {
+            artisanId: artisanObjectId,
+            statut: 'acceptee',
+          },
+        },
+      })
+      .sort({ updatedAt: -1 })
+      .limit(limit)
+      .lean()
+      .exec();
+  }
+
   async update(id: string, updateProjectDto: Partial<Project>): Promise<Project> {
     return this.projectModel.findByIdAndUpdate(id, updateProjectDto, { new: true }).exec();
   }

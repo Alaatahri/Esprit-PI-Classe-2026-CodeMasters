@@ -6,6 +6,9 @@ export interface BMPUser {
   email: string;
   role: string;
   telephone?: string;
+  specialite?: string;
+  experience_annees?: number;
+  zones_travail?: Array<{ scope: "tn_all" | "tn_city" | "country" | "world"; value?: string }>;
   createdAt?: string;
 }
 
