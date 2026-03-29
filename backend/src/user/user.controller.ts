@@ -37,6 +37,9 @@ export class UserController {
         email: dbUser.email,
         role: dbUser.role,
         telephone: dbUser.telephone,
+        specialite: dbUser.specialite,
+        experience_annees: dbUser.experience_annees,
+        zones_travail: dbUser.zones_travail,
         createdAt: dbUser.createdAt,
       };
       return { success: true, user: safeUser };

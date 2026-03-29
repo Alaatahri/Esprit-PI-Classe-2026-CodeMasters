@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   PlusCircle,
 } from "lucide-react";
+import Link from "next/link";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
@@ -89,7 +90,9 @@ export default function ArtisanSpacePage() {
     const fetchApplications = async () => {
       setLoadingApplications(true);
       try {
-        const res = await fetch(`${API_URL}/applications/me`);
+        const res = await fetch(
+          `${API_URL}/applications/me?artisanId=${encodeURIComponent(user._id)}`
+        );
         if (!res.ok) return;
         const data = (await res.json()) as ArtisanApplication[];
         setApplications(data);
@@ -103,7 +106,11 @@ export default function ArtisanSpacePage() {
     const fetchMemberProjects = async () => {
       setLoadingMemberProjects(true);
       try {
-        const res = await fetch(`${API_URL}/projects/mine-as-artisan`);
+        const res = await fetch(
+          `${API_URL}/projects/mine-as-artisan?artisanId=${encodeURIComponent(
+            user._id
+          )}`
+        );
         if (!res.ok) return;
         const data = (await res.json()) as MemberProject[];
         setMemberProjects(data);
@@ -187,17 +194,25 @@ export default function ArtisanSpacePage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center border border-amber-500/40">
-          <Briefcase className="w-5 h-5 text-amber-300" />
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center border border-amber-500/40">
+            <Briefcase className="w-5 h-5 text-amber-300" />
+          </div>
+          <div>
+            <h1 className="text-xl font-semibold text-white">Espace artisan</h1>
+            <p className="text-xs text-gray-400">
+              Consultez les projets ouverts, postulez et suivez les chantiers dont
+              vous faites partie.
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-xl font-semibold text-white">Espace artisan</h1>
-          <p className="text-xs text-gray-400">
-            Consultez les projets ouverts, postulez et suivez les chantiers dont
-            vous faites partie.
-          </p>
-        </div>
+        <Link
+          href="/espace/artisan/profil"
+          className="inline-flex items-center gap-2 rounded-xl bg-white/5 border border-white/10 px-4 py-2 text-sm text-gray-300 hover:text-white hover:border-amber-500/30 hover:bg-amber-500/10 transition-all"
+        >
+          Voir mon profil
+        </Link>
       </div>
 
       {error && (

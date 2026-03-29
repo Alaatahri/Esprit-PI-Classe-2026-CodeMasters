@@ -42,27 +42,6 @@ export class Project {
   expertId?: Types.ObjectId;
 
   @Prop({
-<<<<<<< HEAD
-    min: 1,
-    max: 5,
-  })
-  clientRating?: number;
-
-  @Prop()
-  clientComment?: string;
-
-  @Prop({
-    min: 1,
-    max: 5,
-  })
-  expertRating?: number;
-
-  @Prop({
-    min: 1,
-    max: 5,
-  })
-  artisanRating?: number;
-=======
     type: [
       {
         artisanId: { type: Types.ObjectId, ref: 'User', required: true },
@@ -82,7 +61,18 @@ export class Project {
     statut: 'en_attente' | 'acceptee' | 'refusee';
     createdAt: Date;
   }>;
->>>>>>> Alaa-tahri
+
+  @Prop({ min: 1, max: 5 })
+  clientRating?: number;
+
+  @Prop()
+  clientComment?: string;
+
+  @Prop({ min: 1, max: 5 })
+  expertRating?: number;
+
+  @Prop({ min: 1, max: 5 })
+  artisanRating?: number;
 }
 
 export const ProjectSchema = SchemaFactory.createForClass(Project);

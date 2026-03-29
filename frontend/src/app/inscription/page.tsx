@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useMemo, useState, FormEvent } from "react";
 import Link from "next/link";
 import {
   Building2,
@@ -22,6 +22,9 @@ const ROLES = [
   { value: "manufacturer", label: "Fabricant" },
 ] as const;
 
+type WorkZoneScope = "tn_all" | "tn_city" | "country" | "world";
+type WorkZone = { scope: WorkZoneScope; value?: string };
+
 export default function InscriptionPage() {
   const [nom, setNom] = useState("");
   const [email, setEmail] = useState("");
@@ -29,9 +32,33 @@ export default function InscriptionPage() {
   const [role, setRole] = useState<(typeof ROLES)[number]["value"]>("client");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [specialite, setSpecialite] = useState("");
+  const [experienceAnnees, setExperienceAnnees] = useState<string>("");
+  const [zoneTunisie, setZoneTunisie] = useState(false);
+  const [zoneMonde, setZoneMonde] = useState(false);
+  const [zoneVillesTunisie, setZoneVillesTunisie] = useState(false);
+  const [zonePays, setZonePays] = useState(false);
+  const [villesTunisie, setVillesTunisie] = useState("");
+  const [pays, setPays] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const isArtisan = role === "artisan";
+
+  const parsedVilles = useMemo(() => {
+    return villesTunisie
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }, [villesTunisie]);
+
+  const parsedPays = useMemo(() => {
+    return pays
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }, [pays]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -47,6 +74,46 @@ export default function InscriptionPage() {
       return;
     }
 
+    let zones_travail: WorkZone[] | undefined = undefined;
+    if (isArtisan) {
+      const s = specialite.trim();
+      if (!s) {
+        setError("Veuillez renseigner votre spécialité (artisan)");
+        return;
+      }
+
+      const exp = Number(experienceAnnees);
+      if (!Number.isFinite(exp) || exp < 0) {
+        setError("Veuillez renseigner une expérience valide (en années)");
+        return;
+      }
+
+      const zones: WorkZone[] = [];
+      if (zoneTunisie) zones.push({ scope: "tn_all" });
+      if (zoneMonde) zones.push({ scope: "world" });
+      if (zoneVillesTunisie) {
+        for (const v of parsedVilles) zones.push({ scope: "tn_city", value: v });
+      }
+      if (zonePays) {
+        for (const c of parsedPays) zones.push({ scope: "country", value: c });
+      }
+
+      if (zoneVillesTunisie && parsedVilles.length === 0) {
+        setError("Ajoute au moins une ville (Tunisie) ou décoche l’option");
+        return;
+      }
+      if (zonePays && parsedPays.length === 0) {
+        setError("Ajoute au moins un pays ou décoche l’option");
+        return;
+      }
+      if (zones.length === 0) {
+        setError("Sélectionne au moins une zone de travail");
+        return;
+      }
+
+      zones_travail = zones;
+    }
+
     setLoading(true);
 
     try {
@@ -59,6 +126,13 @@ export default function InscriptionPage() {
           telephone: telephone.trim() || undefined,
           role: role,
           mot_de_passe: password,
+          ...(isArtisan
+            ? {
+                specialite: specialite.trim(),
+                experience_annees: Number(experienceAnnees),
+                zones_travail,
+              }
+            : {}),
         }),
       });
 
@@ -232,6 +306,127 @@ export default function InscriptionPage() {
                 ))}
               </select>
             </div>
+
+            {isArtisan && (
+              <div className="space-y-5 rounded-2xl border border-white/15 bg-white/5 p-5">
+                <div>
+                  <label
+                    htmlFor="specialite"
+                    className="block text-sm font-medium text-gray-300 mb-2"
+                  >
+                    Spécialité
+                  </label>
+                  <input
+                    id="specialite"
+                    type="text"
+                    value={specialite}
+                    onChange={(e) => setSpecialite(e.target.value)}
+                    placeholder="Ex: Maçonnerie, Plomberie, Électricité..."
+                    required
+                    disabled={loading}
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/20 transition-all disabled:opacity-60"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="experience"
+                    className="block text-sm font-medium text-gray-300 mb-2"
+                  >
+                    Expérience (années)
+                  </label>
+                  <input
+                    id="experience"
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={experienceAnnees}
+                    onChange={(e) => setExperienceAnnees(e.target.value)}
+                    placeholder="Ex: 5"
+                    required
+                    disabled={loading}
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/20 transition-all disabled:opacity-60"
+                  />
+                </div>
+
+                <div>
+                  <div className="text-sm font-medium text-gray-300 mb-2">
+                    Zones de travail (choix multiples)
+                  </div>
+                  <div className="space-y-3">
+                    <label className="flex items-center gap-3 text-sm text-gray-200">
+                      <input
+                        type="checkbox"
+                        checked={zoneTunisie}
+                        onChange={(e) => setZoneTunisie(e.target.checked)}
+                        disabled={loading}
+                        className="h-4 w-4 accent-amber-400"
+                      />
+                      Toute la Tunisie
+                    </label>
+
+                    <label className="flex items-center gap-3 text-sm text-gray-200">
+                      <input
+                        type="checkbox"
+                        checked={zoneVillesTunisie}
+                        onChange={(e) => setZoneVillesTunisie(e.target.checked)}
+                        disabled={loading}
+                        className="h-4 w-4 accent-amber-400"
+                      />
+                      Villes spécifiques (Tunisie)
+                    </label>
+
+                    {zoneVillesTunisie && (
+                      <input
+                        type="text"
+                        value={villesTunisie}
+                        onChange={(e) => setVillesTunisie(e.target.value)}
+                        placeholder="Ex: Tunis, Sfax, Sousse"
+                        disabled={loading}
+                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/20 transition-all disabled:opacity-60"
+                      />
+                    )}
+
+                    <label className="flex items-center gap-3 text-sm text-gray-200">
+                      <input
+                        type="checkbox"
+                        checked={zonePays}
+                        onChange={(e) => setZonePays(e.target.checked)}
+                        disabled={loading}
+                        className="h-4 w-4 accent-amber-400"
+                      />
+                      Pays spécifiques (Europe / Amérique)
+                    </label>
+
+                    {zonePays && (
+                      <input
+                        type="text"
+                        value={pays}
+                        onChange={(e) => setPays(e.target.value)}
+                        placeholder="Ex: France, Italie, Canada"
+                        disabled={loading}
+                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/20 transition-all disabled:opacity-60"
+                      />
+                    )}
+
+                    <label className="flex items-center gap-3 text-sm text-gray-200">
+                      <input
+                        type="checkbox"
+                        checked={zoneMonde}
+                        onChange={(e) => setZoneMonde(e.target.checked)}
+                        disabled={loading}
+                        className="h-4 w-4 accent-amber-400"
+                      />
+                      Partout dans le monde
+                    </label>
+                  </div>
+
+                  <p className="mt-3 text-xs text-gray-500">
+                    Astuce: pour les villes/pays, sépare par des virgules.
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div>
               <label

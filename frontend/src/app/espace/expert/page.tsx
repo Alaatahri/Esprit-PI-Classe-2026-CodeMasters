@@ -206,14 +206,14 @@ export default function ExpertSpacePage() {
       setProjects((prev) =>
         prev.map((project) => ({
           ...project,
-          applications: project.applications.map((app) =>
+          applications: project.applications?.map((app) =>
             app._id === applicationId
               ? {
                   ...app,
                   statut: action === "accept" ? "acceptee" : "refusee",
                 }
               : app
-          ),
+          ) ?? [],
         }))
       );
     } catch (err) {

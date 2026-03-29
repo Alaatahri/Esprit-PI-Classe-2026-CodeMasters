@@ -69,6 +69,12 @@ async function seed() {
         mot_de_passe: 'password123',
         role: 'artisan',
         telephone: '+216 55 123 456',
+        specialite: 'Maçonnerie',
+        experience_annees: 7,
+        zones_travail: [
+          { scope: 'tn_all' },
+          { scope: 'country', value: 'France' },
+        ],
       });
 
       manufacturer = await userService.create({
@@ -103,7 +109,9 @@ async function seed() {
       client2 = clients[1];
       client3 = clients[2];
       expert = existingUsers.find(u => u.role === 'expert') || existingUsers[0];
-      artisan = existingUsers.find(u => u.role === 'artisan');
+      artisan =
+        existingUsers.find(u => u.email === 'mohamed@example.com') ||
+        existingUsers.find(u => u.role === 'artisan');
       manufacturer = existingUsers.find(u => u.role === 'manufacturer');
       admin = existingUsers.find(u => u.role === 'admin');
     }
@@ -149,6 +157,18 @@ async function seed() {
         avancement_global: 100,
         clientId: new Types.ObjectId(clientForProject3._id),
         expertId: new Types.ObjectId(expert._id),
+        applications: artisan
+          ? [
+              {
+                artisanId: new Types.ObjectId(artisan._id),
+                statut: 'acceptee',
+                createdAt: new Date('2023-06-10'),
+              },
+            ]
+          : [],
+        artisanRating: 5,
+        clientComment:
+          'Très bon artisan: travail propre, délais respectés, excellente communication.',
       });
 
       const project4 = await projectService.create({
@@ -216,6 +236,47 @@ async function seed() {
           });
           projects.push(created);
         }
+      }
+
+      // S'assurer qu'il existe au moins 1 projet "Terminé" avec feedback pour l'artisan
+      const artisanFeedbackTarget = artisan;
+      const hasCompletedForTarget =
+        !!artisanFeedbackTarget &&
+        projects.some((p: any) =>
+          p?.statut === 'Terminé' &&
+          (p?.applications || []).some(
+            (a: any) =>
+              a?.statut === 'acceptee' &&
+              a?.artisanId?.toString?.() === artisanFeedbackTarget._id?.toString?.(),
+          ),
+        );
+
+      if (!hasCompletedForTarget && client && expert && artisanFeedbackTarget) {
+        const artisanFeedbackTitle = `Projet démo – Feedback artisan (terminé) – ${artisanFeedbackTarget.email}`;
+        console.log('\n📝 Creating demo completed project with artisan feedback...');
+        const created = await projectService.create({
+          titre: artisanFeedbackTitle,
+          description:
+            "Projet de démonstration terminé afin d'afficher un profil artisan complet (note + feedback client).",
+          date_debut: new Date('2024-01-05'),
+          date_fin_prevue: new Date('2024-03-20'),
+          budget_estime: 18000,
+          statut: 'Terminé',
+          avancement_global: 100,
+          clientId: new Types.ObjectId(client._id),
+          expertId: new Types.ObjectId(expert._id),
+          applications: [
+            {
+              artisanId: new Types.ObjectId(artisanFeedbackTarget._id),
+              statut: 'acceptee',
+              createdAt: new Date('2024-01-10'),
+            },
+          ],
+          artisanRating: 5,
+          clientComment:
+            'Excellent travail: finition impeccable, ponctualité et très bonne communication.',
+        });
+        projects.push(created);
       }
     }
 

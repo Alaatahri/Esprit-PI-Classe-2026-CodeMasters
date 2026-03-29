@@ -32,6 +32,26 @@ export class ProjectController {
     return this.projectService.findCompletedByClient(clientId);
   }
 
+  @Get('artisan/:artisanId')
+  findAcceptedByArtisan(@Param('artisanId') artisanId: string) {
+    return this.projectService.findAcceptedByArtisan(artisanId);
+  }
+
+  @Get('artisan/:artisanId/completed')
+  findCompletedByArtisan(@Param('artisanId') artisanId: string) {
+    return this.projectService.findCompletedByArtisan(artisanId);
+  }
+
+  @Get('mine-as-artisan')
+  findMineAsArtisan(
+    @Query('artisanId') artisanIdFromQuery?: string,
+    @Headers('x-user-id') artisanIdFromHeader?: string,
+  ) {
+    const artisanId = artisanIdFromQuery || artisanIdFromHeader;
+    if (!artisanId) return [];
+    return this.projectService.findAcceptedByArtisan(artisanId);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.projectService.findOne(id);
