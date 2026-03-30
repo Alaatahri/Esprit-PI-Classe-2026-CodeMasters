@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ReactNode, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { isFieldWorkerRole } from '../constants/workerRoles';
 import './Layout.css';
 
 interface LayoutProps {
@@ -69,6 +70,14 @@ const Layout = ({ children }: LayoutProps) => {
     </svg>
   );
 
+  const IconMatching = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 2v2M12 20v2M2 12h2M20 12h2" />
+      <path d="m4.93 4.93 1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+    </svg>
+  );
+
   const IconLogout = () => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -77,9 +86,32 @@ const Layout = ({ children }: LayoutProps) => {
     </svg>
   );
 
+  const IconWorkers = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      <path d="M12 11v4M10 13h4" strokeLinecap="round" />
+    </svg>
+  );
+
+  const IconOffers = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+      <path d="M13 8H7" />
+      <path d="M17 12H7" />
+    </svg>
+  );
+
   const menuItems = [
     { path: '/', label: 'Dashboard', icon: IconDashboard },
     { path: '/projects', label: 'Projets', icon: IconProjects },
+    { path: '/matching', label: 'Matching IA', icon: IconMatching },
+    ...(isFieldWorkerRole(user?.role)
+      ? [{ path: '/worker/dashboard', label: 'Mes offres projet', icon: IconOffers }]
+      : []),
+    { path: '/workers', label: 'Travailleurs', icon: IconWorkers },
     { path: '/users', label: 'Utilisateurs', icon: IconUsers },
     { path: '/profile', label: 'Mon Profil', icon: IconProfile },
   ];
@@ -167,6 +199,7 @@ const Layout = ({ children }: LayoutProps) => {
               {location.pathname === '/projects/add' && 'Nouveau Projet'}
               {location.pathname.startsWith('/projects/') && !location.pathname.includes('/add') && 'Détails du Projet'}
               {location.pathname === '/users' && 'Gestion des Utilisateurs'}
+              {location.pathname.startsWith('/worker/dashboard') && 'Mes offres projet'}
               {location.pathname === '/profile' && 'Mon Profil'}
             </h2>
             <div className="header-actions">

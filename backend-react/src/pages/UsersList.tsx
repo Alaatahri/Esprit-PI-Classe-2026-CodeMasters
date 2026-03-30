@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import userService, { User } from '../services/userService';
 import './UsersList.css';
 
@@ -45,6 +46,11 @@ const UsersList = () => {
   return (
     <div className="users-list">
       <h1>Liste des Utilisateurs</h1>
+      <p className="users-list__hint">
+        Tous les comptes sont dans la collection <code>users</code>. Les profils <strong>terrain</strong>{' '}
+        (matching) sont les mêmes documents : filtrez par rôle côté page{' '}
+        <Link to="/workers">Travailleurs</Link> pour voir artisans, experts, etc.
+      </p>
 
       {users.length === 0 ? (
         <div className="empty-state">

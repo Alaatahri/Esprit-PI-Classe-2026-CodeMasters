@@ -6,7 +6,15 @@ export interface User {
   nom: string;
   email: string;
   mot_de_passe?: string;
-  role: 'client' | 'expert' | 'artisan' | 'manufacturer' | 'admin';
+  role:
+    | 'client'
+    | 'expert'
+    | 'artisan'
+    | 'manufacturer'
+    | 'admin'
+    | 'ouvrier'
+    | 'electricien'
+    | 'architecte';
   telephone: string;
   createdAt?: string;
 }

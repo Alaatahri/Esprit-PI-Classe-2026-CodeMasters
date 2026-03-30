@@ -1,0 +1,363 @@
+.mp-page {
+  --brown: #7c4a3a;
+  --beige: #f5f0e8;
+  --dark: #1a0a02;
+  min-height: 100%;
+  overflow: auto;
+  padding: 1rem 1.25rem 2rem;
+  background: linear-gradient(165deg, var(--beige) 0%, #ebe4d8 100%);
+  color: var(--dark);
+}
+
+.mp-toasts {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 380px;
+}
+.mp-toast {
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+.mp-toast--ok {
+  background: #d8f3dc;
+  color: #2e6b4f;
+  border: 1px solid #b7e1c1;
+}
+.mp-toast--warn {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+}
+
+.mp-header {
+  max-width: 1200px;
+  margin: 0 auto 1.25rem;
+}
+
+.mp-title {
+  font-family: Georgia, serif;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--brown);
+}
+
+.mp-context-note {
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: #4a4038;
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(124, 74, 58, 0.2);
+  border-radius: 10px;
+  max-width: 52rem;
+}
+.mp-context-note a {
+  color: var(--brown);
+  font-weight: 600;
+}
+.mp-context-note code {
+  font-size: 0.82em;
+  background: rgba(0, 0, 0, 0.06);
+  padding: 0.05em 0.3em;
+  border-radius: 4px;
+}
+
+.mp-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.mp-stat {
+  background: #fff;
+  padding: 0.65rem 1.1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(124, 74, 58, 0.15);
+  min-width: 120px;
+}
+.mp-stat__val {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--brown);
+}
+.mp-stat__label {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.mp-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.mp-legend__pill {
+  font-size: 0.65rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 6px;
+  color: #fff;
+  font-weight: 600;
+}
+
+.mp-panels {
+  display: flex;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: 1.25rem;
+  align-items: flex-start;
+}
+
+.mp-left {
+  flex: 0 0 min(340px, 38%);
+  background: #fff;
+  border-radius: 14px;
+  padding: 1rem;
+  border: 1px solid rgba(124, 74, 58, 0.12);
+  max-height: calc(100vh - 220px);
+  overflow: auto;
+}
+
+.mp-left__title {
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+  color: var(--brown);
+}
+
+.mp-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.mp-row {
+  width: 100%;
+  text-align: left;
+  padding: 0.75rem 0.65rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: #faf8f5;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.mp-row:hover {
+  background: #f0ebe3;
+}
+.mp-row--active {
+  border-color: var(--brown);
+  background: #fff;
+}
+
+.mp-row__title {
+  font-family: Georgia, serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 0.35rem;
+}
+
+.mp-cx {
+  display: inline-block;
+  font-size: 0.72rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+.mp-cx--simple {
+  background: #d8f3dc;
+  color: #2e6b4f;
+}
+.mp-cx--moyen {
+  background: #fff3cd;
+  color: #856404;
+}
+.mp-cx--complexe {
+  background: #ffe0e0;
+  color: #8b1a1a;
+}
+
+.mp-row__types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.mp-wt {
+  font-size: 0.65rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 999px;
+  font-weight: 600;
+  color: #fff;
+}
+.mp-wt--artisan {
+  background: #7c4a3a;
+}
+.mp-wt--ouvrier {
+  background: #5a4a3a;
+}
+.mp-wt--electricien {
+  background: #b8860b;
+}
+.mp-wt--expert {
+  background: #2e4a6b;
+}
+.mp-wt--architecte {
+  background: #2e6b4f;
+}
+
+.mp-right {
+  flex: 1;
+  min-width: 0;
+  background: #fff;
+  border-radius: 14px;
+  padding: 1.25rem;
+  border: 1px solid rgba(124, 74, 58, 0.12);
+  max-height: calc(100vh - 220px);
+  overflow: auto;
+}
+
+.mp-detail-title {
+  font-family: Georgia, serif;
+  font-size: 1.35rem;
+  margin-bottom: 0.5rem;
+}
+
+.mp-detail-desc {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: #444;
+  margin-bottom: 0.75rem;
+}
+
+.mp-detail-budget {
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+  color: #333;
+}
+
+.mp-ia-toggle {
+  background: none;
+  border: none;
+  color: #2e4a6b;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.mp-ia-panel {
+  padding: 1rem;
+  background: #faf8f5;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(124, 74, 58, 0.12);
+}
+
+.mp-ia-cx {
+  display: inline-block;
+  font-size: 1rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.mp-ia-reason {
+  font-style: italic;
+  background: #f5f0e8;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  margin-bottom: 0.75rem;
+  color: #3d3830;
+}
+
+.mp-ia-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.mp-actions-bar {
+  margin-bottom: 1rem;
+}
+
+.mp-btn-relaunch {
+  padding: 0.55rem 1rem;
+  background: #2e6b4f;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.mp-btn-relaunch:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mp-worker-flow-hint {
+  font-size: 0.82rem;
+  color: #5c534a;
+  max-width: 42rem;
+  margin: 0 0 0.75rem;
+  line-height: 1.45;
+}
+.mp-worker-flow-hint a {
+  color: var(--brown);
+  font-weight: 600;
+}
+
+.mp-matches-title {
+  font-size: 1.05rem;
+  margin-bottom: 0.75rem;
+  color: var(--brown);
+}
+
+.mp-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.mp-placeholder {
+  opacity: 0.7;
+  font-size: 0.95rem;
+}
+
+.mp-skel {
+  height: 120px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #ede8e0 25%, #f5f0e8 50%, #ede8e0 75%);
+  background-size: 200% 100%;
+  animation: mp-shimmer 1.2s ease-in-out infinite;
+}
+@keyframes mp-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .mp-panels {
+    flex-direction: column;
+  }
+  .mp-left {
+    flex: none;
+    width: 100%;
+    max-height: 280px;
+  }
+}

@@ -45,8 +45,8 @@ const Profile = () => {
     if (!user?._id) return;
 
     try {
-      const updatedUser = await updateUser(formData);
-      setUser(updatedUser);
+      await updateUser(formData);
+      await loadUser();
       setEditing(false);
     } catch (error) {
       console.error('Error updating user:', error);

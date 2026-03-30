@@ -1,0 +1,142 @@
+.emc-card {
+  position: relative;
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.25rem;
+  border: 1px solid rgba(124, 74, 58, 0.12);
+  box-shadow: 0 6px 20px rgba(26, 10, 2, 0.06);
+}
+
+.emc-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.emc-name {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.1rem;
+  margin: 0 0 0.25rem;
+  color: #1a0a02;
+}
+
+.emc-exp {
+  font-size: 0.85rem;
+  color: #5c534a;
+  margin: 0;
+}
+
+.emc-wt {
+  flex-shrink: 0;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: none;
+}
+.emc-wt--artisan { background: #7c4a3a; color: #fff; }
+.emc-wt--ouvrier { background: #5a4a3a; color: #fff; }
+.emc-wt--electricien { background: #b8860b; color: #fff; }
+.emc-wt--expert { background: #2e4a6b; color: #fff; }
+.emc-wt--architecte { background: #2e6b4f; color: #fff; }
+
+.emc-score-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.emc-bars {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.emc-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.7rem;
+}
+.emc-bar-label {
+  width: 120px;
+  flex-shrink: 0;
+  color: #555;
+}
+.emc-bar-track {
+  flex: 1;
+  height: 8px;
+  background: #ede8e0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.emc-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+}
+
+.emc-explain {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: #f5f0e8;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-style: italic;
+  color: #3d3830;
+  line-height: 1.45;
+}
+
+.emc-status-wrap {
+  margin-top: 1rem;
+}
+
+.emc-status {
+  display: inline-block;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.emc-status--wait {
+  background: #fff3cd;
+  color: #856404;
+}
+.emc-status--ok {
+  background: #d8f3dc;
+  color: #2e6b4f;
+}
+.emc-status--no {
+  background: #ffe0e0;
+  color: #8b1a1a;
+}
+.emc-status--exp {
+  background: #e9ecef;
+  color: #495057;
+}
+
+.emc-worker-link-wrap {
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed rgba(124, 74, 58, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.emc-worker-link {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #5c3d2e;
+  text-decoration: underline;
+}
+.emc-worker-link:hover {
+  color: #2e6b4f;
+}
+.emc-worker-hint {
+  font-size: 0.72rem;
+  color: #6c635a;
+  line-height: 1.35;
+}

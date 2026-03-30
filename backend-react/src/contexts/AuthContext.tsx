@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode } from 'react';
 import authService, { LoginCredentials } from '../services/authService';
 import { User } from '../services/userService';
 
@@ -15,7 +15,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(() => authService.getCurrentUser());
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
 
   const login = async (credentials: LoginCredentials) => {
     const response = await authService.login(credentials);

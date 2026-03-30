@@ -8,6 +8,9 @@ import ProjectDetails from './pages/ProjectDetails';
 import AddProject from './pages/AddProject';
 import UsersList from './pages/UsersList';
 import Profile from './pages/Profile';
+import WorkerDashboard from './pages/WorkerDashboard';
+import WorkersList from './pages/WorkersList';
+import MatchingPage from './pages/MatchingPage';
 
 const PrivateRoute = ({ children }: { children: React.ReactElement }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -74,11 +77,41 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/workers"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <WorkersList />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
         path="/profile"
         element={
           <PrivateRoute>
             <Layout>
               <Profile />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/worker/dashboard"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <WorkerDashboard />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/matching"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <MatchingPage />
             </Layout>
           </PrivateRoute>
         }

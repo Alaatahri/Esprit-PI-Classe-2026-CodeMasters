@@ -13,11 +13,13 @@ async function bootstrap() {
   // Global prefix for all routes
   app.setGlobalPrefix('api');
 
-  await app.listen(3001);
-  console.log('🚀 Backend server running on http://localhost:3001');
-  console.log('📋 API Base URL: http://localhost:3001/api');
+  const port = Number(process.env.PORT) || 3001;
+  await app.listen(port);
+  console.log(`🚀 Backend server running on http://localhost:${port}`);
+  console.log(`📋 API Base URL: http://localhost:${port}/api`);
   console.log('📝 Available endpoints:');
   console.log('   - GET  /api/users');
+  console.log('   - GET  /api/workers (profils terrain)');
   console.log('   - GET  /api/projects');
   console.log('   - GET  /api/suivi-projects');
   console.log('   - GET  /api/devis');

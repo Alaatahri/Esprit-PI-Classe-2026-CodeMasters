@@ -9,7 +9,19 @@
 
 .users-list h1 {
   color: #2c3e50;
-  margin-bottom: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.users-list__hint {
+  max-width: 52rem;
+  margin: 0 0 1.5rem;
+  padding: 0.85rem 1rem;
+  background: #f4f6f8;
+  border: 1px solid #e0e4e8;
+  border-radius: 8px;
+  color: #2c3e50;
+  font-size: 0.95rem;
+  line-height: 1.5;
 }
 
 .empty-state {

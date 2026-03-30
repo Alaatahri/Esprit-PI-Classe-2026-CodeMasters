@@ -1,0 +1,18 @@
+.workers-page__intro {
+  max-width: 52rem;
+  margin: 0 0 1.5rem;
+  padding: 0.85rem 1rem;
+  background: #eef6ff;
+  border: 1px solid #c5d9f0;
+  border-radius: 8px;
+  color: #2c3e50;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.workers-page__intro code {
+  font-size: 0.85em;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
