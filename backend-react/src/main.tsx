@@ -4,9 +4,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import App from './App'
 import './index.css'
 
-const router = createBrowserRouter([{ path: '/*', element: <App /> }], {
-  future: { v7_startTransition: true, v7_relativeSplatPath: true },
-})
+const router = createBrowserRouter([{ path: '/*', element: <App /> }])
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

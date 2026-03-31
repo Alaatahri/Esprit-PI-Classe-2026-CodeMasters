@@ -11,6 +11,9 @@ export type WorkZone = {
 
 @Schema({ timestamps: true })
 export class User {
+  @Prop()
+  prenom?: string;
+
   @Prop({ required: true })
   nom: string;
 
@@ -25,6 +28,9 @@ export class User {
     enum: ['client', 'expert', 'artisan', 'manufacturer', 'admin']
   })
   role: string;
+
+  @Prop({ type: [String], default: [] })
+  competences?: string[];
 
   @Prop()
   telephone?: string;
@@ -50,6 +56,15 @@ export class User {
     default: [],
   })
   zones_travail?: WorkZone[];
+
+  @Prop({ type: Boolean, default: true })
+  isAvailable?: boolean;
+
+  @Prop({ type: Number, default: 0 })
+  rating?: number;
+
+  @Prop({ type: Number, default: 0 })
+  experienceYears?: number;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

@@ -8,6 +8,8 @@ import ProjectDetails from './pages/ProjectDetails';
 import AddProject from './pages/AddProject';
 import UsersList from './pages/UsersList';
 import Profile from './pages/Profile';
+import MatchingAdmin from './pages/MatchingAdmin';
+import ExpertRequests from './pages/ExpertRequests';
 
 const PrivateRoute = ({ children }: { children: React.ReactElement }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -79,6 +81,26 @@ function AppRoutes() {
           <PrivateRoute>
             <Layout>
               <Profile />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/admin/matching"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <MatchingAdmin />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/expert/requests"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <ExpertRequests />
             </Layout>
           </PrivateRoute>
         }

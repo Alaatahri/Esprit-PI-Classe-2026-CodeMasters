@@ -56,11 +56,16 @@ async function seed() {
 
       // Expert / artisan / fabricant / admin
       expert = await userService.create({
-        nom: 'Sara Trabelsi',
+        prenom: 'Sara',
+        nom: 'Trabelsi',
         email: 'sara@example.com',
         mot_de_passe: 'password123',
         role: 'expert',
         telephone: '+216 98 765 432',
+        competences: ['peinture', 'rénovation', 'plomberie', 'électricité'],
+        isAvailable: true,
+        rating: 4.3,
+        experienceYears: 6,
       });
 
       artisan = await userService.create({
@@ -114,6 +119,111 @@ async function seed() {
         existingUsers.find(u => u.role === 'artisan');
       manufacturer = existingUsers.find(u => u.role === 'manufacturer');
       admin = existingUsers.find(u => u.role === 'admin');
+    }
+
+    // S'assurer qu'il existe plusieurs experts avec competences pour tester le matching
+    const demoExperts = [
+      {
+        prenom: 'Youssef',
+        nom: 'Ben Youssef',
+        email: 'expert.peinture@bmp.tn',
+        mot_de_passe: 'password123',
+        role: 'expert',
+        telephone: '+216 20 100 200',
+        competences: ['peinture', 'revêtement'],
+        isAvailable: true,
+        rating: 4.8,
+        experienceYears: 9,
+      },
+      {
+        prenom: 'Ines',
+        nom: 'Trabelsi',
+        email: 'expert.reno@bmp.tn',
+        mot_de_passe: 'password123',
+        role: 'expert',
+        telephone: '+216 20 300 400',
+        competences: ['rénovation', 'plomberie', 'électricité', 'carrelage'],
+        isAvailable: true,
+        rating: 4.4,
+        experienceYears: 7,
+      },
+      {
+        prenom: 'Hatem',
+        nom: 'Khelifi',
+        email: 'expert.structure@bmp.tn',
+        mot_de_passe: 'password123',
+        role: 'expert',
+        telephone: '+216 20 500 600',
+        competences: ['maçonnerie', 'construction', 'toiture'],
+        isAvailable: true,
+        rating: 4.1,
+        experienceYears: 10,
+      },
+      {
+        prenom: 'Mariem',
+        nom: 'Gharbi',
+        email: 'expert.off@bmp.tn',
+        mot_de_passe: 'password123',
+        role: 'expert',
+        telephone: '+216 20 700 800',
+        competences: ['peinture', 'carrelage'],
+        isAvailable: false,
+        rating: 4.9,
+        experienceYears: 10,
+      },
+      // Experts supplémentaires pour tests (plus de diversité)
+      {
+        prenom: 'Sami',
+        nom: 'Haddad',
+        email: 'expert.elec@bmp.tn',
+        mot_de_passe: 'password123',
+        role: 'expert',
+        telephone: '+216 20 111 222',
+        competences: ['électricité', 'rénovation'],
+        isAvailable: true,
+        rating: 4.0,
+        experienceYears: 5,
+      },
+      {
+        prenom: 'Nour',
+        nom: 'Mansouri',
+        email: 'expert.plomberie@bmp.tn',
+        mot_de_passe: 'password123',
+        role: 'expert',
+        telephone: '+216 20 333 444',
+        competences: ['plomberie', 'rénovation'],
+        isAvailable: true,
+        rating: 4.6,
+        experienceYears: 8,
+      },
+      {
+        prenom: 'Amir',
+        nom: 'Ben Salah',
+        email: 'expert.carrelage@bmp.tn',
+        mot_de_passe: 'password123',
+        role: 'expert',
+        telephone: '+216 20 555 666',
+        competences: ['carrelage', 'revêtement', 'rénovation'],
+        isAvailable: true,
+        rating: 4.2,
+        experienceYears: 6,
+      },
+    ];
+
+    for (const ex of demoExperts) {
+      const existing = await userService.findByEmail(ex.email);
+      if (!existing) {
+        await userService.create(ex as any);
+      } else {
+        await userService.update((existing as any)._id?.toString?.() ?? (existing as any)._id, {
+          prenom: (ex as any).prenom,
+          nom: (ex as any).nom,
+          competences: (ex as any).competences,
+          isAvailable: (ex as any).isAvailable,
+          rating: (ex as any).rating,
+          experienceYears: (ex as any).experienceYears,
+        } as any);
+      }
     }
 
     // Créer des projets de test

@@ -7,6 +7,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { SuiviProjectModule } from './suivi-project/suivi-project.module';
 import { DevisModule } from './devis/devis.module';
 import { MarketplaceModule } from './marketplace/marketplace.module';
+import { MatchingModule } from './matching/matching.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { MarketplaceModule } from './marketplace/marketplace.module';
     SuiviProjectModule,
     DevisModule,
     MarketplaceModule,
+    MatchingModule,
   ],
   controllers: [AppController],
 })
