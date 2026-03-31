@@ -34,6 +34,12 @@ const IconUsers = () => (
   </svg>
 );
 
+const IconMatching = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M3 12h6l3 8 3-16 3 8h3" />
+  </svg>
+);
+
 const IconMenu = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <line x1="3" y1="12" x2="21" y2="12" />
@@ -81,6 +87,12 @@ const Layout = ({ children }: LayoutProps) => {
     { path: '/', label: 'Dashboard', icon: IconDashboard },
     { path: '/projects', label: 'Projets', icon: IconProjects },
     { path: '/users', label: 'Utilisateurs', icon: IconUsers },
+    ...(user?.role === 'admin'
+      ? [{ path: '/admin/matching', label: 'Matching IA', icon: IconMatching }]
+      : []),
+    ...(user?.role === 'expert'
+      ? [{ path: '/expert/requests', label: 'Mes demandes', icon: IconMatching }]
+      : []),
     { path: '/profile', label: 'Mon Profil', icon: IconProfile },
   ];
 
@@ -167,6 +179,8 @@ const Layout = ({ children }: LayoutProps) => {
               {location.pathname === '/projects/add' && 'Nouveau Projet'}
               {location.pathname.startsWith('/projects/') && !location.pathname.includes('/add') && 'Détails du Projet'}
               {location.pathname === '/users' && 'Gestion des Utilisateurs'}
+              {location.pathname.startsWith('/admin/matching') && 'Matching IA'}
+              {location.pathname.startsWith('/expert/requests') && 'Mes demandes'}
               {location.pathname === '/profile' && 'Mon Profil'}
             </h2>
             <div className="header-actions">

@@ -12,11 +12,13 @@ export class UserService {
   async create(createUserDto: Partial<User>): Promise<User> {
     const dto: any = { ...(createUserDto as any) };
 
+    if (typeof dto.prenom === 'string') dto.prenom = dto.prenom.trim();
     if (typeof dto.nom === 'string') dto.nom = dto.nom.trim();
     if (typeof dto.email === 'string') dto.email = dto.email.trim().toLowerCase();
     if (typeof dto.telephone === 'string') dto.telephone = dto.telephone.trim();
 
     if (dto.telephone === '') delete dto.telephone;
+    if (dto.prenom === '') delete dto.prenom;
 
     if (dto.role === 'artisan') {
       if (typeof dto.specialite === 'string') dto.specialite = dto.specialite.trim();

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode } from 'react';
 import authService, { LoginCredentials } from '../services/authService';
 import { User } from '../services/userService';
 
@@ -7,7 +7,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => void;
-  updateUser: (data: Partial<User>) => Promise<void>;
+  updateUser: (data: Partial<User>) => Promise<User>;
   isLoading: boolean;
 }
 
@@ -15,7 +15,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(() => authService.getCurrentUser());
-  const [isLoading, setIsLoading] = useState(false);
+  const isLoading = false;
 
   const login = async (credentials: LoginCredentials) => {
     const response = await authService.login(credentials);
@@ -27,10 +27,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
   };
 
-  const updateUser = async (data: Partial<User>) => {
-    if (!user?._id) return;
+  const updateUser = async (data: Partial<User>): Promise<User> => {
+    if (!user?._id) {
+      throw new Error('Utilisateur non authentifié');
+    }
     const updatedUser = await authService.updateProfile(user._id, data);
     setUser(updatedUser);
+    return updatedUser;
   };
 
   return (

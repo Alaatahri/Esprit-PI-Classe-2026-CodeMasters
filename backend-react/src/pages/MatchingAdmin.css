@@ -1,0 +1,564 @@
+.matching-admin {
+  padding: 20px;
+}
+
+.matching-section {
+  margin-top: 24px;
+}
+
+.project-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 16px;
+}
+
+.project-card {
+  background: #fff;
+  border: 1px solid #e6e8ef;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.project-card-top {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.project-title {
+  margin: 0 0 6px 0;
+}
+
+.project-desc {
+  margin: 0;
+  color: #566;
+}
+
+.btn-disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.inline-error {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fff0f0;
+  border: 1px solid #ffd0d0;
+  color: #c0392b;
+}
+
+.result-box {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #eef1f7;
+  background: #fafbff;
+}
+
+.result-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.complexity-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-simple {
+  background: #e9f8ef;
+  color: #1e824c;
+}
+.badge-medium {
+  background: #fff4e5;
+  color: #b35a00;
+}
+.badge-complex {
+  background: #fdeaea;
+  color: #b71540;
+}
+
+.tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.tags.small .tag {
+  font-size: 11px;
+  padding: 3px 8px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eef3ff;
+  color: #2c3e50;
+  font-size: 12px;
+}
+
+.experts h4 {
+  margin: 14px 0 8px;
+}
+
+.expert-row {
+  border-top: 1px dashed #e6e8ef;
+  padding-top: 10px;
+  margin-top: 10px;
+}
+
+.expert-main {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.expert-name {
+  font-weight: 600;
+}
+
+.expert-score {
+  font-weight: 700;
+  color: #34495e;
+}
+
+.muted {
+  color: #7f8c8d;
+}
+
+.btn-inline-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.requests-table {
+  background: #fff;
+  border: 1px solid #e6e8ef;
+  border-radius: 12px;
+  overflow: auto;
+}
+
+.requests-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.requests-table th,
+.requests-table td {
+  padding: 12px;
+  border-bottom: 1px solid #eef1f7;
+  text-align: left;
+  vertical-align: top;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-pending {
+  background: #eef2ff;
+  color: #2c3e50;
+}
+.status-accepted {
+  background: #e9f8ef;
+  color: #1e824c;
+}
+.status-refused {
+  background: #fdeaea;
+  color: #b71540;
+}
+
+.matching-admin {
+  padding: 20px;
+}
+
+.matching-section {
+  margin-top: 24px;
+}
+
+.project-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 16px;
+}
+
+.project-card {
+  background: #fff;
+  border: 1px solid #e6e8ef;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.project-card-top {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.project-title {
+  margin: 0 0 6px 0;
+}
+
+.project-desc {
+  margin: 0;
+  color: #566;
+}
+
+.btn-disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.inline-error {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fff0f0;
+  border: 1px solid #ffd0d0;
+  color: #c0392b;
+}
+
+.result-box {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #eef1f7;
+  background: #fafbff;
+}
+
+.result-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.complexity-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-simple {
+  background: #e9f8ef;
+  color: #1e824c;
+}
+.badge-medium {
+  background: #fff4e5;
+  color: #b35a00;
+}
+.badge-complex {
+  background: #fdeaea;
+  color: #b71540;
+}
+
+.tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.tags.small .tag {
+  font-size: 11px;
+  padding: 3px 8px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eef3ff;
+  color: #2c3e50;
+  font-size: 12px;
+}
+
+.experts h4 {
+  margin: 14px 0 8px;
+}
+
+.expert-row {
+  border-top: 1px dashed #e6e8ef;
+  padding-top: 10px;
+  margin-top: 10px;
+}
+
+.expert-main {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.expert-name {
+  font-weight: 600;
+}
+
+.expert-score {
+  font-weight: 700;
+  color: #34495e;
+}
+
+.muted {
+  color: #7f8c8d;
+}
+
+.btn-inline-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.requests-table {
+  background: #fff;
+  border: 1px solid #e6e8ef;
+  border-radius: 12px;
+  overflow: auto;
+}
+
+.requests-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.requests-table th,
+.requests-table td {
+  padding: 12px;
+  border-bottom: 1px solid #eef1f7;
+  text-align: left;
+  vertical-align: top;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-pending {
+  background: #eef2ff;
+  color: #2c3e50;
+}
+.status-accepted {
+  background: #e9f8ef;
+  color: #1e824c;
+}
+.status-refused {
+  background: #fdeaea;
+  color: #b71540;
+}
+
+.matching-admin {
+  padding: 20px;
+}
+
+.matching-section {
+  margin-top: 24px;
+}
+
+.project-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 16px;
+}
+
+.project-card {
+  background: #fff;
+  border: 1px solid #e6e8ef;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.project-card-top {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.project-title {
+  margin: 0 0 6px 0;
+}
+
+.project-desc {
+  margin: 0;
+  color: #566;
+}
+
+.btn-disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.inline-error {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fff0f0;
+  border: 1px solid #ffd0d0;
+  color: #c0392b;
+}
+
+.result-box {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #eef1f7;
+  background: #fafbff;
+}
+
+.result-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.complexity-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-simple {
+  background: #e9f8ef;
+  color: #1e824c;
+}
+.badge-medium {
+  background: #fff4e5;
+  color: #b35a00;
+}
+.badge-complex {
+  background: #fdeaea;
+  color: #b71540;
+}
+
+.tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.tags.small .tag {
+  font-size: 11px;
+  padding: 3px 8px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eef3ff;
+  color: #2c3e50;
+  font-size: 12px;
+}
+
+.experts h4 {
+  margin: 14px 0 8px;
+}
+
+.expert-row {
+  border-top: 1px dashed #e6e8ef;
+  padding-top: 10px;
+  margin-top: 10px;
+}
+
+.expert-main {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.expert-name {
+  font-weight: 600;
+}
+
+.expert-score {
+  font-weight: 700;
+  color: #34495e;
+}
+
+.muted {
+  color: #7f8c8d;
+}
+
+.btn-inline-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.requests-table {
+  background: #fff;
+  border: 1px solid #e6e8ef;
+  border-radius: 12px;
+  overflow: auto;
+}
+
+.requests-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.requests-table th,
+.requests-table td {
+  padding: 12px;
+  border-bottom: 1px solid #eef1f7;
+  text-align: left;
+  vertical-align: top;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-pending {
+  background: #eef2ff;
+  color: #2c3e50;
+}
+.status-accepted {
+  background: #e9f8ef;
+  color: #1e824c;
+}
+.status-refused {
+  background: #fdeaea;
+  color: #b71540;
+}
+
