@@ -11,6 +11,7 @@ import { Project, ProjectSchema } from './schemas/project.schema';
   ],
   controllers: [ProjectController, ApplicationsController],
   providers: [ProjectService],
-  exports: [ProjectService],
+  // Ré-exporte le modèle Project pour les modules qui importent ProjectModule (ex. SuiviModule)
+  exports: [MongooseModule, ProjectService],
 })
 export class ProjectModule {}

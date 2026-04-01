@@ -14,8 +14,15 @@ import {
   Menu,
   X,
   ChevronRight,
+  Camera,
+  type LucideIcon,
 } from "lucide-react";
-import { getStoredUser, clearStoredUser, type BMPUser } from "@/lib/auth";
+import {
+  getStoredUser,
+  clearStoredUser,
+  isClientRole,
+  type BMPUser,
+} from "@/lib/auth";
 
 const baseNavItems = [
   { key: "home", href: "/espace", label: "Mon espace", icon: Home },
@@ -46,32 +53,43 @@ export default function GlobalNavbar() {
       return true;
     });
 
-    return filteredBase.map((item) => {
+    const mapped = filteredBase.map((item) => {
       if (item.key !== "home") return item;
       if (!user) return item;
 
-      const roleHref =
-        user.role === "client"
-          ? "/espace/client"
-          : user.role === "expert"
+      const roleHref = isClientRole(user.role)
+        ? "/espace/client"
+        : user.role === "expert"
           ? "/espace/expert"
           : user.role === "artisan"
-          ? "/espace/artisan"
-          : user.role === "admin"
-          ? "/espace/admin"
-          : "/espace";
+            ? "/espace/artisan"
+            : user.role === "admin"
+              ? "/espace/admin"
+              : "/espace";
 
       return { ...item, href: roleHref };
     });
+
+    return mapped;
   }, [user]);
 
-  const extraClientItems =
-    user?.role === "client"
-      ? [
-          { href: "/espace/client", label: "Mes projets" },
-          { href: "/espace/client/nouveau-projet", label: "+ Nouveau projet" },
-        ]
-      : [];
+  const extraClientItems: Array<{
+    href: string;
+    label: string;
+    icon?: LucideIcon;
+    title?: string;
+  }> = isClientRole(user?.role)
+    ? [
+        {
+          href: "/espace/client/suivi",
+          label: "Suivi de mes projets",
+          icon: Camera,
+          title: "Voir le taux d'avancement et les photos de chantier",
+        },
+        { href: "/espace/client", label: "Mes projets" },
+        { href: "/espace/client/nouveau-projet", label: "+ Nouveau projet" },
+      ]
+    : [];
 
   const handleLogout = () => {
     clearStoredUser();
@@ -83,6 +101,15 @@ export default function GlobalNavbar() {
   const isActive = (href: string) => {
     if (!pathname) return false;
     if (href === "/espace") return pathname === "/espace";
+    if (href === "/espace/client") {
+      return (
+        pathname === "/espace/client" ||
+        pathname === "/espace/client/nouveau-projet"
+      );
+    }
+    if (href === "/espace/client/suivi") {
+      return pathname.startsWith("/espace/client/suivi");
+    }
     return pathname.startsWith(href);
   };
 
@@ -124,14 +151,14 @@ export default function GlobalNavbar() {
             </div>
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-1 min-w-0 overflow-x-auto">
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
                 <Link
-                  key={item.href}
+                  key={item.key ?? item.href}
                   href={item.href}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                  className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all shrink-0 whitespace-nowrap ${
                     isActive(item.href)
                       ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
                       : "text-gray-300/80 hover:text-white hover:bg-white/5"
@@ -144,20 +171,27 @@ export default function GlobalNavbar() {
             })}
 
             {extraClientItems.length > 0 && (
-              <div className="hidden xl:flex items-center gap-1 ml-2 pl-2 border-l border-white/10">
-                {extraClientItems.map((it) => (
-                  <Link
-                    key={it.href}
-                    href={it.href}
-                    className={`flex items-center px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                      isActive(it.href)
-                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                        : "text-gray-300/80 hover:text-white hover:bg-white/5"
-                    }`}
-                  >
-                    {it.label}
-                  </Link>
-                ))}
+              <div className="flex items-center gap-1 ml-2 pl-2 border-l border-white/10 shrink-0">
+                {extraClientItems.map((it) => {
+                  const ExtraIcon = it.icon;
+                  return (
+                    <Link
+                      key={it.href}
+                      href={it.href}
+                      title={it.title}
+                      className={`inline-flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap shrink-0 ${
+                        isActive(it.href)
+                          ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                          : "text-gray-300/80 hover:text-white hover:bg-white/5"
+                      }`}
+                    >
+                      {ExtraIcon ? (
+                        <ExtraIcon className="w-4 h-4 shrink-0 opacity-90" />
+                      ) : null}
+                      {it.label}
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </nav>
@@ -212,7 +246,7 @@ export default function GlobalNavbar() {
               const Icon = item.icon;
               return (
                 <Link
-                  key={item.href}
+                  key={item.key ?? item.href}
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl transition ${
@@ -230,21 +264,28 @@ export default function GlobalNavbar() {
 
             {extraClientItems.length > 0 && (
               <div className="mt-2 pt-2 border-t border-white/10">
-                {extraClientItems.map((it) => (
-                  <Link
-                    key={it.href}
-                    href={it.href}
-                    onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition ${
-                      isActive(it.href)
-                        ? "bg-amber-500/15 text-amber-200 border border-amber-500/20"
-                        : "text-gray-200/80 hover:bg-white/5 hover:text-amber-300"
-                    }`}
-                  >
-                    {it.label}
-                    <ChevronRight className="w-4 h-4 ml-auto opacity-60" />
-                  </Link>
-                ))}
+                {extraClientItems.map((it) => {
+                  const ExtraIcon = it.icon;
+                  return (
+                    <Link
+                      key={it.href}
+                      href={it.href}
+                      title={it.title}
+                      onClick={() => setMobileOpen(false)}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition ${
+                        isActive(it.href)
+                          ? "bg-amber-500/15 text-amber-200 border border-amber-500/20"
+                          : "text-gray-200/80 hover:bg-white/5 hover:text-amber-300"
+                      }`}
+                    >
+                      {ExtraIcon ? (
+                        <ExtraIcon className="w-5 h-5 shrink-0 opacity-90" />
+                      ) : null}
+                      {it.label}
+                      <ChevronRight className="w-4 h-4 ml-auto opacity-60" />
+                    </Link>
+                  );
+                })}
               </div>
             )}
 

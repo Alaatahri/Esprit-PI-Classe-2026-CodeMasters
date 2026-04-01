@@ -1,9 +1,19 @@
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { json, urlencoded } from 'express';
 import { AppModule } from './app.module';
 
+/** Limite corps JSON (photos base64 sur /api/suivi/photo) — évite 413 Payload Too Large */
+const BODY_LIMIT = '35mb';
+
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bodyParser: false,
+  });
+
+  app.use(json({ limit: BODY_LIMIT }));
+  app.use(urlencoded({ extended: true, limit: BODY_LIMIT }));
+
   // Enable CORS for frontend (vitrine) and admin (backend-react)
   app.enableCors({
     origin: ['http://localhost:3000', 'http://localhost:5173'],

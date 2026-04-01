@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getStoredUser, type BMPUser } from "@/lib/auth";
+import { SuiviTimeline } from "@/components/SuiviTimeline";
 import {
   PlusCircle,
   ClipboardList,
@@ -10,6 +12,8 @@ import {
   CheckCircle2,
   Star,
   ShoppingCart,
+  Camera,
+  ChevronRight,
 } from "lucide-react";
 
 const API_URL =
@@ -330,11 +334,21 @@ export default function ClientSpacePage() {
       <section className="space-y-6">
         {/* Historique des projets du client */}
         <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <ClipboardList className="w-5 h-5 text-amber-300" />
-            <h2 className="text-sm font-semibold text-white">
-              Mes projets récents
-            </h2>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <ClipboardList className="w-5 h-5 text-amber-300" />
+              <h2 className="text-sm font-semibold text-white">
+                Mes projets récents
+              </h2>
+            </div>
+            <Link
+              href="/espace/client/suivi"
+              className="inline-flex items-center gap-2 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-200 hover:bg-amber-500/20 transition"
+            >
+              <Camera className="w-3.5 h-3.5" />
+              Suivre l&apos;avancement de mes projets
+              <ChevronRight className="w-3.5 h-3.5 opacity-80" />
+            </Link>
           </div>
 
           {loadingProjects ? (
@@ -351,7 +365,19 @@ export default function ClientSpacePage() {
               {projects.map((project) => (
                 <div
                   key={project._id}
-                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm space-y-2"
+                  role="link"
+                  tabIndex={0}
+                  aria-label={`Ouvrir le suivi détaillé : ${project.titre}`}
+                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm space-y-2 cursor-pointer transition hover:border-amber-500/35 hover:bg-white/[0.07]"
+                  onClick={() =>
+                    router.push(`/espace/client/suivi/${project._id}`)
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      router.push(`/espace/client/suivi/${project._id}`);
+                    }
+                  }}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <p className="font-medium text-white line-clamp-1">
@@ -392,6 +418,18 @@ export default function ClientSpacePage() {
                       {project.avancement_global ?? 0}% avancement
                     </span>
                   </div>
+
+                  <div
+                    className="pt-0.5"
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
+                  >
+                    <SuiviTimeline projectId={project._id} apiBaseUrl={API_URL} />
+                  </div>
+                  <p className="text-[10px] text-center text-amber-400/70 pt-1">
+                    Cliquez sur la carte pour voir le taux d&apos;avancement et les
+                    photos
+                  </p>
                 </div>
               ))}
             </div>

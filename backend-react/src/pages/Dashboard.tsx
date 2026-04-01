@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { dashboardService } from '../services/dashboardService';
 import type { Project } from '../services/projectService';
 import type { User } from '../services/userService';
+import { useAuth } from '../contexts/AuthContext';
 import './Dashboard.css';
 
 // Icônes SVG simples
@@ -58,13 +59,43 @@ const IconActivity = () => (
 );
 
 const Dashboard = () => {
+  const { user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  const visibleProjects = useMemo(() => {
+    if (user?.role === 'client' && user._id) {
+      return projects.filter((p) => String(p.clientId) === String(user._id));
+    }
+    return projects;
+  }, [projects, user]);
+
+  const stats = useMemo(() => {
+    const list = visibleProjects;
+    return {
+      totalProjects: list.length,
+      projectsEnAttente: list.filter((p) => p.statut === 'En attente').length,
+      projectsEnCours: list.filter((p) => p.statut === 'En cours').length,
+      projectsTermines: list.filter((p) => p.statut === 'Terminé').length,
+      totalUsers: users.length,
+      totalBudget: list.reduce((sum, p) => sum + (p.budget_estime || 0), 0),
+      avancementMoyen:
+        list.length > 0
+          ? Math.round(
+              list.reduce((sum, p) => sum + (p.avancement_global || 0), 0) /
+                list.length,
+            )
+          : 0,
+      usersByRole: {
+        client: users.filter((u) => u.role === 'client').length,
+        expert: users.filter((u) => u.role === 'expert').length,
+        artisan: users.filter((u) => u.role === 'artisan').length,
+        manufacturer: users.filter((u) => u.role === 'manufacturer').length,
+        admin: users.filter((u) => u.role === 'admin').length,
+      },
+    };
+  }, [visibleProjects, users]);
 
   const loadData = async () => {
     try {
@@ -78,6 +109,12 @@ const Dashboard = () => {
     }
   };
 
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const isClient = user?.role === 'client';
+
   if (loading) {
     return (
       <div className="loading-container">
@@ -87,31 +124,16 @@ const Dashboard = () => {
     );
   }
 
-  const stats = {
-    totalProjects: projects.length,
-    projectsEnAttente: projects.filter(p => p.statut === 'En attente').length,
-    projectsEnCours: projects.filter(p => p.statut === 'En cours').length,
-    projectsTermines: projects.filter(p => p.statut === 'Terminé').length,
-    totalUsers: users.length,
-    totalBudget: projects.reduce((sum, p) => sum + (p.budget_estime || 0), 0),
-    avancementMoyen: projects.length > 0 
-      ? Math.round(projects.reduce((sum, p) => sum + (p.avancement_global || 0), 0) / projects.length)
-      : 0,
-    usersByRole: {
-      client: users.filter(u => u.role === 'client').length,
-      expert: users.filter(u => u.role === 'expert').length,
-      artisan: users.filter(u => u.role === 'artisan').length,
-      manufacturer: users.filter(u => u.role === 'manufacturer').length,
-      admin: users.filter(u => u.role === 'admin').length,
-    },
-  };
-
   return (
     <div className="dashboard-modern">
       <div className="dashboard-header">
         <div>
           <h1>Tableau de Bord</h1>
-          <p className="dashboard-subtitle">Vue d'ensemble de votre plateforme BMP.tn</p>
+          <p className="dashboard-subtitle">
+            {isClient
+              ? 'Vue de vos projets et de leur avancement (BMP.tn)'
+              : "Vue d'ensemble de votre plateforme BMP.tn"}
+          </p>
         </div>
         <div className="header-actions">
           <Link to="/projects/add" className="btn-primary-modern">
@@ -190,79 +212,91 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="stat-card-modern stat-blue">
-          <div className="stat-icon-wrapper">
-            <IconUsers />
-          </div>
-          <div className="stat-content">
-            <h3>Utilisateurs</h3>
-            <p className="stat-number-modern">{stats.totalUsers}</p>
-            <p className="stat-change">Inscrits</p>
-          </div>
-        </div>
-
-        <div className="stat-card-modern stat-users">
-          <div className="stat-content-full">
-            <h3>Répartition Utilisateurs</h3>
-            <div className="users-breakdown-modern">
-              {stats.usersByRole.client > 0 && (
-                <div className="role-item">
-                  <span className="role-dot role-client"></span>
-                  <span className="role-text">{stats.usersByRole.client} Clients</span>
-                </div>
-              )}
-              {stats.usersByRole.expert > 0 && (
-                <div className="role-item">
-                  <span className="role-dot role-expert"></span>
-                  <span className="role-text">{stats.usersByRole.expert} Experts</span>
-                </div>
-              )}
-              {stats.usersByRole.artisan > 0 && (
-                <div className="role-item">
-                  <span className="role-dot role-artisan"></span>
-                  <span className="role-text">{stats.usersByRole.artisan} Artisans</span>
-                </div>
-              )}
-              {stats.usersByRole.manufacturer > 0 && (
-                <div className="role-item">
-                  <span className="role-dot role-manufacturer"></span>
-                  <span className="role-text">{stats.usersByRole.manufacturer} Fabricants</span>
-                </div>
-              )}
-              {stats.usersByRole.admin > 0 && (
-                <div className="role-item">
-                  <span className="role-dot role-admin"></span>
-                  <span className="role-text">{stats.usersByRole.admin} Admins</span>
-                </div>
-              )}
+        {!isClient && (
+          <>
+            <div className="stat-card-modern stat-blue">
+              <div className="stat-icon-wrapper">
+                <IconUsers />
+              </div>
+              <div className="stat-content">
+                <h3>Utilisateurs</h3>
+                <p className="stat-number-modern">{stats.totalUsers}</p>
+                <p className="stat-change">Inscrits</p>
+              </div>
             </div>
-          </div>
-        </div>
+
+            <div className="stat-card-modern stat-users">
+              <div className="stat-content-full">
+                <h3>Répartition Utilisateurs</h3>
+                <div className="users-breakdown-modern">
+                  {stats.usersByRole.client > 0 && (
+                    <div className="role-item">
+                      <span className="role-dot role-client"></span>
+                      <span className="role-text">{stats.usersByRole.client} Clients</span>
+                    </div>
+                  )}
+                  {stats.usersByRole.expert > 0 && (
+                    <div className="role-item">
+                      <span className="role-dot role-expert"></span>
+                      <span className="role-text">{stats.usersByRole.expert} Experts</span>
+                    </div>
+                  )}
+                  {stats.usersByRole.artisan > 0 && (
+                    <div className="role-item">
+                      <span className="role-dot role-artisan"></span>
+                      <span className="role-text">{stats.usersByRole.artisan} Artisans</span>
+                    </div>
+                  )}
+                  {stats.usersByRole.manufacturer > 0 && (
+                    <div className="role-item">
+                      <span className="role-dot role-manufacturer"></span>
+                      <span className="role-text">{stats.usersByRole.manufacturer} Fabricants</span>
+                    </div>
+                  )}
+                  {stats.usersByRole.admin > 0 && (
+                    <div className="role-item">
+                      <span className="role-dot role-admin"></span>
+                      <span className="role-text">{stats.usersByRole.admin} Admins</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="dashboard-content-modern">
         <div className="projects-section-modern">
           <div className="section-header-modern">
             <div>
-              <h2>Projets Récents</h2>
-              <p className="section-subtitle">Derniers projets ajoutés à la plateforme</p>
+              <h2>{isClient ? 'Mes projets récents' : 'Projets Récents'}</h2>
+              <p className="section-subtitle">
+                {isClient
+                  ? 'Vos chantiers et leur avancement'
+                  : 'Derniers projets ajoutés à la plateforme'}
+              </p>
             </div>
             <Link to="/projects" className="btn-link-modern">
               Voir tout <span>→</span>
             </Link>
           </div>
-          {projects.length === 0 ? (
+          {visibleProjects.length === 0 ? (
             <div className="empty-state-modern">
               <IconProject />
               <h3>Aucun projet pour le moment</h3>
-              <p>Commencez par créer votre premier projet</p>
+              <p>
+                {isClient
+                  ? 'Aucun projet associé à votre compte.'
+                  : 'Commencez par créer votre premier projet'}
+              </p>
               <Link to="/projects/add" className="btn-primary-modern">
                 Créer un projet
               </Link>
             </div>
           ) : (
             <div className="projects-grid-modern">
-              {projects.slice(0, 6).map((project, index) => (
+              {visibleProjects.slice(0, 6).map((project, index) => (
                 <div 
                   key={project._id} 
                   className="project-card-modern"
@@ -317,45 +351,47 @@ const Dashboard = () => {
           )}
         </div>
 
-        <div className="users-section-modern">
-          <div className="section-header-modern">
-            <div>
-              <h2>Utilisateurs Actifs</h2>
-              <p className="section-subtitle">Membres récemment inscrits</p>
+        {!isClient && (
+          <div className="users-section-modern">
+            <div className="section-header-modern">
+              <div>
+                <h2>Utilisateurs Actifs</h2>
+                <p className="section-subtitle">Membres récemment inscrits</p>
+              </div>
+              <Link to="/users" className="btn-link-modern">
+                Voir tout <span>→</span>
+              </Link>
             </div>
-            <Link to="/users" className="btn-link-modern">
-              Voir tout <span>→</span>
-            </Link>
+            {users.length === 0 ? (
+              <div className="empty-state-modern">
+                <IconUsers />
+                <h3>Aucun utilisateur</h3>
+                <p>Les utilisateurs apparaîtront ici</p>
+              </div>
+            ) : (
+              <div className="users-list-modern">
+                {users.slice(0, 5).map((u, index) => (
+                  <div
+                    key={u._id}
+                    className="user-card-modern"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <div className="user-avatar-modern">
+                      {u.nom.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="user-details-modern">
+                      <h4>{u.nom}</h4>
+                      <p className="user-email-modern">{u.email}</p>
+                      <span className={`role-badge-modern role-${u.role}`}>
+                        {u.role}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          {users.length === 0 ? (
-            <div className="empty-state-modern">
-              <IconUsers />
-              <h3>Aucun utilisateur</h3>
-              <p>Les utilisateurs apparaîtront ici</p>
-            </div>
-          ) : (
-            <div className="users-list-modern">
-              {users.slice(0, 5).map((user, index) => (
-                <div 
-                  key={user._id} 
-                  className="user-card-modern"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <div className="user-avatar-modern">
-                    {user.nom.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="user-details-modern">
-                    <h4>{user.nom}</h4>
-                    <p className="user-email-modern">{user.email}</p>
-                    <span className={`role-badge-modern role-${user.role}`}>
-                      {user.role}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );

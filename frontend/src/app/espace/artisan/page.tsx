@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getStoredUser, type BMPUser } from "@/lib/auth";
+import { SuiviTimeline } from "@/components/SuiviTimeline";
 import {
   ClipboardList,
   Briefcase,
@@ -416,6 +417,7 @@ export default function ArtisanSpacePage() {
                         Actif dans le chantier
                       </span>
                     </div>
+                    <SuiviTimeline projectId={project._id} apiBaseUrl={API_URL} />
                   </div>
                 ))}
               </div>

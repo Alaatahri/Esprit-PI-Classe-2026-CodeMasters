@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getStoredUser, type BMPUser } from "@/lib/auth";
+import { SuiviTimeline } from "@/components/SuiviTimeline";
 import {
   Users,
   Star,
@@ -51,6 +53,7 @@ type ExpertProject = {
   clientNom?: string;
   date_debut?: string;
   date_fin_prevue?: string;
+  avancement_global?: number;
   applications?: ArtisanApplication[];
 };
 
@@ -439,6 +442,13 @@ export default function ExpertSpacePage() {
                     {project.description}
                   </p>
 
+                  <Link
+                    href={`/expert/projects/${project._id}/suivi-photo`}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-200 hover:bg-amber-500/20 transition w-full sm:w-auto"
+                  >
+                    📷 Suivi photo
+                  </Link>
+
                   <div className="flex items-center justify-between text-[11px] text-gray-400">
                     <span>
                       Budget estimé :{" "}
@@ -463,6 +473,8 @@ export default function ExpertSpacePage() {
                         : "-"}
                     </span>
                   </div>
+
+                  <SuiviTimeline projectId={project._id} apiBaseUrl={API_URL} />
 
                   <div className="pt-2 border-t border-white/5 space-y-2">
                     <div className="flex items-center justify-between gap-2">

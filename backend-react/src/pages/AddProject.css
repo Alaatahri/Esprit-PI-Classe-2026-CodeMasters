@@ -95,3 +95,9 @@
 .btn-secondary:hover {
   background-color: #7f8c8d;
 }
+
+.input-readonly {
+  background-color: #ecf0f1 !important;
+  cursor: not-allowed;
+  color: #555;
+}

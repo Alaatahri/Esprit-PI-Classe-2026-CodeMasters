@@ -1,17 +1,27 @@
 import { NestFactory } from '@nestjs/core';
+import { getModelToken } from '@nestjs/mongoose';
 import { AppModule } from '../app.module';
 import { UserService } from '../user/user.service';
 import { ProjectService } from '../project/project.service';
 import { SuiviProjectService } from '../suivi-project/suivi-project.service';
 import { DevisService } from '../devis/devis.service';
 import { MarketplaceService } from '../marketplace/marketplace.service';
-import { Types } from 'mongoose';
+import {
+  SuiviProject,
+  SuiviProjectDocument,
+} from '../suivi-project/schemas/suivi-project.schema';
+import { Alert, AlertDocument } from '../alerts/schemas/alert.schema';
+import { Model, Types } from 'mongoose';
 
 async function seed() {
   const app = await NestFactory.createApplicationContext(AppModule);
   const userService = app.get(UserService);
   const projectService = app.get(ProjectService);
   const suiviProjectService = app.get(SuiviProjectService);
+  const suiviProjectModel = app.get<Model<SuiviProjectDocument>>(
+    getModelToken(SuiviProject.name),
+  );
+  const alertModel = app.get<Model<AlertDocument>>(getModelToken(Alert.name));
   const devisService = app.get(DevisService);
   const marketplaceService = app.get(MarketplaceService);
 
@@ -119,6 +129,13 @@ async function seed() {
         existingUsers.find(u => u.role === 'artisan');
       manufacturer = existingUsers.find(u => u.role === 'manufacturer');
       admin = existingUsers.find(u => u.role === 'admin');
+    }
+
+    // Toujours utiliser Ahmed comme client principal des démos (login ahmed@example.com)
+    const ahmedResolved = await userService.findByEmail('ahmed@example.com');
+    if (ahmedResolved) {
+      client = ahmedResolved as any;
+      console.log('📌 Client démo principal: ahmed@example.com');
     }
 
     // S'assurer qu'il existe plusieurs experts avec competences pour tester le matching
@@ -418,6 +435,205 @@ async function seed() {
       }
     }
 
+    // Données démo supplémentaires (idempotent) — suivi photo STEP 1 + projet pour matching
+    console.log('\n📝 Ensuring bonus demo data (suivi photo STEP 1, projet matching)...');
+    const DEMO_SUIVI_TITLE = 'Projet démo BMP – Suivi photo (STEP 1)';
+    const DEMO_MATCHING_TITLE = 'Projet démo – Matching IA (rénovation cuisine)';
+
+    const allProjList = await projectService.findAll(500);
+    let demoSuiviProject = allProjList.find((p: any) => p.titre === DEMO_SUIVI_TITLE);
+    let demoMatchingProject = allProjList.find((p: any) => p.titre === DEMO_MATCHING_TITLE);
+
+    if (client && expert && artisan) {
+      if (!demoSuiviProject) {
+        demoSuiviProject = await projectService.create({
+          titre: DEMO_SUIVI_TITLE,
+          description:
+            'Chantier de démonstration pour tester photoUrl, progressIndex, progressPercent et suivi photo. ' +
+            'Travaux: peinture, carrelage, plomberie.',
+          date_debut: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+          date_fin_prevue: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
+          budget_estime: 95000,
+          statut: 'En attente',
+          avancement_global: 0,
+          clientId: new Types.ObjectId(client._id),
+          expertId: new Types.ObjectId(expert._id),
+        });
+      }
+
+      if (!demoMatchingProject) {
+        demoMatchingProject = await projectService.create({
+          titre: DEMO_MATCHING_TITLE,
+          description:
+            'Rénovation complète de cuisine avec nouveaux meubles, électricité, plomberie et carrelage mural.',
+          date_debut: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
+          date_fin_prevue: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000),
+          budget_estime: 28000,
+          statut: 'En attente',
+          avancement_global: 0,
+          clientId: new Types.ObjectId(client._id),
+        });
+      }
+    }
+
+    // Suivis avec champs STEP 1 (photoUrl, progressPercent, progressIndex, workerId, aiAnalysis)
+    if (demoSuiviProject && artisan) {
+      const pid = new Types.ObjectId(
+        (demoSuiviProject as any)._id?.toString?.() ?? (demoSuiviProject as any)._id,
+      );
+      const marker = 'demo-seed-suivi-photo';
+      const exists = await suiviProjectModel.countDocuments({
+        projectId: pid,
+        description_progression: { $regex: marker, $options: 'i' },
+      });
+
+      if (exists === 0) {
+        const wid = new Types.ObjectId(artisan._id);
+        const baseDay = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+        const rows = [
+          {
+            idx: 1,
+            pct: 30,
+            url: 'https://picsum.photos/seed/bmp-suivi-demo1/800/600',
+            note: 'Premier point de contrôle.',
+          },
+          {
+            idx: 2,
+            pct: 45,
+            url: 'https://picsum.photos/seed/bmp-suivi-demo2/800/600',
+            note: 'Avancement murs et début finitions.',
+          },
+          {
+            idx: 3,
+            pct: 55,
+            url: 'https://picsum.photos/seed/bmp-suivi-demo3/800/600',
+            note: 'Finitions en cours.',
+          },
+        ];
+
+        for (const r of rows) {
+          const uploadedAt = new Date(baseDay.getTime() + r.idx * 86400000);
+          await suiviProjectService.create({
+            projectId: pid,
+            workerId: wid,
+            photoUrl: r.url,
+            photo_url: r.url,
+            uploadedAt,
+            date_suivi: uploadedAt,
+            description_progression: `[${marker}] ${r.note}`,
+            pourcentage_avancement: r.pct,
+            progressPercent: r.pct,
+            progressIndex: r.idx,
+            cout_actuel: 0,
+            aiAnalysis: JSON.stringify({
+              percent: r.pct,
+              reason: 'demo_seed',
+              note: r.note,
+            }),
+          });
+        }
+        console.log('✅ Bonus demo suivis created (STEP 1 fields):', rows.length);
+      } else {
+        console.log('📋 Bonus demo suivis already present (skipped).');
+      }
+    }
+
+    // STEP 2 — Projet + alerte démo (retard vs planning, échéance < 3 j)
+    console.log('\n📝 Ensuring demo data for STEP 2 (alertes retard)...');
+    const ALERT_DEMO_TITLE = 'Projet démo – Alerte retard (échéance critique)';
+    const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
+    const ninetyDaysMs = 90 * 24 * 60 * 60 * 1000;
+
+    const projListForAlert = await projectService.findAll(500);
+    let alertDemoProject = projListForAlert.find((p: any) => p.titre === ALERT_DEMO_TITLE);
+
+    if (client && expert && artisan) {
+      if (!alertDemoProject) {
+        alertDemoProject = await projectService.create({
+          titre: ALERT_DEMO_TITLE,
+          description:
+            'Chantier démo pour tester les alertes retard (STEP 2). Avancement volontairement bas par rapport au planning linéaire.',
+          date_debut: new Date(Date.now() - ninetyDaysMs),
+          date_fin_prevue: new Date(Date.now() + twoDaysMs),
+          budget_estime: 120000,
+          statut: 'En cours',
+          avancement_global: 12,
+          clientId: new Types.ObjectId(client._id),
+          expertId: new Types.ObjectId(expert._id),
+        });
+        console.log('✅ Demo alert project created (avancement 12 %, fin dans ~2 j)');
+
+        const pid = new Types.ObjectId(
+          (alertDemoProject as any)._id?.toString?.() ?? (alertDemoProject as any)._id,
+        );
+        const wid = new Types.ObjectId(artisan._id);
+        const totalMs =
+          new Date(alertDemoProject.date_fin_prevue).getTime() -
+          new Date(alertDemoProject.date_debut).getTime();
+        const totalDays = Math.max(totalMs / (1000 * 60 * 60 * 24), 1);
+        const today = new Date();
+        const daysElapsed =
+          (today.getTime() - new Date(alertDemoProject.date_debut).getTime()) /
+          (1000 * 60 * 60 * 24);
+        const expectedProgress = Math.min(
+          Math.max((daysElapsed / totalDays) * 100, 0),
+          100,
+        );
+        const daysRemaining =
+          (new Date(alertDemoProject.date_fin_prevue).getTime() - today.getTime()) /
+          (1000 * 60 * 60 * 24);
+
+        const existingAlert = await alertModel.countDocuments({ projectId: pid });
+        if (existingAlert === 0) {
+          await alertModel.create({
+            projectId: pid,
+            workerId: wid,
+            alertDate: new Date(),
+            expectedProgress: Math.round(expectedProgress * 10) / 10,
+            realProgress: 12,
+            daysRemaining: Math.round(daysRemaining * 10) / 10,
+            status: 'pending',
+          });
+          console.log('✅ Demo alert document created in collection `alerts` (STEP 2)');
+        }
+      } else {
+        const pid = new Types.ObjectId(
+          (alertDemoProject as any)._id?.toString?.() ?? (alertDemoProject as any)._id,
+        );
+        const wid = new Types.ObjectId(artisan._id);
+        const existingAlert = await alertModel.countDocuments({ projectId: pid });
+        if (existingAlert === 0) {
+          const totalMs =
+            new Date(alertDemoProject.date_fin_prevue).getTime() -
+            new Date(alertDemoProject.date_debut).getTime();
+          const totalDays = Math.max(totalMs / (1000 * 60 * 60 * 24), 1);
+          const today = new Date();
+          const daysElapsed =
+            (today.getTime() - new Date(alertDemoProject.date_debut).getTime()) /
+            (1000 * 60 * 60 * 24);
+          const expectedProgress = Math.min(
+            Math.max((daysElapsed / totalDays) * 100, 0),
+            100,
+          );
+          const daysRemaining =
+            (new Date(alertDemoProject.date_fin_prevue).getTime() - today.getTime()) /
+            (1000 * 60 * 60 * 24);
+          await alertModel.create({
+            projectId: pid,
+            workerId: wid,
+            alertDate: new Date(),
+            expectedProgress: Math.round(expectedProgress * 10) / 10,
+            realProgress: typeof alertDemoProject.avancement_global === 'number'
+              ? alertDemoProject.avancement_global
+              : 12,
+            daysRemaining: Math.round(daysRemaining * 10) / 10,
+            status: 'pending',
+          });
+          console.log('✅ Demo alert document created in collection `alerts` (STEP 2)');
+        }
+      }
+    }
+
     // Créer des devis
     console.log('\n📝 Creating quotes (devis)...');
     const existingDevis = await devisService.findAll();
@@ -519,6 +735,198 @@ async function seed() {
       }
     }
 
+    // Lot dédié ahmed@example.com — tout visible dans l’espace client + API
+    console.log('\n📝 Ensuring Ahmed bundle (ahmed@example.com / password123)...');
+    const ahmedUser = await userService.findByEmail('ahmed@example.com');
+    const saraExpert = await userService.findByEmail('sara@example.com');
+    const mohamedArtisan = await userService.findByEmail('mohamed@example.com');
+    if (ahmedUser && saraExpert && mohamedArtisan) {
+      const ahmedId = new Types.ObjectId((ahmedUser as any)._id);
+      const expertOid = new Types.ObjectId((saraExpert as any)._id);
+      const artisanOid = new Types.ObjectId((mohamedArtisan as any)._id);
+      const allProjectsAhmed = await projectService.findAll(600);
+
+      const ahmedHas = (title: string) =>
+        allProjectsAhmed.some(
+          (p: any) =>
+            p.titre === title && String(p.clientId) === String(ahmedId),
+        );
+
+      const T_SUIVI = '[AHMED TEST] Suivi photo – journal visible';
+      const T_MATCH = '[AHMED TEST] Matching IA – rénovation cuisine';
+      const T_ALERT = '[AHMED TEST] Alerte retard – échéance critique';
+
+      if (!ahmedHas(T_SUIVI)) {
+        const pSuivi = await projectService.create({
+          titre: T_SUIVI,
+          description:
+            'Démo pour Ahmed : journal de suivi, photos et pourcentages. Mots-clés: peinture, carrelage.',
+          date_debut: new Date(Date.now() - 25 * 86400000),
+          date_fin_prevue: new Date(Date.now() + 70 * 86400000),
+          budget_estime: 48000,
+          statut: 'En cours',
+          avancement_global: 0,
+          clientId: ahmedId,
+          expertId: expertOid,
+        });
+        const pid = new Types.ObjectId((pSuivi as any)._id);
+        const suiviRows = [
+          {
+            idx: 1,
+            pct: 28,
+            desc: '[ahmed-demo] Première visite chantier — fondations OK.',
+          },
+          {
+            idx: 2,
+            pct: 45,
+            desc: '[ahmed-demo] Second point — murs et début finitions.',
+          },
+        ];
+        for (const r of suiviRows) {
+          const d = new Date(Date.now() - (3 - r.idx) * 86400000);
+          await suiviProjectService.create({
+            projectId: pid,
+            workerId: artisanOid,
+            date_suivi: d,
+            description_progression: r.desc,
+            pourcentage_avancement: r.pct,
+            cout_actuel: r.idx === 1 ? 12000 : 21000,
+            photo_url: `https://picsum.photos/seed/ahmed-${r.idx}/800/600`,
+            photoUrl: `https://picsum.photos/seed/ahmed-${r.idx}/800/600`,
+            uploadedAt: d,
+            progressPercent: r.pct,
+            progressIndex: r.idx,
+            aiAnalysis: JSON.stringify({ demo: 'ahmed', step: r.idx }),
+          });
+        }
+        console.log('✅ [AHMED] Projet suivi + entrées suiviprojects');
+      }
+
+      if (!ahmedHas(T_MATCH)) {
+        await projectService.create({
+          titre: T_MATCH,
+          description:
+            'Rénovation cuisine : électricité, plomberie, carrelage mural et meubles.',
+          date_debut: new Date(Date.now() - 12 * 86400000),
+          date_fin_prevue: new Date(Date.now() + 50 * 86400000),
+          budget_estime: 26500,
+          statut: 'En attente',
+          avancement_global: 0,
+          clientId: ahmedId,
+        });
+        console.log('✅ [AHMED] Projet matching (déclenchable depuis admin)');
+      }
+
+      if (!ahmedHas(T_ALERT)) {
+        const pAlert = await projectService.create({
+          titre: T_ALERT,
+          description: 'Démo alerte retard pour le client Ahmed (STEP 2).',
+          date_debut: new Date(Date.now() - 92 * 86400000),
+          date_fin_prevue: new Date(Date.now() + 2 * 86400000),
+          budget_estime: 95000,
+          statut: 'En cours',
+          avancement_global: 11,
+          clientId: ahmedId,
+          expertId: expertOid,
+        });
+        const pidA = new Types.ObjectId((pAlert as any)._id);
+        const nAlert = await alertModel.countDocuments({ projectId: pidA });
+        if (nAlert === 0) {
+          const start = new Date((pAlert as any).date_debut).getTime();
+          const end = new Date((pAlert as any).date_fin_prevue).getTime();
+          const totalDays = Math.max((end - start) / (1000 * 60 * 60 * 24), 1);
+          const today = new Date();
+          const daysElapsed = (today.getTime() - start) / (1000 * 60 * 60 * 24);
+          const expectedProgress = Math.min(
+            Math.max((daysElapsed / totalDays) * 100, 0),
+            100,
+          );
+          const daysRemaining = (end - today.getTime()) / (1000 * 60 * 60 * 24);
+          await alertModel.create({
+            projectId: pidA,
+            workerId: artisanOid,
+            alertDate: new Date(),
+            expectedProgress: Math.round(expectedProgress * 10) / 10,
+            realProgress: 11,
+            daysRemaining: Math.round(daysRemaining * 10) / 10,
+            status: 'pending',
+          });
+        }
+        console.log('✅ [AHMED] Projet alerte + document alerts');
+      }
+
+      // Projets supplémentaires pour mohamed@example.com : 0 % au départ, artisan accepté (test IA photo)
+      console.log(
+        '\n📝 Ensuring Mohamed artisan projects (0% start, accepted application — IA photo from scratch)...',
+      );
+      const MOHAMED_IA_TEST_PROJECTS: Array<{ titre: string; description: string; budget_estime: number }> = [
+        {
+          titre: '[MOHAMED IA TEST] Chantier neuf – gros œuvre',
+          description:
+            'Démo analyse IA depuis le départ (0 %). Mots-clés: fondations, béton, maçonnerie, structure.',
+          budget_estime: 185000,
+        },
+        {
+          titre: '[MOHAMED IA TEST] Rénovation salle de bain',
+          description:
+            'Second chantier test : carrelage, étanchéité, plomberie. Aucune photo seed — premier envoi = analyse IA.',
+          budget_estime: 14200,
+        },
+        {
+          titre: '[MOHAMED IA TEST] Extension terrasse',
+          description:
+            'Dalle, garde-corps, évacuation eaux. Idéal pour une première photo du chantier vide ou démarré.',
+          budget_estime: 28000,
+        },
+        {
+          titre: '[MOHAMED IA TEST] Peinture et finitions salon',
+          description:
+            'Peinture, plinthes, éclairage. Tester l’estimation de % après une ou plusieurs photos.',
+          budget_estime: 9600,
+        },
+        {
+          titre: '[MOHAMED IA TEST] Cloisons et isolation bureau',
+          description:
+            'Cloisons légères, laine de verre, portes. Chantier intérieur pour comparaison avec gros œuvre.',
+          budget_estime: 22100,
+        },
+      ];
+
+      const projSnapshotMohamed = await projectService.findAll(800);
+      const mohamedProjectExists = (title: string) =>
+        projSnapshotMohamed.some(
+          (p: any) =>
+            p.titre === title && String(p.clientId) === String(ahmedId),
+        );
+
+      for (const spec of MOHAMED_IA_TEST_PROJECTS) {
+        if (mohamedProjectExists(spec.titre)) {
+          continue;
+        }
+        await projectService.create({
+          titre: spec.titre,
+          description: spec.description,
+          date_debut: new Date(Date.now() - 5 * 86400000),
+          date_fin_prevue: new Date(Date.now() + 100 * 86400000),
+          budget_estime: spec.budget_estime,
+          statut: 'En cours',
+          avancement_global: 0,
+          clientId: ahmedId,
+          expertId: expertOid,
+          applications: [
+            {
+              artisanId: artisanOid,
+              statut: 'acceptee',
+              createdAt: new Date(),
+            },
+          ],
+        });
+        console.log(`   ✅ [MOHAMED IA] Créé: ${spec.titre} (0 %, artisan accepté)`);
+      }
+    } else {
+      console.log('⚠️  Ahmed / Sara / Mohamed introuvable — lot [AHMED TEST] ignoré.');
+    }
+
     console.log('\n🎉 Seeding completed successfully!');
     console.log('\n📊 Test Data Summary:');
     const finalUsers = await userService.findAll();
@@ -527,14 +935,22 @@ async function seed() {
     const finalDevis = await devisService.findAll();
     const finalProduits = await marketplaceService.findAllProduits();
     const finalCommandes = await marketplaceService.findAllCommandes();
-    
+    const finalAlerts = await alertModel.countDocuments();
+
     console.log(`   👥 Users: ${finalUsers.length} (${finalUsers.filter(u => u.role === 'client').length} clients, ${finalUsers.filter(u => u.role === 'expert').length} experts, ${finalUsers.filter(u => u.role === 'artisan').length} artisans)`);
     console.log(`   🏗️  Projects: ${finalProjects.length}`);
     console.log(`   📈 Project Follow-ups: ${finalSuivis.length}`);
+    console.log(`   🚨 Alerts (STEP 2): ${finalAlerts}`);
     console.log(`   💰 Quotes: ${finalDevis.length}`);
     console.log(`   🛒 Products: ${finalProduits.length}`);
     console.log(`   📦 Orders: ${finalCommandes.length}`);
     console.log('\n✨ Your database is ready for testing!');
+    console.log(
+      '\n   📌 Démo alerte retard: titre « Projet démo – Alerte retard (échéance critique) » — avancement 12 % (voir aussi collection `alerts`).',
+    );
+    console.log(
+      '\n   🔑 Client test: ahmed@example.com / password123 — projets « [AHMED TEST] … » (suivi, matching, alerte).',
+    );
   } catch (error) {
     console.error('❌ Error seeding database:', error);
     throw error;

@@ -10,6 +10,7 @@ import UsersList from './pages/UsersList';
 import Profile from './pages/Profile';
 import MatchingAdmin from './pages/MatchingAdmin';
 import ExpertRequests from './pages/ExpertRequests';
+import MesProjets from './pages/MesProjets';
 
 const PrivateRoute = ({ children }: { children: React.ReactElement }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -101,6 +102,16 @@ function AppRoutes() {
           <PrivateRoute>
             <Layout>
               <ExpertRequests />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/mes-projets"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <MesProjets />
             </Layout>
           </PrivateRoute>
         }
