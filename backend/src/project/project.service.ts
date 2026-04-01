@@ -1,15 +1,23 @@
 import {
   BadRequestException,
+  ForbiddenException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Project, ProjectDocument } from './schemas/project.schema';
+import { SuiviProjectService } from '../suivi-project/suivi-project.service';
 
 @Injectable()
 export class ProjectService {
-  constructor(@InjectModel(Project.name) private projectModel: Model<ProjectDocument>) {}
+  constructor(
+    @InjectModel(Project.name) private projectModel: Model<ProjectDocument>,
+    @Inject(forwardRef(() => SuiviProjectService))
+    private readonly suiviProjectService: SuiviProjectService,
+  ) {}
 
   private isValidObjectId(id: string): boolean {
     return Types.ObjectId.isValid(id);
@@ -80,8 +88,205 @@ export class ProjectService {
       .exec();
   }
 
+  async findByExpertId(expertId: string, limit = 100): Promise<Project[]> {
+    if (!this.isValidObjectId(expertId)) {
+      throw new BadRequestException('ID expert invalide.');
+    }
+    return this.projectModel
+      .find({ expertId: new Types.ObjectId(expertId) })
+      .sort({ updatedAt: -1 })
+      .limit(limit)
+      .lean()
+      .exec();
+  }
+
+  /** Projets terminés pour la vitrine publique (sans données sensibles côté contrôleur). */
+  async findShowcaseProjects(limit = 24): Promise<Project[]> {
+    return this.projectModel
+      .find({ statut: 'Terminé' })
+      .sort({ updatedAt: -1 })
+      .limit(limit)
+      .select(
+        '_id titre description statut avancement_global clientRating clientComment photosAvant photosApres updatedAt createdAt',
+      )
+      .lean()
+      .exec();
+  }
+
+  /** Détail public d’un projet terminé (galerie avant/après, avis, photos chantier). */
+  async findPublicShowcaseById(id: string) {
+    if (!this.isValidObjectId(id)) {
+      throw new NotFoundException('Projet introuvable');
+    }
+    const p = await this.projectModel.findById(id).lean().exec();
+    if (!p || p.statut !== 'Terminé') {
+      throw new NotFoundException('Projet introuvable');
+    }
+    const doc = p as any;
+    const photosAvant = Array.isArray(doc.photosAvant) ? doc.photosAvant : [];
+    const photosApres = Array.isArray(doc.photosApres) ? doc.photosApres : [];
+
+    const reviews: Array<{
+      text: string;
+      rating?: number;
+      author: string;
+      role: string;
+    }> = [];
+
+    const clientText = typeof doc.clientComment === 'string' ? doc.clientComment.trim() : '';
+    if (clientText) {
+      reviews.push({
+        text: clientText,
+        rating: typeof doc.clientRating === 'number' ? doc.clientRating : undefined,
+        author: 'Client',
+        role: 'client',
+      });
+    }
+
+    if (typeof doc.expertRating === 'number') {
+      const expertText =
+        typeof doc.expertComment === 'string' && doc.expertComment.trim()
+          ? doc.expertComment.trim()
+          : 'Accompagnement technique, visites de contrôle et validation des lots conformes au dossier.';
+      reviews.push({
+        text: expertText,
+        rating: doc.expertRating,
+        author: 'Expert BMP.tn',
+        role: 'expert',
+      });
+    }
+
+    if (typeof doc.artisanRating === 'number') {
+      const artisanText =
+        typeof doc.artisanComment === 'string' && doc.artisanComment.trim()
+          ? doc.artisanComment.trim()
+          : 'Réalisation des travaux dans le respect du planning, de la sécurité et des finitions convenues.';
+      reviews.push({
+        text: artisanText,
+        rating: doc.artisanRating,
+        author: 'Équipe artisan',
+        role: 'artisan',
+      });
+    }
+
+    const extra = Array.isArray(doc.showcaseReviews) ? doc.showcaseReviews : [];
+    for (const r of extra) {
+      const t = typeof r?.text === 'string' ? r.text.trim() : '';
+      if (!t) continue;
+      reviews.push({
+        text: t,
+        rating: typeof r.rating === 'number' ? r.rating : undefined,
+        author: typeof r.author === 'string' && r.author.trim() ? r.author.trim() : 'Visiteur',
+        role: typeof r.role === 'string' ? r.role : 'visiteur',
+      });
+    }
+
+    let chantierPhotos: string[] = [];
+    try {
+      chantierPhotos = await this.suiviProjectService.findPublicPhotoUrlsForProject(id);
+    } catch {
+      chantierPhotos = [];
+    }
+
+    return {
+      _id: doc._id,
+      titre: doc.titre,
+      description: doc.description,
+      statut: doc.statut,
+      avancement_global: doc.avancement_global,
+      clientRating: doc.clientRating,
+      clientComment: doc.clientComment,
+      expertRating: doc.expertRating,
+      artisanRating: doc.artisanRating,
+      expertComment: doc.expertComment,
+      artisanComment: doc.artisanComment,
+      photosAvant,
+      photosApres,
+      reviews,
+      chantierPhotos,
+      updatedAt: doc.updatedAt,
+      createdAt: doc.createdAt,
+    };
+  }
+
   async update(id: string, updateProjectDto: Partial<Project>): Promise<Project> {
     return this.projectModel.findByIdAndUpdate(id, updateProjectDto, { new: true }).exec();
+  }
+
+  /**
+   * L’expert assigné enrichit les galeries « avant / après » du projet (URLs publiques).
+   */
+  async appendExpertProjectPhotos(
+    projectId: string,
+    expertId: string,
+    dto: { urls: string[]; album: 'avant' | 'apres' },
+  ): Promise<Project> {
+    if (!this.isValidObjectId(projectId) || !this.isValidObjectId(expertId)) {
+      throw new BadRequestException('Identifiants invalides.');
+    }
+    const project: any = await this.projectModel.findById(projectId).lean().exec();
+    if (!project) {
+      throw new NotFoundException('Projet introuvable.');
+    }
+    const assigned = project.expertId?.toString?.();
+    if (!assigned || assigned !== expertId) {
+      throw new ForbiddenException(
+        'Seul l’expert assigné à ce projet peut y ajouter des photos.',
+      );
+    }
+    const clean = dto.urls
+      .map((u) => String(u).trim())
+      .filter((u) => /^https?:\/\//i.test(u));
+    if (clean.length === 0) {
+      throw new BadRequestException(
+        'Au moins une URL http(s) valide est requise.',
+      );
+    }
+    const maxAdd = 24;
+    const slice = clean.slice(0, maxAdd);
+    const field = dto.album === 'avant' ? 'photosAvant' : 'photosApres';
+    const updated = await this.projectModel
+      .findByIdAndUpdate(
+        projectId,
+        { $push: { [field]: { $each: slice } } } as Record<string, unknown>,
+        { new: true },
+      )
+      .lean()
+      .exec();
+    return updated as Project;
+  }
+
+  /** Note de suivi / feedback par l’expert assigné */
+  async setExpertProjectFeedback(
+    projectId: string,
+    expertId: string,
+    text: string,
+  ): Promise<Project> {
+    if (!this.isValidObjectId(projectId) || !this.isValidObjectId(expertId)) {
+      throw new BadRequestException('Identifiants invalides.');
+    }
+    const project: any = await this.projectModel.findById(projectId).lean().exec();
+    if (!project) {
+      throw new NotFoundException('Projet introuvable.');
+    }
+    const assigned = project.expertId?.toString?.();
+    if (!assigned || assigned !== expertId) {
+      throw new ForbiddenException(
+        'Seul l’expert assigné à ce projet peut enregistrer un feedback.',
+      );
+    }
+    const t = String(text ?? '').trim();
+    if (!t) {
+      throw new BadRequestException('Le texte du feedback est requis.');
+    }
+    if (t.length > 12000) {
+      throw new BadRequestException('Feedback trop long (max 12000 caractères).');
+    }
+    const updated = await this.projectModel
+      .findByIdAndUpdate(projectId, { expertFeedback: t }, { new: true })
+      .lean()
+      .exec();
+    return updated as Project;
   }
 
   async rateProject(

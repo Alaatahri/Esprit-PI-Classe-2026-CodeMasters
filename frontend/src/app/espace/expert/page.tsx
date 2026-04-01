@@ -15,9 +15,9 @@ import {
   Clock,
   XCircle,
 } from "lucide-react";
+import { getApiBaseUrl } from "@/lib/api-base";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const API_URL = getApiBaseUrl();
 
 type Artisan = {
   _id: string;
@@ -144,6 +144,7 @@ export default function ExpertSpacePage() {
 
     const fetchArtisans = async () => {
       setLoadingArtisans(true);
+      setError(null);
       try {
         const res = await fetch(`${API_URL}/users`);
         if (!res.ok) {
@@ -152,6 +153,7 @@ export default function ExpertSpacePage() {
         const data = (await res.json()) as Artisan[];
         setArtisans(data.filter((u) => u.role === "artisan"));
       } catch (err) {
+        setError(err instanceof Error ? err.message : "Erreur de chargement.");
       } finally {
         setLoadingArtisans(false);
       }
@@ -160,21 +162,26 @@ export default function ExpertSpacePage() {
     const fetchProjectsForExpert = async () => {
       setLoadingProjects(true);
       try {
-        const res = await fetch(`${API_URL}/projects`);
+        const res = await fetch(
+          `${API_URL}/projects/expert/${encodeURIComponent(user._id)}`,
+          { cache: "no-store" },
+        );
         if (!res.ok) {
+          setError("Impossible de charger vos projets.");
           return;
         }
         const data = (await res.json()) as ExpertProject[];
-        // Garder uniquement les projets en attente ou en cours
         const filtered = data
-          .filter((p) => ["En attente", "En cours"].includes(p.statut))
+          .filter((p) =>
+            ["En attente", "En cours", "Terminé"].includes(p.statut),
+          )
           .map((p) => ({
             ...p,
             applications: p.applications ?? [],
           }));
         setProjects(filtered);
       } catch {
-        // Silencieux : l'expert verra au moins la liste des artisans
+        /* ignore */
       } finally {
         setLoadingProjects(false);
       }
@@ -442,12 +449,20 @@ export default function ExpertSpacePage() {
                     {project.description}
                   </p>
 
-                  <Link
-                    href={`/expert/projects/${project._id}/suivi-photo`}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-200 hover:bg-amber-500/20 transition w-full sm:w-auto"
-                  >
-                    📷 Suivi photo
-                  </Link>
+                  <div className="flex flex-col sm:flex-row flex-wrap gap-2">
+                    <Link
+                      href={`/expert/projects/${project._id}/photos`}
+                      className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-200 hover:bg-emerald-500/20 transition"
+                    >
+                      Galerie avant / après
+                    </Link>
+                    <Link
+                      href={`/expert/projects/${project._id}/suivi-photo`}
+                      className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-200 hover:bg-amber-500/20 transition"
+                    >
+                      Suivi photo chantier
+                    </Link>
+                  </div>
 
                   <div className="flex items-center justify-between text-[11px] text-gray-400">
                     <span>

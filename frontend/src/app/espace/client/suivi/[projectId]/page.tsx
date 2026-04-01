@@ -9,11 +9,13 @@ import {
   ImageIcon,
   Loader2,
   Percent,
+  MessageCircle,
 } from "lucide-react";
 import { getStoredUser, type BMPUser } from "@/lib/auth";
+import { getApiBaseUrl } from "@/lib/api-base";
+import { refId } from "@/lib/project-refs";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const API_URL = getApiBaseUrl();
 
 type Project = {
   _id: string;
@@ -25,6 +27,11 @@ type Project = {
   statut: string;
   avancement_global: number;
   clientId: string;
+  expertId?: unknown;
+  applications?: Array<{
+    artisanId?: unknown;
+    statut?: string;
+  }>;
 };
 
 type SuiviEntry = {
@@ -197,6 +204,47 @@ export default function ClientSuiviDetailPage() {
               </span>
             </div>
           </header>
+
+          {(() => {
+            const expertOid = refId(project.expertId);
+            const accepted = project.applications?.find(
+              (a) => a.statut === "acceptee",
+            );
+            const artisanOid = accepted ? refId(accepted.artisanId) : "";
+            if (!expertOid && !artisanOid) return null;
+            return (
+              <section className="rounded-2xl border border-amber-500/20 bg-amber-950/20 p-4 space-y-3">
+                <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+                  <MessageCircle className="w-4 h-4 text-amber-400" />
+                  Échanger avec l&apos;équipe
+                </h2>
+                <p className="text-xs text-gray-500">
+                  Ouvrez une conversation avec votre expert ou l&apos;artisan
+                  assigné au chantier.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {expertOid ? (
+                    <Link
+                      href={`/messages/${expertOid}`}
+                      className="inline-flex items-center gap-2 rounded-xl border border-sky-500/35 bg-sky-500/10 px-4 py-2 text-xs font-medium text-sky-200 hover:bg-sky-500/20"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      Message à l&apos;expert
+                    </Link>
+                  ) : null}
+                  {artisanOid ? (
+                    <Link
+                      href={`/messages/${artisanOid}`}
+                      className="inline-flex items-center gap-2 rounded-xl border border-violet-500/35 bg-violet-500/10 px-4 py-2 text-xs font-medium text-violet-200 hover:bg-violet-500/20"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      Message à l&apos;artisan
+                    </Link>
+                  ) : null}
+                </div>
+              </section>
+            );
+          })()}
 
           <section className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-3">
             <div className="flex items-center justify-between gap-4">

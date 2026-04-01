@@ -4,9 +4,10 @@ import { useState, FormEvent, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Building2, Mail, Lock, Loader2, AlertCircle } from "lucide-react";
-import { getStoredUser, normalizeRole } from "@/lib/auth";
+import { getStoredUser, normalizeRole, setStoredUser } from "@/lib/auth";
+import { getApiBaseUrl } from "@/lib/api-base";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const API_URL = getApiBaseUrl();
 
 export default function LoginPage() {
   const router = useRouter();
@@ -60,7 +61,7 @@ export default function LoginPage() {
         role: normalizeRole(data.user.role),
       };
       if (typeof window !== "undefined") {
-        localStorage.setItem("bmp_user", JSON.stringify(userToStore));
+        setStoredUser(userToStore);
         localStorage.setItem("bmp_token", token);
       }
 

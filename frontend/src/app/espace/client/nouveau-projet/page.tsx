@@ -3,13 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getStoredUser, type BMPUser } from "@/lib/auth";
+import { getApiBaseUrl } from "@/lib/api-base";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
-
-type Project = {
-  _id: string;
-};
+const API_URL = getApiBaseUrl();
 
 type NewProjectForm = {
   titre: string;
@@ -85,7 +81,7 @@ export default function NouveauProjetPage() {
         );
       }
 
-      const created = (await res.json()) as Project;
+      await res.json();
       setSuccess("Projet créé avec succès.");
       setForm(initialForm);
       // Retour à l'espace client après création

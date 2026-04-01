@@ -927,6 +927,673 @@ async function seed() {
       console.log('⚠️  Ahmed / Sara / Mohamed introuvable — lot [AHMED TEST] ignoré.');
     }
 
+    // --- Vitrine : photos, bios, artisans supplémentaires, projets terminés avec avis ---
+    console.log('\n📝 Ensuring vitrine (photos, bios, projets [VITRINE] avec avis)...');
+    const allUsersV = await userService.findAll(300);
+    const byEmail = (e: string) =>
+      allUsersV.find((u: any) => (u.email || '').toLowerCase() === e.toLowerCase());
+
+    const expertVitrineMeta: Record<
+      string,
+      { avatarUrl: string; bio: string }
+    > = {
+      'expert.peinture@bmp.tn': {
+        avatarUrl:
+          'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&q=80',
+        bio: 'Ingénieur d’études peinture et revêtements — conseils couleur, supports et mise en œuvre chantier.',
+      },
+      'expert.reno@bmp.tn': {
+        avatarUrl:
+          'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=80',
+        bio: 'Coordination multi-corps d’état : plomberie, électricité, carrelage et finitions.',
+      },
+      'expert.structure@bmp.tn': {
+        avatarUrl:
+          'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&q=80',
+        bio: 'Structure, gros œuvre et toiture — sécurisation des plans avant travaux.',
+      },
+      'expert.off@bmp.tn': {
+        avatarUrl:
+          'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&q=80',
+        bio: 'Expertise second œuvre (peinture, carrelage) — disponibilité selon charge.',
+      },
+      'expert.elec@bmp.tn': {
+        avatarUrl:
+          'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80',
+        bio: 'Mise aux normes, tableaux et éclairage — rénovation et neuf.',
+      },
+      'expert.plomberie@bmp.tn': {
+        avatarUrl:
+          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
+        bio: 'Installations sanitaires et réseaux — dépannage et projets complets.',
+      },
+      'expert.carrelage@bmp.tn': {
+        avatarUrl:
+          'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80',
+        bio: 'Pose grand format, salles de bain et pièces à vivre.',
+      },
+      'sara@example.com': {
+        avatarUrl:
+          'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=400&q=80',
+        bio: 'Accompagnement technique global — coordination avec clients et équipes terrain.',
+      },
+    };
+
+    for (const [email, meta] of Object.entries(expertVitrineMeta)) {
+      const u = byEmail(email) as any;
+      if (u?._id) {
+        await userService.update(String(u._id), {
+          avatarUrl: meta.avatarUrl,
+          bio: meta.bio,
+        } as any);
+      }
+    }
+
+    const vitrineArtisans = [
+      {
+        prenom: 'Karim',
+        nom: 'Ben Ammar',
+        email: 'artisan.menuiserie@bmp.tn',
+        mot_de_passe: 'password123',
+        role: 'artisan' as const,
+        telephone: '+216 55 100 200',
+        specialite: 'Menuiserie aluminium & bois',
+        experience_annees: 12,
+        zones_travail: [{ scope: 'tn_all' as const }],
+        rating: 4.7,
+        isAvailable: true,
+        avatarUrl:
+          'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&q=80',
+        bio: 'Atelier sur mesure : portes, fenêtres, dressings et agencement intérieur.',
+      },
+      {
+        prenom: 'Salma',
+        nom: 'Jlassi',
+        email: 'artisan.carrelage@bmp.tn',
+        mot_de_passe: 'password123',
+        role: 'artisan' as const,
+        telephone: '+216 55 200 300',
+        specialite: 'Carrelage & faïence',
+        experience_annees: 9,
+        zones_travail: [{ scope: 'tn_city' as const, value: 'Tunis' }],
+        rating: 4.9,
+        isAvailable: true,
+        avatarUrl:
+          'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&q=80',
+        bio: 'Grands formats, salles de bain et extérieurs — finitions soignées.',
+      },
+      {
+        prenom: 'Walid',
+        nom: 'Mabrouk',
+        email: 'artisan.elec@bmp.tn',
+        mot_de_passe: 'password123',
+        role: 'artisan' as const,
+        telephone: '+216 55 300 400',
+        specialite: 'Électricité bâtiment',
+        experience_annees: 11,
+        zones_travail: [{ scope: 'tn_all' as const }],
+        rating: 4.5,
+        isAvailable: true,
+        avatarUrl:
+          'https://images.unsplash.com/photo-1504257434649-3a7fd3f84f4b?w=400&q=80',
+        bio: 'Courant fort/faible, domotique légère, mise aux normes après rénovation.',
+      },
+      {
+        prenom: 'Houda',
+        nom: 'Sassi',
+        email: 'artisan.peinture@bmp.tn',
+        mot_de_passe: 'password123',
+        role: 'artisan' as const,
+        telephone: '+216 55 400 500',
+        specialite: 'Peinture & enduits décoratifs',
+        experience_annees: 8,
+        zones_travail: [
+          { scope: 'tn_city' as const, value: 'Sfax' },
+          { scope: 'tn_city' as const, value: 'Sousse' },
+        ],
+        rating: 4.6,
+        isAvailable: true,
+        avatarUrl:
+          'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&q=80',
+        bio: 'Peinture intérieure/extérieure et effets décoratifs pour particuliers et bureaux.',
+      },
+    ];
+
+    for (const a of vitrineArtisans) {
+      const ex = await userService.findByEmail(a.email);
+      if (!ex) {
+        await userService.create(a as any);
+        console.log(`   ✅ Artisan vitrine créé: ${a.email}`);
+      } else {
+        await userService.update((ex as any)._id.toString(), {
+          avatarUrl: a.avatarUrl,
+          bio: a.bio,
+          specialite: a.specialite,
+          rating: a.rating,
+          experience_annees: a.experience_annees,
+          zones_travail: a.zones_travail,
+        } as any);
+      }
+    }
+
+    const mohamedArt = byEmail('mohamed@example.com') as any;
+    if (mohamedArt?._id) {
+      await userService.update(String(mohamedArt._id), {
+        avatarUrl:
+          'https://images.unsplash.com/photo-1463453091185-61582044d556?w=400&q=80',
+        bio: 'Maçonnerie traditionnelle et rénovation structurelle — équipes stables sur longs chantiers.',
+      } as any);
+    }
+
+    const allUsersFresh = await userService.findAll(400);
+    const userByEmail = (e: string) =>
+      allUsersFresh.find((u: any) => (u.email || '').toLowerCase() === e.toLowerCase());
+
+    const clientV = userByEmail('ahmed@example.com') || client;
+    const projVitrine = await projectService.findAll(800);
+    const hasVitrineTitle = (t: string) =>
+      projVitrine.some((p: any) => p.titre === t);
+
+    const vitrineProjectSpecs: Array<{
+      titre: string;
+      description: string;
+      expertEmail: string;
+      artisanEmail: string;
+      clientComment: string;
+      clientRating: number;
+      expertRating: number;
+      artisanRating: number;
+    }> = [
+      {
+        titre: '[VITRINE] Rénovation villa — La Marsa',
+        description:
+          'Rénovation complète : isolation, électricité, cuisine ouverte et terrasse.',
+        expertEmail: 'expert.reno@bmp.tn',
+        artisanEmail: 'artisan.menuiserie@bmp.tn',
+        clientComment:
+          'Équipe réactive, planning tenu, finitions au-delà de nos attentes. Je recommande BMP.tn.',
+        clientRating: 5,
+        expertRating: 5,
+        artisanRating: 5,
+      },
+      {
+        titre: '[VITRINE] Extension R+1 — Ariana',
+        description:
+          'Surélévation d’un étage, renforcement structure et couverture.',
+        expertEmail: 'expert.structure@bmp.tn',
+        artisanEmail: 'mohamed@example.com',
+        clientComment:
+          'Très bon suivi technique. Chantier propre malgré la complexité.',
+        clientRating: 5,
+        expertRating: 4,
+        artisanRating: 5,
+      },
+      {
+        titre: '[VITRINE] Cuisine équipée — Lac 2',
+        description:
+          'Démolition, réseaux, carrelage et pose cuisine sur mesure.',
+        expertEmail: 'expert.carrelage@bmp.tn',
+        artisanEmail: 'artisan.carrelage@bmp.tn',
+        clientComment:
+          'Carrelage impeccable, délais respectés. Communication claire avec l’experte.',
+        clientRating: 5,
+        expertRating: 5,
+        artisanRating: 5,
+      },
+      {
+        titre: '[VITRINE] Peinture bureaux — Centre-ville',
+        description:
+          'Mise en peinture de 400 m² open space, week-ends uniquement.',
+        expertEmail: 'expert.peinture@bmp.tn',
+        artisanEmail: 'artisan.peinture@bmp.tn',
+        clientComment:
+          'Intervention rapide sans perturber l’activité. Rendu uniforme.',
+        clientRating: 4,
+        expertRating: 5,
+        artisanRating: 5,
+      },
+      {
+        titre: '[VITRINE] Réfection toiture — Ben Arous',
+        description: 'Étanchéité, liteaux et tuiles — dépose partielle.',
+        expertEmail: 'expert.structure@bmp.tn',
+        artisanEmail: 'mohamed@example.com',
+        clientComment:
+          'Devis transparent, pas de mauvaise surprise. Bonne coordination.',
+        clientRating: 5,
+        expertRating: 4,
+        artisanRating: 4,
+      },
+      {
+        titre: '[VITRINE] Salle de bain PMR — Mutuelleville',
+        description:
+          'Adaptation PMR, douche à l’italienne, barres et carrelage antidérapant.',
+        expertEmail: 'expert.plomberie@bmp.tn',
+        artisanEmail: 'artisan.carrelage@bmp.tn',
+        clientComment:
+          'Travail soigné pour un usage quotidien en toute sécurité. Merci.',
+        clientRating: 5,
+        expertRating: 5,
+        artisanRating: 5,
+      },
+      {
+        titre: '[VITRINE] Tableaux électriques — Immeuble',
+        description:
+          'Mise aux normes des tableaux, terre et différentiels par logement.',
+        expertEmail: 'expert.elec@bmp.tn',
+        artisanEmail: 'artisan.elec@bmp.tn',
+        clientComment:
+          'Installations propres, dossier conforme pour la réception.',
+        clientRating: 5,
+        expertRating: 5,
+        artisanRating: 5,
+      },
+      {
+        titre: '[VITRINE] Terrasse bois — Hammamet',
+        description:
+          'Structure bois exotique, drainage et garde-corps inox.',
+        expertEmail: 'expert.reno@bmp.tn',
+        artisanEmail: 'artisan.menuiserie@bmp.tn',
+        clientComment:
+          'Superbe rendu pour l’été. L’équipe a été à l’écoute du détail.',
+        clientRating: 5,
+        expertRating: 5,
+        artisanRating: 4,
+      },
+      {
+        titre: '[VITRINE] Cloisons & faux plafonds — Bureau',
+        description:
+          'Cloisons acoustiques, faux plafonds suspendus et éclairage LED.',
+        expertEmail: 'sara@example.com',
+        artisanEmail: 'artisan.peinture@bmp.tn',
+        clientComment:
+          'Bon niveau de finition pour nos réunions et open space.',
+        clientRating: 4,
+        expertRating: 5,
+        artisanRating: 4,
+      },
+      {
+        titre: '[VITRINE] Ravalement façade — Sousse',
+        description:
+          'Nettoyage, fissures, enduit et peinture façade sur 3 niveaux.',
+        expertEmail: 'expert.peinture@bmp.tn',
+        artisanEmail: 'artisan.peinture@bmp.tn',
+        clientComment:
+          'Façade comme neuve. Échafaudage géré sans incident.',
+        clientRating: 5,
+        expertRating: 4,
+        artisanRating: 5,
+      },
+      {
+        titre: '[VITRINE] Piscine & local technique — Gammarth',
+        description:
+          'Dalle, équipement filtration, carrelage margelles et local technique.',
+        expertEmail: 'expert.carrelage@bmp.tn',
+        artisanEmail: 'artisan.carrelage@bmp.tn',
+        clientComment:
+          'Super travail sur les pentes et l’étanchéité. Très satisfaits.',
+        clientRating: 5,
+        expertRating: 5,
+        artisanRating: 5,
+      },
+      {
+        titre: '[VITRINE] Rénovation loft — Tunis',
+        description:
+          'Ouverture des volumes, IPN, verrière et chape fluide.',
+        expertEmail: 'expert.structure@bmp.tn',
+        artisanEmail: 'mohamed@example.com',
+        clientComment:
+          'Projet ambitieux mené avec pédagogie. Résultat magnifique.',
+        clientRating: 5,
+        expertRating: 5,
+        artisanRating: 5,
+      },
+      {
+        titre: '[VITRINE] Éclairage commerce — Avenue Habib Bourguiba',
+        description:
+          'Spots, néons LED et mise à la terre pour vitrine et réserve.',
+        expertEmail: 'expert.elec@bmp.tn',
+        artisanEmail: 'artisan.elec@bmp.tn',
+        clientComment:
+          'Ouverture dans les temps, éclairage conforme aux normes commerce.',
+        clientRating: 5,
+        expertRating: 5,
+        artisanRating: 5,
+      },
+      {
+        titre: '[VITRINE] Jardin & clôture — Radès',
+        description:
+          'Muret, portail coulissant, allée gravillons et éclairage extérieur.',
+        expertEmail: 'expert.reno@bmp.tn',
+        artisanEmail: 'artisan.menuiserie@bmp.tn',
+        clientComment:
+          'Extérieur fonctionnel et esthétique. Merci pour le suivi BMP.',
+        clientRating: 5,
+        expertRating: 4,
+        artisanRating: 5,
+      },
+      {
+        titre: '[VITRINE] Réfection plomberie — Appartement',
+        description:
+          'Remplacement colonnes montantes, salle d’eau et cuisine.',
+        expertEmail: 'expert.plomberie@bmp.tn',
+        artisanEmail: 'artisan.carrelage@bmp.tn',
+        clientComment:
+          'Intervention propre, moins de poussière que prévu. Bravo.',
+        clientRating: 5,
+        expertRating: 5,
+        artisanRating: 4,
+      },
+    ];
+
+    /** Galeries « avant / après » pour la vitrine (URLs publiques — 4 + 4 par projet). */
+    const vitrinePhotosAvantPool = [
+      'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1400&q=85',
+      'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1400&q=85',
+      'https://images.unsplash.com/photo-1507089947368-19c925da9775?w=1400&q=85',
+      'https://images.unsplash.com/photo-1523413651479-59755e0c44ad?w=1400&q=85',
+      'https://images.unsplash.com/photo-1497366210438-12e768c8e85c?w=1400&q=85',
+      'https://images.unsplash.com/photo-1556911220-bff31c812dba?w=1400&q=85',
+      'https://images.unsplash.com/photo-1502005229762-cf1b6da7c5b6?w=1400&q=85',
+      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1400&q=85',
+      'https://images.unsplash.com/photo-1574362848149-11496d93a7c6?w=1400&q=85',
+      'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=1400&q=85',
+      'https://images.unsplash.com/photo-1600585152911-dfcbec067cea?w=1400&q=85',
+      'https://images.unsplash.com/photo-1600573472556-e636f53eab27?w=1400&q=85',
+    ];
+    const vitrinePhotosApresPool = [
+      'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1400&q=85',
+      'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1400&q=85',
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1400&q=85',
+      'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1400&q=85',
+      'https://images.unsplash.com/photo-1556912172-45b7abe8b7e1?w=1400&q=85',
+      'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=1400&q=85',
+      'https://images.unsplash.com/photo-1600566753082-2f6ca09b6a58?w=1400&q=85',
+      'https://images.unsplash.com/photo-1600210492493-0946911123ea?w=1400&q=85',
+      'https://images.unsplash.com/photo-1600047509807-bafc19b8889e?w=1400&q=85',
+      'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=1400&q=85',
+      'https://images.unsplash.com/photo-1600607687644-c7171b42498b?w=1400&q=85',
+      'https://images.unsplash.com/photo-1600573472592-701b2c0100c7?w=1400&q=85',
+    ];
+
+    const vitrineExpertComments = [
+      'Visites de contrôle régulières, validation des lots et arbitrages techniques clairs avec le client.',
+      'Dossier technique solide, coordination avec le bureau de contrôle sans friction.',
+      'Points d’attention sécurité et conformité bien expliqués sur le terrain.',
+      'Rapports de visite envoyés à temps, ajustements de planning proposés au bon moment.',
+      'Excellente lecture des plans d’exécution et des réserves avant réception.',
+      'Accompagnement sur les choix matériaux et détails de finition.',
+      'Synthèse claire entre attentes client et faisabilité chantier.',
+      'Gestion des aléas météo et replanification transparente.',
+      'Contrôle des réseaux et mise à la terre vérifiée avant fermeture des cloisons.',
+      'Réunion de synthèse en fin de phase gros œuvre très utile.',
+      'Présence sur levée de réserves structurée et constructive.',
+      'Veille aux détails d’étanchéité et points singuliers toiture.',
+      'Validation des essais de mise en service électrique.',
+      'Suivi des finitions et harmonisation des teintes avec le client.',
+      'Clôture administrative du dossier sans surprise.',
+    ];
+    const vitrineArtisanComments = [
+      'Équipe présente chaque jour, chantier rangé, respect des délais annoncés.',
+      'Échanges fluides avec le client pour les petits ajustements de dernière minute.',
+      'Qualité de pose irréprochable, protections des zones finies systématiques.',
+      'Respect du voisinage (horaires, propreté des accès).',
+      'Matériaux conformes au devis, factures et garanties fournies.',
+      'Sous-traitants coordonnés sans retard sur notre partie.',
+      'Finitions soignées, retouches demandées traitées dans la foulée.',
+      'Sécurité du chantier exemplaire (EPI, balisage).',
+      'Réactivité en cas de besoin d’échantillons supplémentaires.',
+      'Respect du planning malgré une contrainte fournisseur en milieu de chantier.',
+      'Propreté en fin de journée, benne et gravats gérés proprement.',
+      'Derniers détails réglés avant réception sans stress.',
+      'Conseils pratiques pour l’entretien après livraison.',
+      'Disponibilité pour une petite intervention de garantie mineure.',
+      'Équipe sympathique et professionnelle du début à la fin.',
+    ];
+    const vitrineShowcaseReviewsPool: Array<{
+      text: string;
+      rating: number;
+      author: string;
+      role: 'visiteur';
+    }> = [
+      {
+        text: 'Nous sommes passés voir le chantier à mi-parcours : impressionnant niveau de propreté.',
+        rating: 5,
+        author: 'Samir K.',
+        role: 'visiteur',
+      },
+      {
+        text: 'Le rendu final correspond exactement aux photos partagies sur BMP.tn.',
+        rating: 5,
+        author: 'Inès M.',
+        role: 'visiteur',
+      },
+      {
+        text: 'Bon rapport qualité / délais pour un projet de cette ampleur.',
+        rating: 4,
+        author: 'Hedi B.',
+        role: 'visiteur',
+      },
+      {
+        text: 'Voisins du chantier : peu de nuisances sonores, équipe respectueuse.',
+        rating: 5,
+        author: 'Voisinage — Rue du Lac',
+        role: 'visiteur',
+      },
+      {
+        text: 'Visite de réception ouverte : les finitions sont au rendez-vous.',
+        rating: 5,
+        author: 'Amel R.',
+        role: 'visiteur',
+      },
+      {
+        text: 'J’ai recommandé BMP.tn à un collègue après cette réalisation.',
+        rating: 5,
+        author: 'Youssef T.',
+        role: 'visiteur',
+      },
+      {
+        text: 'Communication claire sur les étapes, même pour un non-professionnel.',
+        rating: 4,
+        author: 'Salma L.',
+        role: 'visiteur',
+      },
+      {
+        text: 'Photos du chantier sur la plateforme : très rassurant pour suivre l’avancement.',
+        rating: 5,
+        author: 'Mehdi F.',
+        role: 'visiteur',
+      },
+      {
+        text: 'Bon équilibre entre conseil expert et écoute du budget.',
+        rating: 4,
+        author: 'Nadia G.',
+        role: 'visiteur',
+      },
+      {
+        text: 'Livraison dans les temps annoncés, sans mauvaise surprise.',
+        rating: 5,
+        author: 'Karim D.',
+        role: 'visiteur',
+      },
+      {
+        text: 'Espace lumineux et agréable après travaux, merci à toute l’équipe.',
+        rating: 5,
+        author: 'Leïla H.',
+        role: 'visiteur',
+      },
+      {
+        text: 'Contrôle des détails au sol et aux angles : rien à redire.',
+        rating: 5,
+        author: 'Omar S.',
+        role: 'visiteur',
+      },
+      {
+        text: 'Projet de référence pour notre futur extension.',
+        rating: 5,
+        author: 'Famille J.',
+        role: 'visiteur',
+      },
+      {
+        text: 'Réactivité quand on a demandé une petite modification de dernière minute.',
+        rating: 4,
+        author: 'Rim A.',
+        role: 'visiteur',
+      },
+      {
+        text: 'Très satisfaits, nous avons pris des photos pour notre album perso.',
+        rating: 5,
+        author: 'Client anonyme',
+        role: 'visiteur',
+      },
+    ];
+    const vitrineChantierPhotoPool = [
+      'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=1200&q=85',
+      'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=1200&q=85',
+      'https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=1200&q=85',
+      'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=1200&q=85',
+      'https://images.unsplash.com/photo-1595846519844-68b4e6b7b0b0?w=1200&q=85',
+      'https://images.unsplash.com/photo-1513467534839-fbcff8975ad1?w=1200&q=85',
+    ];
+
+    const vitrineEnrichment = (vi: number) => {
+      const na = vitrinePhotosAvantPool.length;
+      const np = vitrinePhotosApresPool.length;
+      const pr = vitrineShowcaseReviewsPool.length;
+      return {
+        photosAvant: [
+          vitrinePhotosAvantPool[vi % na],
+          vitrinePhotosAvantPool[(vi + 2) % na],
+          vitrinePhotosAvantPool[(vi + 5) % na],
+          vitrinePhotosAvantPool[(vi + 8) % na],
+        ],
+        photosApres: [
+          vitrinePhotosApresPool[vi % np],
+          vitrinePhotosApresPool[(vi + 3) % np],
+          vitrinePhotosApresPool[(vi + 6) % np],
+          vitrinePhotosApresPool[(vi + 9) % np],
+        ],
+        expertComment: vitrineExpertComments[vi % vitrineExpertComments.length],
+        artisanComment: vitrineArtisanComments[vi % vitrineArtisanComments.length],
+        showcaseReviews: [
+          vitrineShowcaseReviewsPool[(vi * 3) % pr],
+          vitrineShowcaseReviewsPool[(vi * 3 + 1) % pr],
+          vitrineShowcaseReviewsPool[(vi * 3 + 2) % pr],
+        ],
+      };
+    };
+
+    if (clientV?._id) {
+      const cid = new Types.ObjectId(clientV._id);
+      let createdV = 0;
+      for (let vi = 0; vi < vitrineProjectSpecs.length; vi++) {
+        const spec = vitrineProjectSpecs[vi];
+        if (hasVitrineTitle(spec.titre)) continue;
+        const exp = userByEmail(spec.expertEmail) as any;
+        const art = userByEmail(spec.artisanEmail) as any;
+        if (!exp?._id || !art?._id) continue;
+        const enr = vitrineEnrichment(vi);
+        await projectService.create({
+          titre: spec.titre,
+          description: spec.description,
+          date_debut: new Date('2023-04-01'),
+          date_fin_prevue: new Date('2024-06-30'),
+          budget_estime: 45000 + Math.floor(Math.random() * 80000),
+          statut: 'Terminé',
+          avancement_global: 100,
+          clientId: cid,
+          expertId: new Types.ObjectId(exp._id as string),
+          applications: [
+            {
+              artisanId: new Types.ObjectId(art._id as string),
+              statut: 'acceptee',
+              createdAt: new Date('2023-05-01'),
+            },
+          ],
+          clientRating: spec.clientRating,
+          clientComment: spec.clientComment,
+          expertRating: spec.expertRating,
+          artisanRating: spec.artisanRating,
+          photosAvant: enr.photosAvant,
+          photosApres: enr.photosApres,
+          expertComment: enr.expertComment,
+          artisanComment: enr.artisanComment,
+          showcaseReviews: enr.showcaseReviews,
+        } as any);
+        createdV++;
+      }
+      console.log(
+        `   ✅ Projets vitrine [VITRINE] : ${createdV} créé(s) (${vitrineProjectSpecs.length} spécifications au total)`,
+      );
+
+      const allProjForPhotos = await projectService.findAll(800);
+      let updatedVitrine = 0;
+      for (let vi = 0; vi < vitrineProjectSpecs.length; vi++) {
+        const spec = vitrineProjectSpecs[vi];
+        const p = allProjForPhotos.find((x: any) => x.titre === spec.titre) as
+          | { _id?: { toString(): string }; titre?: string }
+          | undefined;
+        if (!p?._id) continue;
+        const enr = vitrineEnrichment(vi);
+        await projectService.update(String(p._id), {
+          photosAvant: enr.photosAvant,
+          photosApres: enr.photosApres,
+          expertComment: enr.expertComment,
+          artisanComment: enr.artisanComment,
+          showcaseReviews: enr.showcaseReviews,
+        } as any);
+        updatedVitrine++;
+      }
+      if (updatedVitrine > 0) {
+        console.log(
+          `   ✅ Vitrine : photos, commentaires expert/artisan et avis invités synchronisés pour ${updatedVitrine} projet(s) [VITRINE]`,
+        );
+      }
+
+      const allVitrineForSuivi = await projectService.findAll(800);
+      let vitrineSuivis = 0;
+      for (let vi = 0; vi < vitrineProjectSpecs.length; vi++) {
+        const spec = vitrineProjectSpecs[vi];
+        const proj = allVitrineForSuivi.find((x: any) => x.titre === spec.titre) as
+          | { _id?: Types.ObjectId }
+          | undefined;
+        if (!proj?._id) continue;
+        const pid = new Types.ObjectId(String(proj._id));
+        const n = await suiviProjectModel.countDocuments({
+          projectId: pid,
+          description_progression: /^\[VITRINE chantier\]/,
+        });
+        if (n >= 3) continue;
+        const dates = [
+          new Date('2023-07-10'),
+          new Date('2023-10-15'),
+          new Date('2024-01-20'),
+        ];
+        const pcts = [35, 72, 100];
+        const descs = [
+          '[VITRINE chantier] Phase démarrage — lots ouverts, contrôles et premières finitions visibles.',
+          '[VITRINE chantier] Mi-chantier — avancement conforme, coordination expert / artisan.',
+          '[VITRINE chantier] Livraison — réception, derniers réglages et chantier nettoyé.',
+        ];
+        for (let si = 0; si < 3; si++) {
+          await suiviProjectService.create({
+            projectId: pid,
+            date_suivi: dates[si],
+            description_progression: descs[si],
+            pourcentage_avancement: pcts[si],
+            cout_actuel: 22000 + vi * 800 + si * 4500,
+            photoUrl:
+              vitrineChantierPhotoPool[(vi + si) % vitrineChantierPhotoPool.length],
+          } as any);
+        }
+        vitrineSuivis++;
+      }
+      if (vitrineSuivis > 0) {
+        console.log(
+          `   ✅ Suivi chantier (photos) ajouté pour ${vitrineSuivis} projet(s) vitrine`,
+        );
+      }
+    }
+
     console.log('\n🎉 Seeding completed successfully!');
     console.log('\n📊 Test Data Summary:');
     const finalUsers = await userService.findAll();

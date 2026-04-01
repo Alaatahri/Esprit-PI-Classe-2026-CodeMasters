@@ -14,9 +14,9 @@ import {
   Phone,
   Mail,
 } from "lucide-react";
+import { getApiBaseUrl } from "@/lib/api-base";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const API_URL = getApiBaseUrl();
 
 type WorkZoneScope = "tn_all" | "tn_city" | "country" | "world";
 type WorkZone = { scope: WorkZoneScope; value?: string };

@@ -1,14 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { SuiviProject, SuiviProjectDocument } from './schemas/suivi-project.schema';
 import { ProjectService } from '../project/project.service';
 
 @Injectable()
 export class SuiviProjectService {
   constructor(
-    @InjectModel(SuiviProject.name) 
+    @InjectModel(SuiviProject.name)
     private suiviProjectModel: Model<SuiviProjectDocument>,
+    @Inject(forwardRef(() => ProjectService))
     private projectService: ProjectService,
   ) {}
 
@@ -32,6 +33,23 @@ export class SuiviProjectService {
 
   async findByProject(projectId: string): Promise<SuiviProject[]> {
     return this.suiviProjectModel.find({ projectId }).exec();
+  }
+
+  /** URLs photos de suivi de chantier (fiche projet publique). */
+  async findPublicPhotoUrlsForProject(projectId: string): Promise<string[]> {
+    if (!Types.ObjectId.isValid(projectId)) return [];
+    const rows = await this.suiviProjectModel
+      .find({ projectId: new Types.ObjectId(projectId) })
+      .sort({ date_suivi: 1 })
+      .lean()
+      .exec();
+    return rows
+      .map((s: Record<string, unknown>) => {
+        const u = s.photoUrl ?? s.photo_url;
+        return typeof u === 'string' ? u : '';
+      })
+      .filter((u) => /^https?:\/\//i.test(u))
+      .slice(0, 24);
   }
 
   async findOne(id: string): Promise<SuiviProject> {

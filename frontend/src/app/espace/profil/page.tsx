@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getStoredUser, type BMPUser } from "@/lib/auth";
 import { Star, Clock, CheckCircle2, MessageCircle } from "lucide-react";
+import { getApiBaseUrl } from "@/lib/api-base";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const API_URL = getApiBaseUrl();
 
 type RatedProject = {
   _id: string;
@@ -380,7 +380,7 @@ export default function ProfilPage() {
             </form>
           ) : (
             <p className="text-sm text-gray-400">
-              Choisissez d'abord un projet terminé dans la liste ci-dessus pour
+              Choisissez d&apos;abord un projet terminé dans la liste ci-dessus pour
               laisser une note et un commentaire.
             </p>
           )}

@@ -1,13 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { User, UserDocument, type WorkZone, type WorkZoneScope } from './schemas/user.schema';
+import { ProjectService } from '../project/project.service';
 
 type SafeUser = Omit<User, 'mot_de_passe'>;
 
 @Injectable()
 export class UserService {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    private readonly projectService: ProjectService,
+  ) {}
 
   async create(createUserDto: Partial<User>): Promise<User> {
     const dto: any = { ...(createUserDto as any) };
@@ -86,6 +90,98 @@ export class UserService {
 
   async findAll(limit = 100): Promise<User[]> {
     return this.userModel.find().sort({ createdAt: -1 }).limit(limit).lean().exec();
+  }
+
+  /** Artisans et experts pour la page d'accueil (sans mot de passe ni email). */
+  async findPublicWorkers(limit = 48): Promise<Record<string, unknown>[]> {
+    const users = await this.userModel
+      .find({ role: { $in: ['artisan', 'expert'] } })
+      .select('-mot_de_passe -email')
+      .sort({ rating: -1, createdAt: -1 })
+      .limit(limit)
+      .lean()
+      .exec();
+    return users as Record<string, unknown>[];
+  }
+
+  /** Profil public + historique projets + avis extraits des projets. */
+  async getPublicProfile(id: string) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new NotFoundException('Profil introuvable');
+    }
+    const user = await this.userModel.findById(id).select('-mot_de_passe -email').lean().exec();
+    if (!user || !['artisan', 'expert'].includes((user as { role?: string }).role || '')) {
+      throw new NotFoundException('Profil introuvable');
+    }
+
+    const role = (user as { role: string }).role;
+    const projects =
+      role === 'expert'
+        ? await this.projectService.findByExpertId(id)
+        : await this.projectService.findAcceptedByArtisan(id);
+
+    type Review = {
+      projetId: string;
+      projetTitre: string;
+      note?: number;
+      commentaire?: string;
+      kind: 'client' | 'artisan' | 'expert';
+    };
+    const reviews: Review[] = [];
+
+    for (const p of projects) {
+      const pid = String((p as { _id?: Types.ObjectId })._id ?? '');
+      const titre = p.titre;
+      if (p.clientComment && String(p.clientComment).trim()) {
+        reviews.push({
+          projetId: pid,
+          projetTitre: titre,
+          note: p.clientRating,
+          commentaire: p.clientComment,
+          kind: 'client',
+        });
+      }
+      if (role === 'artisan' && typeof p.artisanRating === 'number') {
+        reviews.push({
+          projetId: pid,
+          projetTitre: titre,
+          note: p.artisanRating,
+          kind: 'artisan',
+        });
+      }
+      if (role === 'expert' && typeof p.expertRating === 'number') {
+        reviews.push({
+          projetId: pid,
+          projetTitre: titre,
+          note: p.expertRating,
+          kind: 'expert',
+        });
+      }
+    }
+
+    const completedCount = projects.filter((p) => p.statut === 'Terminé').length;
+
+    return {
+      user,
+      stats: {
+        projectCount: projects.length,
+        completedCount,
+      },
+      projects: projects.map((p) => ({
+        _id: (p as { _id?: Types.ObjectId })._id,
+        titre: p.titre,
+        description: p.description,
+        statut: p.statut,
+        avancement_global: p.avancement_global,
+        date_debut: p.date_debut,
+        date_fin_prevue: p.date_fin_prevue,
+        clientRating: p.clientRating,
+        clientComment: p.clientComment,
+        expertRating: p.expertRating,
+        artisanRating: p.artisanRating,
+      })),
+      reviews,
+    };
   }
 
   async findOne(id: string): Promise<User> {

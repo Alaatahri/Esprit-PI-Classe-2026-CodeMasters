@@ -2,9 +2,9 @@
 
 import { useCallback, useRef, useState } from "react";
 import { Camera, Loader2, Send, ImagePlus } from "lucide-react";
+import { getApiBaseUrl } from "@/lib/api-base";
 
-const DEFAULT_API =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const DEFAULT_API = getApiBaseUrl();
 
 type UploadResult =
   | {

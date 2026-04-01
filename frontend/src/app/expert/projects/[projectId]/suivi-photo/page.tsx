@@ -12,9 +12,9 @@ import {
   ImagePlus,
 } from "lucide-react";
 import { getStoredUser, normalizeRole, type BMPUser } from "@/lib/auth";
+import { getApiBaseUrl } from "@/lib/api-base";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const API_URL = getApiBaseUrl();
 
 type Project = {
   _id: string;
@@ -231,6 +231,13 @@ export default function ExpertSuiviPhotoPage() {
           </div>
         ) : project ? (
           <>
+            <Link
+              href={`/expert/projects/${projectId}/photos`}
+              className="mb-4 inline-flex text-xs font-medium text-emerald-400/90 hover:text-emerald-300 hover:underline"
+            >
+              + Ajouter des photos à la galerie avant / après du projet
+            </Link>
+
             <div className="rounded-2xl border border-white/10 bg-white/5 p-5 mb-8 space-y-3">
               <p className="text-lg font-semibold text-white">{project.titre}</p>
               <div className="flex items-center justify-between text-xs text-gray-400">

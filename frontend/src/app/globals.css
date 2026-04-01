@@ -123,6 +123,78 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Scrollbar premium (cohérent thème dark / ambre) */
+.scrollbar-bmp {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: rgba(245, 158, 11, 0.55) rgba(255, 255, 255, 0.06); /* thumb / track */
+}
+
+.scrollbar-bmp::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.scrollbar-bmp::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+}
+
+.scrollbar-bmp::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    rgba(245, 158, 11, 0.9),
+    rgba(234, 179, 8, 0.55)
+  );
+  border-radius: 999px;
+  border: 2px solid rgba(0, 0, 0, 0.55);
+}
+
+.scrollbar-bmp::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(245, 158, 11, 1),
+    rgba(234, 179, 8, 0.75)
+  );
+}
+
+/* Appliquer aussi sur la page entière (barres globales) */
+html,
+body {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: rgba(245, 158, 11, 0.55) rgba(255, 255, 255, 0.06);
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    rgba(245, 158, 11, 0.9),
+    rgba(234, 179, 8, 0.55)
+  );
+  border-radius: 999px;
+  border: 2px solid rgba(0, 0, 0, 0.55);
+}
+
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(245, 158, 11, 1),
+    rgba(234, 179, 8, 0.75)
+  );
+}
 @keyframes float {
   0%, 100% {
     transform: translateY(0) rotate(0deg);

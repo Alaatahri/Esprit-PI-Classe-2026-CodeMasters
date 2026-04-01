@@ -13,8 +13,9 @@ import {
 import { getStoredUser, normalizeRole, type BMPUser } from "@/lib/auth";
 import { WorkerSitePhotoUpload } from "@/components/WorkerSitePhotoUpload";
 import { SuiviTimeline } from "@/components/SuiviTimeline";
+import { getApiBaseUrl } from "@/lib/api-base";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const API_URL = getApiBaseUrl();
 
 type Project = {
   _id: string;

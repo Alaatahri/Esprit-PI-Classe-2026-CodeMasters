@@ -73,6 +73,49 @@ export class Project {
 
   @Prop({ min: 1, max: 5 })
   artisanRating?: number;
+
+  /** URLs photos « avant travaux » (vitrine / galerie publique) */
+  @Prop({ type: [String], default: [] })
+  photosAvant?: string[];
+
+  /** URLs photos « après travaux » */
+  @Prop({ type: [String], default: [] })
+  photosApres?: string[];
+
+  /** Commentaire libre de l’expert (vitrine / fiche publique) */
+  @Prop()
+  expertComment?: string;
+
+  /** Commentaire libre de l’équipe artisan */
+  @Prop()
+  artisanComment?: string;
+
+  /** Avis additionnels pour la vitrine (invités, voisins, second passage…) */
+  @Prop({
+    type: [
+      {
+        text: { type: String, required: true },
+        rating: { type: Number, min: 1, max: 5 },
+        author: { type: String, required: true },
+        role: {
+          type: String,
+          enum: ['client', 'expert', 'artisan', 'visiteur'],
+          default: 'visiteur',
+        },
+      },
+    ],
+    default: [],
+  })
+  showcaseReviews?: Array<{
+    text: string;
+    rating?: number;
+    author: string;
+    role: 'client' | 'expert' | 'artisan' | 'visiteur';
+  }>;
+
+  /** Note / retour expert sur le dossier (interne ou partagé selon usage) */
+  @Prop()
+  expertFeedback?: string;
 }
 
 export const ProjectSchema = SchemaFactory.createForClass(Project);
