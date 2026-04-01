@@ -16,6 +16,16 @@ export class UserController {
     return this.userService.findAll();
   }
 
+  @Get('public/workers')
+  findPublicWorkers() {
+    return this.userService.findPublicWorkers();
+  }
+
+  @Get('public/:id/profile')
+  getPublicProfile(@Param('id') id: string) {
+    return this.userService.getPublicProfile(id);
+  }
+
   @Post('login')
   async login(@Body() loginDto: { email?: string; mot_de_passe?: string }) {
     try {

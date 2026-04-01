@@ -2,9 +2,9 @@
 
 import { useCallback, useState } from "react";
 import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
+import { getApiBaseUrl } from "@/lib/api-base";
 
-const DEFAULT_API =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const DEFAULT_API = getApiBaseUrl();
 
 export type SuiviEntry = {
   _id: string;

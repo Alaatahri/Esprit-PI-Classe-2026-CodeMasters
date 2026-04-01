@@ -97,7 +97,7 @@ const Layout = ({ children }: LayoutProps) => {
     ...(user?.role !== 'client'
       ? [{ path: '/users', label: 'Utilisateurs', icon: IconUsers }]
       : []),
-    ...(user?.role === 'admin'
+    ...(user?.role === 'admin' || user?.role === 'expert'
       ? [{ path: '/admin/matching', label: 'Matching IA', icon: IconMatching }]
       : []),
     ...(user?.role === 'expert'

@@ -65,6 +65,14 @@ export class User {
 
   @Prop({ type: Number, default: 0 })
   experienceYears?: number;
+
+  /** Photo de profil (URL HTTPS, ex. Unsplash) — affichage vitrine / profil public */
+  @Prop()
+  avatarUrl?: string;
+
+  /** Présentation courte pour la vitrine */
+  @Prop()
+  bio?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

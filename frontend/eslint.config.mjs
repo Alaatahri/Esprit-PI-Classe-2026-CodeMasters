@@ -13,6 +13,15 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    rules: {
+      /**
+       * Cette règle est trop agressive dans ce projet (elle signale des patterns
+       * valides comme le bootstrap via localStorage et les chargements async).
+       */
+      "react-hooks/set-state-in-effect": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

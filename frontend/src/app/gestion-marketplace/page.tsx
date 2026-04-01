@@ -217,6 +217,7 @@ export default function GestionMarketplacePage() {
               className="group rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden hover:border-amber-500/30 hover:bg-white/10 transition-all duration-300"
             >
               <div className="aspect-[4/3] relative overflow-hidden bg-gray-800/50">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={product.image}
                   alt={product.name}

@@ -10,6 +10,7 @@ import { MarketplaceModule } from './marketplace/marketplace.module';
 import { MatchingModule } from './matching/matching.module';
 import { SuiviModule } from './suivi/suivi.module';
 import { AlertsModule } from './alerts/alerts.module';
+import { MessagesModule } from './messages/messages.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { AlertsModule } from './alerts/alerts.module';
     DevisModule,
     MarketplaceModule,
     MatchingModule,
+    MessagesModule,
   ],
   controllers: [AppController],
 })

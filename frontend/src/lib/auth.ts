@@ -21,6 +21,8 @@ export interface BMPUser {
   createdAt?: string;
 }
 
+export const AUTH_CHANGE_EVENT = "bmp:auth-change" as const;
+
 const STORAGE_KEY = "bmp_user";
 
 export function getStoredUser(): BMPUser | null {
@@ -38,12 +40,22 @@ export function getStoredUser(): BMPUser | null {
 export function setStoredUser(user: BMPUser): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+  try {
+    window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
+  } catch {
+    /* ignore */
+  }
 }
 
 export function clearStoredUser(): void {
   if (typeof window === "undefined") return;
   localStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem("bmp_token");
+  try {
+    window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
+  } catch {
+    /* ignore */
+  }
 }
 
 export function isAuthenticated(): boolean {

@@ -25,7 +25,7 @@ export default function Error({
           </div>
           <h1 className="text-3xl font-bold text-white mb-4">Une erreur est survenue</h1>
           <p className="text-gray-300 mb-6">
-            Une erreur inattendue s'est produite. Notre équipe technique en a été informée.
+            Une erreur inattendue s&apos;est produite. Notre équipe technique en a été informée.
           </p>
           <div className="bg-white/5 rounded-xl p-4 mb-6 border border-white/10">
             <code className="text-sm text-gray-400 break-all">
@@ -48,7 +48,7 @@ export default function Error({
             className="px-6 py-3 rounded-xl backdrop-blur-xl bg-white/10 border border-amber-500/30 text-white font-semibold flex items-center justify-center gap-2 hover:bg-white/20 transition-all"
           >
             <Home className="w-4 h-4" />
-            Retour à l'accueil
+            Retour à l&apos;accueil
           </Link>
         </div>
       </div>
