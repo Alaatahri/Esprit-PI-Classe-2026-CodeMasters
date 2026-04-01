@@ -1,5 +1,14 @@
 "use client";
 
+/** Rôle normalisé en minuscules (aligné sur l’API / enum Mongo). */
+export function normalizeRole(role: string | undefined | null): string {
+  return String(role ?? "").trim().toLowerCase();
+}
+
+export function isClientRole(role: string | undefined | null): boolean {
+  return normalizeRole(role) === "client";
+}
+
 export interface BMPUser {
   _id: string;
   nom: string;
@@ -19,7 +28,8 @@ export function getStoredUser(): BMPUser | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as BMPUser;
+    const u = JSON.parse(raw) as BMPUser;
+    return { ...u, role: normalizeRole(u.role) };
   } catch {
     return null;
   }

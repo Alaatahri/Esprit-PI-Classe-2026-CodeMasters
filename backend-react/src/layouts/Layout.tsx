@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ReactNode, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { NotificationBell } from '../components/NotificationBell';
 import './Layout.css';
 
 interface LayoutProps {
@@ -37,6 +38,13 @@ const IconUsers = () => (
 const IconMatching = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M3 12h6l3 8 3-16 3 8h3" />
+  </svg>
+);
+
+const IconMesProjets = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+    <circle cx="12" cy="13" r="4" />
   </svg>
 );
 
@@ -86,12 +94,17 @@ const Layout = ({ children }: LayoutProps) => {
   const menuItems = [
     { path: '/', label: 'Dashboard', icon: IconDashboard },
     { path: '/projects', label: 'Projets', icon: IconProjects },
-    { path: '/users', label: 'Utilisateurs', icon: IconUsers },
+    ...(user?.role !== 'client'
+      ? [{ path: '/users', label: 'Utilisateurs', icon: IconUsers }]
+      : []),
     ...(user?.role === 'admin'
       ? [{ path: '/admin/matching', label: 'Matching IA', icon: IconMatching }]
       : []),
     ...(user?.role === 'expert'
       ? [{ path: '/expert/requests', label: 'Mes demandes', icon: IconMatching }]
+      : []),
+    ...(user?.role === 'artisan' || user?.role === 'expert'
+      ? [{ path: '/mes-projets', label: 'Mes projets', icon: IconMesProjets }]
       : []),
     { path: '/profile', label: 'Mon Profil', icon: IconProfile },
   ];
@@ -181,9 +194,11 @@ const Layout = ({ children }: LayoutProps) => {
               {location.pathname === '/users' && 'Gestion des Utilisateurs'}
               {location.pathname.startsWith('/admin/matching') && 'Matching IA'}
               {location.pathname.startsWith('/expert/requests') && 'Mes demandes'}
+              {location.pathname.startsWith('/mes-projets') && 'Mes projets'}
               {location.pathname === '/profile' && 'Mon Profil'}
             </h2>
             <div className="header-actions">
+              <NotificationBell />
               <Link to="/profile" className="user-profile">
                 <div className="profile-avatar">
                   {user?.nom?.charAt(0).toUpperCase() || 'U'}

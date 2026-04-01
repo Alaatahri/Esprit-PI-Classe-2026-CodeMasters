@@ -4,7 +4,7 @@ import { useState, FormEvent, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Building2, Mail, Lock, Loader2, AlertCircle } from "lucide-react";
-import { getStoredUser } from "@/lib/auth";
+import { getStoredUser, normalizeRole } from "@/lib/auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
@@ -18,14 +18,15 @@ export default function LoginPage() {
   useEffect(() => {
     const existing = getStoredUser();
     if (existing) {
+      const r = normalizeRole(existing.role);
       const target =
-        existing.role === "client"
+        r === "client"
           ? "/espace/client"
-          : existing.role === "expert"
+          : r === "expert"
           ? "/espace/expert"
-          : existing.role === "artisan"
+          : r === "artisan"
           ? "/espace/artisan"
-          : existing.role === "admin"
+          : r === "admin"
           ? "/espace/admin"
           : "/espace";
       router.replace(target);
@@ -52,22 +53,27 @@ export default function LoginPage() {
         return;
       }
 
-      // Stocker l'utilisateur et le token
+      // Stocker l'utilisateur et le token (rôle normalisé pour la navbar / garde-fous)
       const token = btoa(`${data.user._id}-${Date.now()}`);
+      const userToStore = {
+        ...data.user,
+        role: normalizeRole(data.user.role),
+      };
       if (typeof window !== "undefined") {
-        localStorage.setItem("bmp_user", JSON.stringify(data.user));
+        localStorage.setItem("bmp_user", JSON.stringify(userToStore));
         localStorage.setItem("bmp_token", token);
       }
 
       // Rediriger vers l'espace adapté au rôle
+      const r = normalizeRole(data.user.role);
       const target =
-        data.user.role === "client"
+        r === "client"
           ? "/espace/client"
-          : data.user.role === "expert"
+          : r === "expert"
           ? "/espace/expert"
-          : data.user.role === "artisan"
+          : r === "artisan"
           ? "/espace/artisan"
-          : data.user.role === "admin"
+          : r === "admin"
           ? "/espace/admin"
           : "/espace";
       router.push(target);

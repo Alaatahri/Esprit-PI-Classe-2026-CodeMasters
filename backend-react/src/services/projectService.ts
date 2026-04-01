@@ -24,6 +24,12 @@ export const projectService = {
     cacheService.set(cacheKey, response.data);
     return response;
   },
+  /**
+   * Projets où l’artisan a une candidature acceptée (chantiers assignés).
+   */
+  getAcceptedByArtisan: async (artisanId: string) => {
+    return api.get<Project[]>(`/projects/artisan/${artisanId}`);
+  },
   getById: async (id: string) => {
     const cacheKey = `projects:${id}`;
     const cached = cacheService.get<any>(cacheKey);

@@ -11,6 +11,7 @@ import {
   ArrowUpDown,
 } from "lucide-react";
 import { getStoredUser, type BMPUser } from "@/lib/auth";
+import { SuiviTimeline } from "@/components/SuiviTimeline";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
@@ -396,6 +397,16 @@ export default function GestionChantierPage() {
                       <span className="text-white font-semibold">
                         {(p.budget_estime ?? 0).toLocaleString("fr-FR")} TND
                       </span>
+                    </div>
+
+                    <div className="flex flex-col gap-2 pt-1">
+                      <Link
+                        href={`/gestion-chantier/${p._id}`}
+                        className="inline-flex items-center justify-center rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-200 hover:bg-amber-500/20 transition"
+                      >
+                        Envoyer une photo du chantier
+                      </Link>
+                      <SuiviTimeline projectId={p._id} apiBaseUrl={API_URL} />
                     </div>
                   </div>
                 ))}

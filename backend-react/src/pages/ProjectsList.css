@@ -10,13 +10,27 @@
 .page-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 1rem;
   margin-bottom: 2rem;
+}
+
+.page-header .btn-primary {
+  align-self: center;
+  flex-shrink: 0;
 }
 
 .page-header h1 {
   color: #2c3e50;
   margin: 0;
+}
+
+.page-subtitle-client {
+  margin: 0.4rem 0 0 0;
+  font-size: 0.9rem;
+  color: #64748b;
+  max-width: 560px;
+  line-height: 1.4;
 }
 
 .empty-state {

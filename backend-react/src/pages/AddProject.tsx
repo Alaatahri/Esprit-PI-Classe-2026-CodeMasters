@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import projectService, { Project } from '../services/projectService';
+import { useAuth } from '../contexts/AuthContext';
 import './AddProject.css';
 
 const AddProject = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<Partial<Project>>({
     titre: '',
@@ -17,6 +19,12 @@ const AddProject = () => {
     clientId: '',
     expertId: '',
   });
+
+  useEffect(() => {
+    if (user?.role === 'client' && user._id) {
+      setFormData((prev) => ({ ...prev, clientId: user._id }));
+    }
+  }, [user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -144,14 +152,26 @@ const AddProject = () => {
 
           <div className="form-group">
             <label htmlFor="clientId">ID Client *</label>
-            <input
-              type="text"
-              id="clientId"
-              name="clientId"
-              value={formData.clientId}
-              onChange={handleChange}
-              required
-            />
+            {user?.role === 'client' ? (
+              <input
+                type="text"
+                id="clientId"
+                name="clientId"
+                value={formData.clientId || ''}
+                readOnly
+                className="input-readonly"
+                title="Votre compte client"
+              />
+            ) : (
+              <input
+                type="text"
+                id="clientId"
+                name="clientId"
+                value={formData.clientId}
+                onChange={handleChange}
+                required
+              />
+            )}
           </div>
         </div>
 

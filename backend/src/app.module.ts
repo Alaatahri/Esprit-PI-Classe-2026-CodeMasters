@@ -8,6 +8,8 @@ import { SuiviProjectModule } from './suivi-project/suivi-project.module';
 import { DevisModule } from './devis/devis.module';
 import { MarketplaceModule } from './marketplace/marketplace.module';
 import { MatchingModule } from './matching/matching.module';
+import { SuiviModule } from './suivi/suivi.module';
+import { AlertsModule } from './alerts/alerts.module';
 
 @Module({
   imports: [
@@ -21,6 +23,8 @@ import { MatchingModule } from './matching/matching.module';
     ProjectModule,
     DashboardModule,
     SuiviProjectModule,
+    SuiviModule,
+    AlertsModule,
     DevisModule,
     MarketplaceModule,
     MatchingModule,

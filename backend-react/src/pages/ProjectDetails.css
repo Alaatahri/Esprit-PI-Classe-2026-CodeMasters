@@ -114,3 +114,69 @@
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
+
+.suivi-section {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.suivi-intro {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+  margin: 0 0 1rem 0;
+}
+
+.suivi-muted {
+  color: #95a5a6;
+  font-size: 0.95rem;
+}
+
+.suivi-error {
+  color: #c0392b;
+  font-size: 0.95rem;
+}
+
+.suivi-table-wrap {
+  overflow-x: auto;
+}
+
+.suivi-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.suivi-table th,
+.suivi-table td {
+  border: 1px solid #e0e0e0;
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.suivi-table th {
+  background: #f1f5f9;
+  color: #475569;
+  font-weight: 600;
+}
+
+.suivi-desc {
+  max-width: 360px;
+  word-break: break-word;
+}
+
+.suivi-index {
+  color: #64748b;
+  font-weight: 400;
+  font-size: 0.85em;
+}
+
+.suivi-photo-link {
+  color: #3498db;
+  text-decoration: none;
+}
+
+.suivi-photo-link:hover {
+  text-decoration: underline;
+}
