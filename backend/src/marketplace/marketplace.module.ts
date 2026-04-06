@@ -4,7 +4,10 @@ import { MarketplaceController } from './marketplace.controller';
 import { MarketplaceService } from './marketplace.service';
 import { Produit, ProduitSchema } from './schemas/produit.schema';
 import { Commande, CommandeSchema } from './schemas/commande.schema';
-import { CommandeItem, CommandeItemSchema } from './schemas/commande-item.schema';
+import {
+  CommandeItem,
+  CommandeItemSchema,
+} from './schemas/commande-item.schema';
 
 @Module({
   imports: [

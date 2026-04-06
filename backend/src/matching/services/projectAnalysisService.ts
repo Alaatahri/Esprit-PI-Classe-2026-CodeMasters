@@ -16,14 +16,50 @@ function analyzeProjectLocally(description: string): AnalysisResult {
   const competenceRules: Array<{ key: string; tokens: string[] }> = [
     { key: 'peinture', tokens: ['peinture', 'peindre', 'mur', 'plafond'] },
     { key: 'carrelage', tokens: ['carrelage', 'carreaux'] },
-    { key: 'plomberie', tokens: ['plomberie', 'salle de bain', 'robinet', 'canalisation'] },
-    { key: 'électricité', tokens: ['électricité', 'electricite', 'electrique', 'tableau', 'câble', 'cable', 'prise'] },
-    { key: 'menuiserie', tokens: ['menuiserie', 'portes', 'fenêtres', 'fenetres', 'bois'] },
-    { key: 'maçonnerie', tokens: ['maçonnerie', 'maconnerie', 'murs', 'dalle', 'fondation', 'fondations'] },
-    { key: 'toiture', tokens: ['toiture', 'charpente', 'étanchéité', 'etancheite'] },
-    { key: 'revêtement', tokens: ['revêtement', 'revetement', 'sol', 'parquet'] },
+    {
+      key: 'plomberie',
+      tokens: ['plomberie', 'salle de bain', 'robinet', 'canalisation'],
+    },
+    {
+      key: 'électricité',
+      tokens: [
+        'électricité',
+        'electricite',
+        'electrique',
+        'tableau',
+        'câble',
+        'cable',
+        'prise',
+      ],
+    },
+    {
+      key: 'menuiserie',
+      tokens: ['menuiserie', 'portes', 'fenêtres', 'fenetres', 'bois'],
+    },
+    {
+      key: 'maçonnerie',
+      tokens: [
+        'maçonnerie',
+        'maconnerie',
+        'murs',
+        'dalle',
+        'fondation',
+        'fondations',
+      ],
+    },
+    {
+      key: 'toiture',
+      tokens: ['toiture', 'charpente', 'étanchéité', 'etancheite'],
+    },
+    {
+      key: 'revêtement',
+      tokens: ['revêtement', 'revetement', 'sol', 'parquet'],
+    },
     { key: 'rénovation', tokens: ['rénovation', 'renovation'] },
-    { key: 'construction', tokens: ['construction', 'villa', 'immeuble', 'bâtiment', 'batiment'] },
+    {
+      key: 'construction',
+      tokens: ['construction', 'villa', 'immeuble', 'bâtiment', 'batiment'],
+    },
   ];
 
   const requiredCompetences: string[] = [];
@@ -43,7 +79,12 @@ function analyzeProjectLocally(description: string): AnalysisResult {
     text.includes('sous-sol')
   ) {
     complexity = 'complex';
-  } else if (text.includes('rénovation') || text.includes('renovation') || uniq.length >= 3 || text.includes('appartement')) {
+  } else if (
+    text.includes('rénovation') ||
+    text.includes('renovation') ||
+    uniq.length >= 3 ||
+    text.includes('appartement')
+  ) {
     complexity = 'medium';
   }
 
@@ -53,7 +94,9 @@ function analyzeProjectLocally(description: string): AnalysisResult {
   };
 }
 
-export async function analyzeProject(description: string): Promise<AnalysisResult> {
+export async function analyzeProject(
+  description: string,
+): Promise<AnalysisResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return analyzeProjectLocally(description);
@@ -89,7 +132,9 @@ export async function analyzeProject(description: string): Promise<AnalysisResul
     if (res.status === 401 || res.status === 403) {
       return analyzeProjectLocally(description);
     }
-    throw new Error(`Erreur Anthropic (${res.status}): ${text || res.statusText}`);
+    throw new Error(
+      `Erreur Anthropic (${res.status}): ${text || res.statusText}`,
+    );
   }
 
   const data: any = await res.json();
@@ -103,7 +148,8 @@ export async function analyzeProject(description: string): Promise<AnalysisResul
     const parsed = JSON.parse(cleaned);
     return parsed as AnalysisResult;
   } catch (e: any) {
-    throw new Error(`Impossible de parser la réponse IA en JSON: ${e?.message || e}`);
+    throw new Error(
+      `Impossible de parser la réponse IA en JSON: ${e?.message || e}`,
+    );
   }
 }
-

@@ -1,16 +1,31 @@
-import { Controller, Get, Post, Body, Put, Param, Delete, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Put,
+  Param,
+  Delete,
+  Query,
+} from '@nestjs/common';
 import { Types } from 'mongoose';
-import { DevisService } from './devis.service';
+import { CreateDevisDto } from './dto/create-devis.dto';
+import { CreateDevisItemDto } from './dto/create-devis-item.dto';
+import { UpdateDevisDto } from './dto/update-devis.dto';
+import { UpdateDevisItemDto } from './dto/update-devis-item.dto';
 import { Devis } from './schemas/devis.schema';
 import { DevisItem } from './schemas/devis-item.schema';
+import { DevisService } from './devis.service';
 
 @Controller('devis')
 export class DevisController {
   constructor(private readonly devisService: DevisService) {}
 
   @Post()
-  create(@Body() createDevisDto: Partial<Devis>) {
-    return this.devisService.create(createDevisDto);
+  create(@Body() createDevisDto: CreateDevisDto) {
+    return this.devisService.create(
+      createDevisDto as unknown as Partial<Devis>,
+    );
   }
 
   @Get()
@@ -27,8 +42,11 @@ export class DevisController {
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() updateDevisDto: Partial<Devis>) {
-    return this.devisService.update(id, updateDevisDto);
+  update(@Param('id') id: string, @Body() updateDevisDto: UpdateDevisDto) {
+    return this.devisService.update(
+      id,
+      updateDevisDto as unknown as Partial<Devis>,
+    );
   }
 
   @Delete(':id')
@@ -38,10 +56,13 @@ export class DevisController {
 
   // DevisItem endpoints
   @Post(':id/items')
-  createItem(@Param('id') devisId: string, @Body() createItemDto: Partial<DevisItem>) {
-    return this.devisService.createItem({ 
-      ...createItemDto, 
-      devisId: new Types.ObjectId(devisId) 
+  createItem(
+    @Param('id') devisId: string,
+    @Body() createItemDto: CreateDevisItemDto,
+  ) {
+    return this.devisService.createItem({
+      ...(createItemDto as unknown as Partial<DevisItem>),
+      devisId: new Types.ObjectId(devisId),
     });
   }
 
@@ -51,8 +72,14 @@ export class DevisController {
   }
 
   @Put('items/:itemId')
-  updateItem(@Param('itemId') itemId: string, @Body() updateItemDto: Partial<DevisItem>) {
-    return this.devisService.updateItem(itemId, updateItemDto);
+  updateItem(
+    @Param('itemId') itemId: string,
+    @Body() updateItemDto: UpdateDevisItemDto,
+  ) {
+    return this.devisService.updateItem(
+      itemId,
+      updateItemDto as unknown as Partial<DevisItem>,
+    );
   }
 
   @Delete('items/:itemId')

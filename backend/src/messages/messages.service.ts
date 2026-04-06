@@ -24,7 +24,9 @@ export class MessagesService {
       throw new BadRequestException('Identifiants utilisateur invalides.');
     }
     if (fromUserId === toUserId) {
-      throw new BadRequestException('Impossible de vous envoyer un message à vous-même.');
+      throw new BadRequestException(
+        'Impossible de vous envoyer un message à vous-même.',
+      );
     }
     const trimmed = String(body ?? '').trim();
     if (!trimmed) {
@@ -67,7 +69,11 @@ export class MessagesService {
         {
           $group: {
             _id: {
-              $cond: [{ $eq: ['$fromUserId', uid] }, '$toUserId', '$fromUserId'],
+              $cond: [
+                { $eq: ['$fromUserId', uid] },
+                '$toUserId',
+                '$fromUserId',
+              ],
             },
             lastBody: { $first: '$body' },
             lastAt: { $first: '$createdAt' },
@@ -116,7 +122,11 @@ export class MessagesService {
 
     await this.messageModel
       .updateMany(
-        { fromUserId: oid, toUserId: uid, $or: [{ readAt: { $exists: false } }, { readAt: null }] },
+        {
+          fromUserId: oid,
+          toUserId: uid,
+          $or: [{ readAt: { $exists: false } }, { readAt: null }],
+        },
         { $set: { readAt: new Date() } },
       )
       .exec();

@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { getStoredUser, type BMPUser } from "@/lib/auth";
 import { Star, Clock, CheckCircle2, MessageCircle } from "lucide-react";
 import { getApiBaseUrl } from "@/lib/api-base";
+import { FieldError, fieldTextareaClass } from "@/lib/form-ui";
+import { validateClientRatingComment } from "@/lib/validators";
 
 const API_URL = getApiBaseUrl();
 
@@ -65,6 +67,7 @@ export default function ProfilPage() {
   const [form, setForm] = useState<RatingFormState>(defaultRatingForm);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [commentError, setCommentError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
@@ -121,6 +124,13 @@ export default function ProfilPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedProjectId) return;
+
+    setCommentError(null);
+    const cErr = validateClientRatingComment(form.clientComment);
+    if (cErr) {
+      setCommentError(cErr);
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
@@ -329,7 +339,7 @@ export default function ProfilPage() {
           )}
 
           {selectedProjectId ? (
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form noValidate onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-300">
                   Note globale du projet
@@ -360,13 +370,22 @@ export default function ProfilPage() {
                   Commentaire (optionnel)
                 </label>
                 <textarea
+                  id="client-comment"
                   value={form.clientComment}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, clientComment: e.target.value }))
-                  }
+                  onChange={(e) => {
+                    setForm((f) => ({ ...f, clientComment: e.target.value }));
+                    setCommentError(null);
+                  }}
                   rows={4}
+                  maxLength={4000}
                   placeholder="Décrivez votre expérience avec les artisans et l'expert (qualité du travail, délais, communication...) "
-                  className="w-full rounded-2xl bg-black/40 border border-white/15 px-3 py-2 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:border-amber-400/60 focus:ring-1 focus:ring-amber-400/40 resize-none"
+                  aria-invalid={!!commentError}
+                  aria-describedby={commentError ? "err-client-comment" : undefined}
+                  className={fieldTextareaClass(!!commentError, submitting)}
+                />
+                <FieldError
+                  id="err-client-comment"
+                  message={commentError ?? undefined}
                 />
               </div>
 

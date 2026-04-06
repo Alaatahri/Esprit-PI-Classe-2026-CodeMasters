@@ -1,14 +1,27 @@
-import { Controller, Get, Post, Body, Put, Param, Delete, Query } from '@nestjs/common';
-import { SuiviProjectService } from './suivi-project.service';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Put,
+  Param,
+  Delete,
+  Query,
+} from '@nestjs/common';
+import { CreateSuiviProjectDto } from './dto/create-suivi-project.dto';
+import { UpdateSuiviProjectDto } from './dto/update-suivi-project.dto';
 import { SuiviProject } from './schemas/suivi-project.schema';
+import { SuiviProjectService } from './suivi-project.service';
 
 @Controller('suivi-projects')
 export class SuiviProjectController {
   constructor(private readonly suiviProjectService: SuiviProjectService) {}
 
   @Post()
-  create(@Body() createSuiviDto: Partial<SuiviProject>) {
-    return this.suiviProjectService.create(createSuiviDto);
+  create(@Body() createSuiviDto: CreateSuiviProjectDto) {
+    return this.suiviProjectService.create(
+      createSuiviDto as unknown as Partial<SuiviProject>,
+    );
   }
 
   @Get()
@@ -25,8 +38,14 @@ export class SuiviProjectController {
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() updateSuiviDto: Partial<SuiviProject>) {
-    return this.suiviProjectService.update(id, updateSuiviDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateSuiviDto: UpdateSuiviProjectDto,
+  ) {
+    return this.suiviProjectService.update(
+      id,
+      updateSuiviDto as unknown as Partial<SuiviProject>,
+    );
   }
 
   @Delete(':id')

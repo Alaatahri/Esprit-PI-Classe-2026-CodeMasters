@@ -1,18 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  ArrowLeft,
-  Camera,
-  CheckCircle2,
-  Loader2,
-  Send,
-  ImagePlus,
-} from "lucide-react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
 import { getStoredUser, normalizeRole, type BMPUser } from "@/lib/auth";
 import { getApiBaseUrl } from "@/lib/api-base";
+import { WorkerSitePhotoUpload } from "@/components/WorkerSitePhotoUpload";
+import { SuiviTimeline } from "@/components/SuiviTimeline";
 
 const API_URL = getApiBaseUrl();
 
@@ -33,23 +28,15 @@ function clampPct(n: unknown) {
 export default function ExpertSuiviPhotoPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const projectId = params?.projectId as string;
+  const fromQ = searchParams.get("from") ?? "projets";
+  const hubHref = `/expert/projects/${encodeURIComponent(projectId)}?from=${encodeURIComponent(fromQ)}`;
 
-  const inputRef = useRef<HTMLInputElement>(null);
   const [user, setUser] = useState<BMPUser | null>(null);
   const [project, setProject] = useState<Project | null>(null);
   const [loadProject, setLoadProject] = useState(true);
   const [projectError, setProjectError] = useState<string | null>(null);
-
-  const [file, setFile] = useState<File | null>(null);
-  const [comment, setComment] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [resultAdvancement, setResultAdvancement] = useState<{
-    kind: "yes" | "no";
-    percent: number;
-    reason?: string;
-  } | null>(null);
 
   useEffect(() => {
     setUser(getStoredUser());
@@ -88,113 +75,6 @@ export default function ExpertSuiviPhotoPage() {
     if (!getStoredUser()) router.replace("/login");
   }, [router]);
 
-  const pickFile = () => inputRef.current?.click();
-
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    setFile(f ?? null);
-    setSubmitError(null);
-    setResultAdvancement(null);
-  };
-
-  const onSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      const u = getStoredUser();
-      if (!u || normalizeRole(u.role) !== "expert") {
-        setSubmitError("Session invalide.");
-        return;
-      }
-      if (!file) {
-        setSubmitError("Choisissez une image.");
-        return;
-      }
-
-      setSubmitting(true);
-      setSubmitError(null);
-      setResultAdvancement(null);
-
-      const fd = new FormData();
-      fd.append("projectId", projectId);
-      fd.append("workerId", u._id);
-      fd.append("photo", file);
-      if (comment.trim()) fd.append("comment", comment.trim());
-
-      try {
-        const res = await fetch(`${API_URL}/suivi/photo`, {
-          method: "POST",
-          body: fd,
-        });
-
-        const data = (await res.json().catch(() => null)) as
-          | {
-              ai?: { percent?: number; reason?: string };
-              currentMaxBefore?: number;
-              suivi?: {
-                progressPercent?: number;
-                pourcentage_avancement?: number;
-              };
-              message?: unknown;
-            }
-          | null;
-
-        if (!res.ok) {
-          const raw = data && typeof data === "object" ? data.message : undefined;
-          const msg = Array.isArray(raw)
-            ? raw.join(" ")
-            : typeof raw === "string"
-              ? raw
-              : `Erreur ${res.status}`;
-          throw new Error(msg);
-        }
-
-        const previous = Number(data?.currentMaxBefore ?? 0);
-        const proposed = Number(data?.ai?.percent ?? 0);
-        const finalPct = Number(
-          data?.suivi?.progressPercent ??
-            data?.suivi?.pourcentage_avancement ??
-            proposed,
-        );
-
-        if (proposed > previous) {
-          setResultAdvancement({
-            kind: "yes",
-            percent: clampPct(finalPct),
-            reason:
-              typeof data?.ai?.reason === "string" ? data.ai.reason : undefined,
-          });
-        } else {
-          setResultAdvancement({
-            kind: "no",
-            percent: clampPct(finalPct),
-            reason:
-              typeof data?.ai?.reason === "string" ? data.ai.reason : undefined,
-          });
-        }
-
-        setFile(null);
-        setComment("");
-        if (inputRef.current) inputRef.current.value = "";
-
-        const resP = await fetch(`${API_URL}/projects/${projectId}`, {
-          cache: "no-store",
-        });
-        if (resP.ok) {
-          setProject((await resP.json()) as Project);
-        }
-      } catch (err) {
-        setSubmitError(
-          err instanceof Error
-            ? err.message
-            : "Échec de l’envoi. Vérifiez que l’API accepte le multipart (étape backend).",
-        );
-      } finally {
-        setSubmitting(false);
-      }
-    },
-    [comment, file, projectId],
-  );
-
   if (user && normalizeRole(user.role) !== "expert") {
     return (
       <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center px-4">
@@ -207,11 +87,11 @@ export default function ExpertSuiviPhotoPage() {
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 text-white">
       <div className="container mx-auto px-4 py-10 max-w-2xl">
         <Link
-          href="/espace/expert"
+          href={hubHref}
           className="inline-flex items-center gap-2 text-sm text-amber-400/90 hover:text-amber-300 mb-6"
         >
           <ArrowLeft className="w-4 h-4" />
-          Retour à l&apos;espace expert
+          Retour au dossier
         </Link>
 
         <h1 className="text-2xl font-bold text-white mb-2">
@@ -232,7 +112,7 @@ export default function ExpertSuiviPhotoPage() {
         ) : project ? (
           <>
             <Link
-              href={`/expert/projects/${projectId}/photos`}
+              href={`/expert/projects/${projectId}/photos?from=${encodeURIComponent(fromQ)}`}
               className="mb-4 inline-flex text-xs font-medium text-emerald-400/90 hover:text-emerald-300 hover:underline"
             >
               + Ajouter des photos à la galerie avant / après du projet
@@ -259,109 +139,20 @@ export default function ExpertSuiviPhotoPage() {
               </div>
             </div>
 
-            <form
-              onSubmit={onSubmit}
-              className="rounded-2xl border border-white/10 bg-black/30 p-5 space-y-4"
-            >
-              <div className="flex items-center gap-2 text-sm font-semibold text-white">
-                <Camera className="w-4 h-4 text-amber-300" />
-                📷 Envoyer une photo du chantier
-              </div>
-
-              <input
-                ref={inputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={onFileChange}
+            {user ? (
+              <WorkerSitePhotoUpload
+                projectId={project._id}
+                workerId={user._id}
+                apiBaseUrl={API_URL}
               />
+            ) : null}
 
-              <div className="flex flex-col sm:flex-row gap-3">
-                <button
-                  type="button"
-                  onClick={pickFile}
-                  disabled={submitting}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2.5 text-sm font-medium text-amber-200 hover:bg-amber-500/20 transition disabled:opacity-50"
-                >
-                  <ImagePlus className="w-4 h-4" />
-                  Choisir une image
-                </button>
-                {file ? (
-                  <span className="text-xs text-gray-300 self-center truncate">
-                    {file.name}
-                  </span>
-                ) : (
-                  <span className="text-xs text-gray-500 self-center">
-                    Aucun fichier sélectionné
-                  </span>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-[11px] text-gray-400 mb-1">
-                  Commentaire (optionnel)
-                </label>
-                <textarea
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  rows={3}
-                  disabled={submitting}
-                  className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-amber-500/40 disabled:opacity-50"
-                  placeholder="Ex. : finitions salon, zone humide…"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={submitting || !file}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-gray-900 font-semibold px-4 py-2.5 text-sm hover:opacity-95 transition disabled:opacity-40 disabled:cursor-not-allowed w-full sm:w-auto"
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    🔍 Analyse en cours...
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-4 h-4" />
-                    Envoyer et analyser
-                  </>
-                )}
-              </button>
-
-              {submitError ? (
-                <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
-                  {submitError}
-                </div>
-              ) : null}
-
-              {resultAdvancement?.kind === "yes" ? (
-                <div className="rounded-xl border border-emerald-500/35 bg-emerald-500/10 px-3 py-3 text-sm text-emerald-100 space-y-1">
-                  <p className="font-semibold">
-                    ✅ Avancement détecté : {Math.round(resultAdvancement.percent)}%
-                  </p>
-                  {resultAdvancement.reason ? (
-                    <p className="text-xs text-emerald-200/80">
-                      {resultAdvancement.reason}
-                    </p>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {resultAdvancement?.kind === "no" ? (
-                <div className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-3 py-3 text-sm text-amber-100 space-y-1">
-                  <p className="font-semibold">
-                    ⚠️ Aucune progression détectée (avancement actuel :{" "}
-                    {Math.round(resultAdvancement.percent)}%).
-                  </p>
-                  {resultAdvancement.reason ? (
-                    <p className="text-xs text-amber-200/80">
-                      {resultAdvancement.reason}
-                    </p>
-                  ) : null}
-                </div>
-              ) : null}
-            </form>
+            <div className="mt-6">
+              <h3 className="text-sm font-semibold text-white mb-2">
+                Journal de suivi
+              </h3>
+              <SuiviTimeline projectId={project._id} apiBaseUrl={API_URL} />
+            </div>
           </>
         ) : null}
       </div>

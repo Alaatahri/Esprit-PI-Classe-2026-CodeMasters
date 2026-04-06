@@ -1,4 +1,5 @@
 import { Body, Controller, Post } from '@nestjs/common';
+import { SuiviPhotoDto } from './dto/suivi-photo.dto';
 import { SuiviService } from './suivi.service';
 
 @Controller('suivi')
@@ -13,16 +14,7 @@ export class SuiviController {
    * @returns L'entrée créée + percent/reason de l'IA
    */
   @Post('photo')
-  async uploadPhotoProgress(
-    @Body()
-    body: {
-      projectId: string;
-      workerId: string;
-      photoUrl: string;
-      photoBase64?: string;
-      uploadedAt?: string | Date;
-    },
-  ) {
+  async uploadPhotoProgress(@Body() body: SuiviPhotoDto) {
     return this.suiviService.createPhotoProgress(body);
   }
 }

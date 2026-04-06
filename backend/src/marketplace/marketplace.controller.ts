@@ -1,9 +1,24 @@
-import { Controller, Get, Post, Body, Put, Param, Delete, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Put,
+  Param,
+  Delete,
+  Query,
+} from '@nestjs/common';
 import { Types } from 'mongoose';
-import { MarketplaceService } from './marketplace.service';
-import { Produit } from './schemas/produit.schema';
+import { CreateCommandeDto } from './dto/create-commande.dto';
+import { CreateCommandeItemDto } from './dto/create-commande-item.dto';
+import { CreateProduitDto } from './dto/create-produit.dto';
+import { UpdateCommandeDto } from './dto/update-commande.dto';
+import { UpdateCommandeItemDto } from './dto/update-commande-item.dto';
+import { UpdateProduitDto } from './dto/update-produit.dto';
 import { Commande } from './schemas/commande.schema';
 import { CommandeItem } from './schemas/commande-item.schema';
+import { Produit } from './schemas/produit.schema';
+import { MarketplaceService } from './marketplace.service';
 
 @Controller('marketplace')
 export class MarketplaceController {
@@ -11,8 +26,10 @@ export class MarketplaceController {
 
   // Produit endpoints
   @Post('produits')
-  createProduit(@Body() createProduitDto: Partial<Produit>) {
-    return this.marketplaceService.createProduit(createProduitDto);
+  createProduit(@Body() createProduitDto: CreateProduitDto) {
+    return this.marketplaceService.createProduit(
+      createProduitDto as unknown as Partial<Produit>,
+    );
   }
 
   @Get('produits')
@@ -26,8 +43,14 @@ export class MarketplaceController {
   }
 
   @Put('produits/:id')
-  updateProduit(@Param('id') id: string, @Body() updateProduitDto: Partial<Produit>) {
-    return this.marketplaceService.updateProduit(id, updateProduitDto);
+  updateProduit(
+    @Param('id') id: string,
+    @Body() updateProduitDto: UpdateProduitDto,
+  ) {
+    return this.marketplaceService.updateProduit(
+      id,
+      updateProduitDto as unknown as Partial<Produit>,
+    );
   }
 
   @Delete('produits/:id')
@@ -37,8 +60,10 @@ export class MarketplaceController {
 
   // Commande endpoints
   @Post('commandes')
-  createCommande(@Body() createCommandeDto: Partial<Commande>) {
-    return this.marketplaceService.createCommande(createCommandeDto);
+  createCommande(@Body() createCommandeDto: CreateCommandeDto) {
+    return this.marketplaceService.createCommande(
+      createCommandeDto as unknown as Partial<Commande>,
+    );
   }
 
   @Get('commandes')
@@ -55,8 +80,14 @@ export class MarketplaceController {
   }
 
   @Put('commandes/:id')
-  updateCommande(@Param('id') id: string, @Body() updateCommandeDto: Partial<Commande>) {
-    return this.marketplaceService.updateCommande(id, updateCommandeDto);
+  updateCommande(
+    @Param('id') id: string,
+    @Body() updateCommandeDto: UpdateCommandeDto,
+  ) {
+    return this.marketplaceService.updateCommande(
+      id,
+      updateCommandeDto as unknown as Partial<Commande>,
+    );
   }
 
   @Delete('commandes/:id')
@@ -66,10 +97,13 @@ export class MarketplaceController {
 
   // CommandeItem endpoints
   @Post('commandes/:id/items')
-  createCommandeItem(@Param('id') commandeId: string, @Body() createItemDto: Partial<CommandeItem>) {
-    return this.marketplaceService.createCommandeItem({ 
-      ...createItemDto, 
-      commandeId: new Types.ObjectId(commandeId) 
+  createCommandeItem(
+    @Param('id') commandeId: string,
+    @Body() createItemDto: CreateCommandeItemDto,
+  ) {
+    return this.marketplaceService.createCommandeItem({
+      ...(createItemDto as unknown as Partial<CommandeItem>),
+      commandeId: new Types.ObjectId(commandeId),
     });
   }
 
@@ -79,8 +113,14 @@ export class MarketplaceController {
   }
 
   @Put('commandes/items/:itemId')
-  updateCommandeItem(@Param('itemId') itemId: string, @Body() updateItemDto: Partial<CommandeItem>) {
-    return this.marketplaceService.updateCommandeItem(itemId, updateItemDto);
+  updateCommandeItem(
+    @Param('itemId') itemId: string,
+    @Body() updateItemDto: UpdateCommandeItemDto,
+  ) {
+    return this.marketplaceService.updateCommandeItem(
+      itemId,
+      updateItemDto as unknown as Partial<CommandeItem>,
+    );
   }
 
   @Delete('commandes/items/:itemId')

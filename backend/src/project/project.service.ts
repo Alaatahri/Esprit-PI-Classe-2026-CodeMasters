@@ -9,12 +9,14 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Project, ProjectDocument } from './schemas/project.schema';
+import { User, UserDocument } from '../user/schemas/user.schema';
 import { SuiviProjectService } from '../suivi-project/suivi-project.service';
 
 @Injectable()
 export class ProjectService {
   constructor(
     @InjectModel(Project.name) private projectModel: Model<ProjectDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
     @Inject(forwardRef(() => SuiviProjectService))
     private readonly suiviProjectService: SuiviProjectService,
   ) {}
@@ -24,19 +26,34 @@ export class ProjectService {
   }
 
   async create(createProjectDto: Partial<Project>): Promise<Project> {
-    const createdProject = new this.projectModel(createProjectDto);
+    // Compat: les nouveaux formulaires client ne fournissent plus date/budget.
+    // On met des valeurs provisoires, l’expert proposera ensuite via proposition/contrat.
+    const dto: any = { ...(createProjectDto as any) };
+    if (!dto.date_debut) dto.date_debut = new Date();
+    if (!dto.date_fin_prevue)
+      dto.date_fin_prevue = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    if (dto.budget_estime == null) dto.budget_estime = 0;
+    const createdProject = new this.projectModel(dto);
     return createdProject.save();
   }
 
   async findAll(limit = 100): Promise<Project[]> {
-    return this.projectModel.find().sort({ createdAt: -1 }).limit(limit).lean().exec();
+    return this.projectModel
+      .find()
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean()
+      .exec();
   }
 
   async findOne(id: string): Promise<Project> {
     return this.projectModel.findById(id).lean().exec();
   }
 
-  async findCompletedByClient(clientId: string, limit = 100): Promise<Project[]> {
+  async findCompletedByClient(
+    clientId: string,
+    limit = 100,
+  ): Promise<Project[]> {
     return this.projectModel
       .find({ clientId, statut: 'Terminé' })
       .sort({ updatedAt: -1 })
@@ -45,7 +62,10 @@ export class ProjectService {
       .exec();
   }
 
-  async findAcceptedByArtisan(artisanId: string, limit = 100): Promise<Project[]> {
+  async findAcceptedByArtisan(
+    artisanId: string,
+    limit = 100,
+  ): Promise<Project[]> {
     if (!this.isValidObjectId(artisanId)) {
       throw new BadRequestException('ID artisan invalide.');
     }
@@ -66,7 +86,10 @@ export class ProjectService {
       .exec();
   }
 
-  async findCompletedByArtisan(artisanId: string, limit = 100): Promise<Project[]> {
+  async findCompletedByArtisan(
+    artisanId: string,
+    limit = 100,
+  ): Promise<Project[]> {
     if (!this.isValidObjectId(artisanId)) {
       throw new BadRequestException('ID artisan invalide.');
     }
@@ -133,11 +156,13 @@ export class ProjectService {
       role: string;
     }> = [];
 
-    const clientText = typeof doc.clientComment === 'string' ? doc.clientComment.trim() : '';
+    const clientText =
+      typeof doc.clientComment === 'string' ? doc.clientComment.trim() : '';
     if (clientText) {
       reviews.push({
         text: clientText,
-        rating: typeof doc.clientRating === 'number' ? doc.clientRating : undefined,
+        rating:
+          typeof doc.clientRating === 'number' ? doc.clientRating : undefined,
         author: 'Client',
         role: 'client',
       });
@@ -176,14 +201,18 @@ export class ProjectService {
       reviews.push({
         text: t,
         rating: typeof r.rating === 'number' ? r.rating : undefined,
-        author: typeof r.author === 'string' && r.author.trim() ? r.author.trim() : 'Visiteur',
+        author:
+          typeof r.author === 'string' && r.author.trim()
+            ? r.author.trim()
+            : 'Visiteur',
         role: typeof r.role === 'string' ? r.role : 'visiteur',
       });
     }
 
     let chantierPhotos: string[] = [];
     try {
-      chantierPhotos = await this.suiviProjectService.findPublicPhotoUrlsForProject(id);
+      chantierPhotos =
+        await this.suiviProjectService.findPublicPhotoUrlsForProject(id);
     } catch {
       chantierPhotos = [];
     }
@@ -209,8 +238,13 @@ export class ProjectService {
     };
   }
 
-  async update(id: string, updateProjectDto: Partial<Project>): Promise<Project> {
-    return this.projectModel.findByIdAndUpdate(id, updateProjectDto, { new: true }).exec();
+  async update(
+    id: string,
+    updateProjectDto: Partial<Project>,
+  ): Promise<Project> {
+    return this.projectModel
+      .findByIdAndUpdate(id, updateProjectDto, { new: true })
+      .exec();
   }
 
   /**
@@ -224,7 +258,10 @@ export class ProjectService {
     if (!this.isValidObjectId(projectId) || !this.isValidObjectId(expertId)) {
       throw new BadRequestException('Identifiants invalides.');
     }
-    const project: any = await this.projectModel.findById(projectId).lean().exec();
+    const project: any = await this.projectModel
+      .findById(projectId)
+      .lean()
+      .exec();
     if (!project) {
       throw new NotFoundException('Projet introuvable.');
     }
@@ -265,7 +302,10 @@ export class ProjectService {
     if (!this.isValidObjectId(projectId) || !this.isValidObjectId(expertId)) {
       throw new BadRequestException('Identifiants invalides.');
     }
-    const project: any = await this.projectModel.findById(projectId).lean().exec();
+    const project: any = await this.projectModel
+      .findById(projectId)
+      .lean()
+      .exec();
     if (!project) {
       throw new NotFoundException('Projet introuvable.');
     }
@@ -280,10 +320,56 @@ export class ProjectService {
       throw new BadRequestException('Le texte du feedback est requis.');
     }
     if (t.length > 12000) {
-      throw new BadRequestException('Feedback trop long (max 12000 caractères).');
+      throw new BadRequestException(
+        'Feedback trop long (max 12000 caractères).',
+      );
     }
     const updated = await this.projectModel
       .findByIdAndUpdate(projectId, { expertFeedback: t }, { new: true })
+      .lean()
+      .exec();
+    return updated as Project;
+  }
+
+  /**
+   * Ajoute des fichiers uploadés (URLs) à la demande de projet.
+   * `kind`:
+   * - attachment -> `pieces_jointes`
+   * - site_photo -> `photos_site`
+   *
+   * Autorisation: propriétaire (clientId) uniquement.
+   */
+  async appendProjectRequestUploads(
+    projectId: string,
+    userId: string,
+    dto: { kind: 'attachment' | 'site_photo'; urls: string[] },
+  ) {
+    if (!this.isValidObjectId(projectId) || !this.isValidObjectId(userId)) {
+      throw new BadRequestException('Identifiants invalides.');
+    }
+    const p: any = await this.projectModel.findById(projectId).lean().exec();
+    if (!p) throw new NotFoundException('Projet introuvable.');
+    if (String(p.clientId) !== String(userId)) {
+      throw new ForbiddenException(
+        'Seul le client propriétaire peut ajouter des fichiers.',
+      );
+    }
+    const clean = (dto.urls || [])
+      .map((u) => String(u).trim())
+      .filter((u) => /^https?:\/\//i.test(u));
+    if (clean.length === 0) {
+      throw new BadRequestException('Aucune URL valide.');
+    }
+    const field = dto.kind === 'site_photo' ? 'photos_site' : 'pieces_jointes';
+    const updated = await this.projectModel
+      .findByIdAndUpdate(
+        projectId,
+        { $push: { [field]: { $each: clean.slice(0, 24) } } } as Record<
+          string,
+          unknown
+        >,
+        { new: true },
+      )
       .lean()
       .exec();
     return updated as Project;
@@ -326,7 +412,10 @@ export class ProjectService {
     return this.projectModel.findByIdAndDelete(id).exec();
   }
 
-  async updateStatusAndProgress(id: string, avancement: number): Promise<Project> {
+  async updateStatusAndProgress(
+    id: string,
+    avancement: number,
+  ): Promise<Project> {
     let statut: string;
     if (avancement === 0) {
       statut = 'En attente';
@@ -336,11 +425,82 @@ export class ProjectService {
       statut = 'En cours';
     }
 
-    return this.projectModel.findByIdAndUpdate(
-      id,
-      { avancement_global: avancement, statut },
-      { new: true }
-    ).exec();
+    return this.projectModel
+      .findByIdAndUpdate(
+        id,
+        { avancement_global: avancement, statut },
+        { new: true },
+      )
+      .exec();
+  }
+
+  /** Client propriétaire : annule la demande / le dossier */
+  async cancelByClient(projectId: string, clientId: string): Promise<Project> {
+    if (!this.isValidObjectId(projectId) || !this.isValidObjectId(clientId)) {
+      throw new BadRequestException('Identifiants invalides.');
+    }
+    const p: any = await this.projectModel.findById(projectId).lean().exec();
+    if (!p) throw new NotFoundException('Projet introuvable.');
+    const cid = String(p.clientId?._id != null ? p.clientId._id : p.clientId);
+    if (cid !== String(clientId)) {
+      throw new ForbiddenException(
+        'Seul le client propriétaire peut annuler ce projet.',
+      );
+    }
+    const updated = await this.projectModel
+      .findByIdAndUpdate(
+        projectId,
+        { requestStatus: 'cancelled' },
+        { new: true },
+      )
+      .lean()
+      .exec();
+    return updated as Project;
+  }
+
+  /**
+   * Expert assigné : saisie manuelle de l’avancement (sans photo).
+   * Crée une ligne de suivi et met à jour `avancement_global`.
+   */
+  async recordExpertManualProgress(
+    projectId: string,
+    expertId: string,
+    avancement: number,
+    note?: string,
+  ): Promise<Project> {
+    if (!this.isValidObjectId(projectId) || !this.isValidObjectId(expertId)) {
+      throw new BadRequestException('Identifiants invalides.');
+    }
+    const project: any = await this.projectModel
+      .findById(projectId)
+      .lean()
+      .exec();
+    if (!project) throw new NotFoundException('Projet introuvable.');
+    const assigned = project?.expertId?.toString?.();
+    if (!assigned || assigned !== expertId) {
+      throw new ForbiddenException(
+        'Seul l’expert assigné à ce projet peut enregistrer l’avancement.',
+      );
+    }
+    const pct = Math.max(0, Math.min(100, Math.round(Number(avancement))));
+    if (!Number.isFinite(pct)) {
+      throw new BadRequestException('Pourcentage invalide.');
+    }
+    const desc =
+      String(note ?? '').trim() ||
+      'Mise à jour de l’avancement par l’expert (sans photo).';
+
+    await this.suiviProjectService.create({
+      projectId: new Types.ObjectId(projectId),
+      date_suivi: new Date(),
+      description_progression: desc,
+      pourcentage_avancement: pct,
+      cout_actuel: 0,
+      workerId: new Types.ObjectId(expertId),
+    });
+
+    const fresh = await this.projectModel.findById(projectId).lean().exec();
+    return fresh as Project;
   }
 
   async applyToProject(projectId: string, artisanId: string) {
@@ -377,7 +537,8 @@ export class ProjectService {
 
     await project.save();
 
-    const createdApplication = project.applications[project.applications.length - 1];
+    const createdApplication =
+      project.applications[project.applications.length - 1];
 
     return {
       _id: createdApplication?._id?.toString?.() ?? createdApplication?._id,
@@ -392,9 +553,27 @@ export class ProjectService {
   async updateApplicationStatus(
     applicationId: string,
     statut: 'en_attente' | 'acceptee' | 'refusee',
+    actorUserId: string,
   ) {
     if (!this.isValidObjectId(applicationId)) {
       throw new BadRequestException('ID de candidature invalide.');
+    }
+
+    const uid = String(actorUserId || '').trim();
+    if (!uid || !this.isValidObjectId(uid)) {
+      throw new ForbiddenException(
+        'Identifiant expert manquant (en-tête x-user-id).',
+      );
+    }
+
+    const actor: any = await this.userModel.findById(uid).lean().exec();
+    if (!actor) {
+      throw new ForbiddenException('Utilisateur introuvable.');
+    }
+    if (String(actor.role || '').toLowerCase() !== 'expert') {
+      throw new ForbiddenException(
+        'Seuls les experts peuvent traiter les candidatures.',
+      );
     }
 
     const applicationObjectId = new Types.ObjectId(applicationId);
@@ -404,6 +583,18 @@ export class ProjectService {
 
     if (!project) {
       throw new NotFoundException('Candidature introuvable.');
+    }
+
+    const assignedExpert = project.expertId?.toString?.();
+    if (!assignedExpert) {
+      throw new ForbiddenException(
+        'Aucun expert n’est assigné à ce projet : impossible de traiter la candidature pour l’instant.',
+      );
+    }
+    if (assignedExpert !== uid) {
+      throw new ForbiddenException(
+        'Seul l’expert assigné à ce projet peut accepter ou refuser les artisans.',
+      );
     }
 
     const application = (project.applications || []).find(

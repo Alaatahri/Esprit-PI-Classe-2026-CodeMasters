@@ -8,8 +8,25 @@ export class Project {
   @Prop({ required: true })
   titre: string;
 
+  /** Catégorie du projet (rénovation, plomberie, etc.) */
+  @Prop()
+  categorie?: string;
+
   @Prop({ required: true })
   description: string;
+
+  /** Localisation */
+  @Prop()
+  ville?: string;
+
+  @Prop()
+  adresse?: string;
+
+  @Prop({
+    type: { lat: { type: Number }, lng: { type: Number } },
+    _id: false,
+  })
+  gps?: { lat?: number; lng?: number };
 
   @Prop({ required: true })
   date_debut: Date;
@@ -20,18 +37,81 @@ export class Project {
   @Prop({ required: true })
   budget_estime: number;
 
-  @Prop({ 
+  /** Budget range optionnel (nouveau formulaire) */
+  @Prop()
+  budget_min?: number;
+
+  @Prop()
+  budget_max?: number;
+
+  /** Détails projet */
+  @Prop()
+  surface_m2?: number;
+
+  @Prop()
+  type_batiment?: string;
+
+  /** Urgence: urgent | normal | flexible */
+  @Prop({ enum: ['urgent', 'normal', 'flexible'], default: 'normal' })
+  urgence?: 'urgent' | 'normal' | 'flexible';
+
+  /** Exigences techniques / matériaux */
+  @Prop()
+  preferences_materiaux?: string;
+
+  @Prop()
+  exigences_techniques?: string;
+
+  /** URLs fichiers (plans / docs) */
+  @Prop({ type: [String], default: [] })
+  pieces_jointes?: string[];
+
+  /** URLs photos du site (état actuel) */
+  @Prop({ type: [String], default: [] })
+  photos_site?: string[];
+
+  /**
+   * Workflow "demande projet" (plus précis que `statut` historique).
+   * - submitted: demande envoyée
+   * - expert_review: en cours d’évaluation
+   * - proposal_sent: proposition envoyée
+   * - negotiation: négociation
+   * - accepted/rejected: décision client
+   * - contract_pending_signatures: contrat généré, signatures en attente
+   * - active/completed/cancelled/disputed: exécution
+   */
+  @Prop({
+    type: String,
+    enum: [
+      'draft',
+      'submitted',
+      'expert_review',
+      'proposal_sent',
+      'negotiation',
+      'accepted',
+      'rejected',
+      'contract_pending_signatures',
+      'active',
+      'completed',
+      'cancelled',
+      'disputed',
+    ],
+    default: 'submitted',
+  })
+  requestStatus?: string;
+
+  @Prop({
     required: true,
     enum: ['En attente', 'En cours', 'Terminé'],
-    default: 'En attente'
+    default: 'En attente',
   })
   statut: string;
 
-  @Prop({ 
+  @Prop({
     required: true,
     default: 0,
     min: 0,
-    max: 100
+    max: 100,
   })
   avancement_global: number;
 

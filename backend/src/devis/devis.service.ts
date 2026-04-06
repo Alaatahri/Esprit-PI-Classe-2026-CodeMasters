@@ -8,7 +8,8 @@ import { DevisItem, DevisItemDocument } from './schemas/devis-item.schema';
 export class DevisService {
   constructor(
     @InjectModel(Devis.name) private devisModel: Model<DevisDocument>,
-    @InjectModel(DevisItem.name) private devisItemModel: Model<DevisItemDocument>,
+    @InjectModel(DevisItem.name)
+    private devisItemModel: Model<DevisItemDocument>,
   ) {}
 
   async create(createDevisDto: Partial<Devis>): Promise<Devis> {
@@ -29,7 +30,9 @@ export class DevisService {
   }
 
   async update(id: string, updateDevisDto: Partial<Devis>): Promise<Devis> {
-    return this.devisModel.findByIdAndUpdate(id, updateDevisDto, { new: true }).exec();
+    return this.devisModel
+      .findByIdAndUpdate(id, updateDevisDto, { new: true })
+      .exec();
   }
 
   async remove(id: string): Promise<Devis> {
@@ -53,12 +56,13 @@ export class DevisService {
     return this.devisItemModel.find({ devisId }).exec();
   }
 
-  async updateItem(id: string, updateItemDto: Partial<DevisItem>): Promise<DevisItem> {
-    const updatedItem = await this.devisItemModel.findByIdAndUpdate(
-      id,
-      updateItemDto,
-      { new: true }
-    ).exec();
+  async updateItem(
+    id: string,
+    updateItemDto: Partial<DevisItem>,
+  ): Promise<DevisItem> {
+    const updatedItem = await this.devisItemModel
+      .findByIdAndUpdate(id, updateItemDto, { new: true })
+      .exec();
 
     if (updatedItem) {
       await this.updateDevisTotal(updatedItem.devisId.toString());
@@ -82,8 +86,10 @@ export class DevisService {
     const items = await this.devisItemModel.find({ devisId }).exec();
     const total = items.reduce(
       (sum, item) => sum + item.quantite * item.prix_unitaire,
-      0
+      0,
     );
-    await this.devisModel.findByIdAndUpdate(devisId, { montant_total: total }).exec();
+    await this.devisModel
+      .findByIdAndUpdate(devisId, { montant_total: total })
+      .exec();
   }
 }

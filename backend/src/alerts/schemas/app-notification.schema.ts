@@ -32,4 +32,5 @@ export class AppNotification {
   metadata?: Record<string, unknown>;
 }
 
-export const AppNotificationSchema = SchemaFactory.createForClass(AppNotification);
+export const AppNotificationSchema =
+  SchemaFactory.createForClass(AppNotification);

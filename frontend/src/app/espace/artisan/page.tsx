@@ -11,16 +11,32 @@ import {
   CheckCircle2,
   PlusCircle,
   MessageCircle,
+  Camera,
   Sparkles,
   Loader2,
   BadgeCheck,
   ArrowRight,
+  Hammer,
+  LayoutDashboard,
 } from "lucide-react";
 import Link from "next/link";
 import { getApiBaseUrl } from "@/lib/api-base";
 import { refId } from "@/lib/project-refs";
+import { readJsonSafe } from "@/lib/read-json-safe";
 
 const API_URL = getApiBaseUrl();
+
+function extractApiError(parsed: unknown, fallback: string): string {
+  if (parsed && typeof parsed === "object") {
+    const r = parsed as Record<string, unknown>;
+    const m = r.message;
+    if (typeof m === "string") return m;
+    if (Array.isArray(m) && typeof m[0] === "string") return m[0];
+    const e = r.error;
+    if (typeof e === "string") return e;
+  }
+  return fallback;
+}
 
 type OpenProject = {
   _id: string;
@@ -70,6 +86,11 @@ export default function ArtisanSpacePage() {
 
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loadErrors, setLoadErrors] = useState<{
+    open?: string;
+    applications?: string;
+    members?: string;
+  }>({});
 
   useEffect(() => {
     const stored = getStoredUser();
@@ -80,17 +101,41 @@ export default function ArtisanSpacePage() {
   useEffect(() => {
     if (!user || user.role !== "artisan") return;
 
+    const artisanHeaders = {
+      "x-user-id": user._id,
+    };
+
     const fetchOpenProjects = async () => {
       setLoadingOpenProjects(true);
+      setLoadErrors((e) => ({ ...e, open: undefined }));
       try {
         const res = await fetch(`${API_URL}/projects`);
-        if (!res.ok) return;
-        const data = (await res.json()) as OpenProject[];
-        // Montrer les projets en attente (non démarrés) comme "disponibles"
-        const filtered = data.filter((p) => p.statut === "En attente");
-        setOpenProjects(filtered);
-      } catch {
-        // silencieux : l'artisan verra au moins ses projets existants
+        const parsed = await readJsonSafe<unknown>(res);
+        if (!res.ok) {
+          setLoadErrors((e) => ({
+            ...e,
+            open: extractApiError(
+              parsed,
+              `Impossible de charger les projets (${res.status}).`
+            ),
+          }));
+          setOpenProjects([]);
+          return;
+        }
+        const data = Array.isArray(parsed) ? parsed : [];
+        const filtered = data.filter(
+          (p: OpenProject) => p.statut === "En attente"
+        );
+        setOpenProjects(filtered as OpenProject[]);
+      } catch (err) {
+        setLoadErrors((e) => ({
+          ...e,
+          open:
+            err instanceof Error
+              ? err.message
+              : "Erreur réseau lors du chargement des projets.",
+        }));
+        setOpenProjects([]);
       } finally {
         setLoadingOpenProjects(false);
       }
@@ -98,15 +143,35 @@ export default function ArtisanSpacePage() {
 
     const fetchApplications = async () => {
       setLoadingApplications(true);
+      setLoadErrors((e) => ({ ...e, applications: undefined }));
       try {
         const res = await fetch(
-          `${API_URL}/applications/me?artisanId=${encodeURIComponent(user._id)}`
+          `${API_URL}/applications/me?artisanId=${encodeURIComponent(user._id)}`,
+          { headers: artisanHeaders }
         );
-        if (!res.ok) return;
-        const data = (await res.json()) as ArtisanApplication[];
-        setApplications(data);
-      } catch {
-        // silencieux
+        const parsed = await readJsonSafe<unknown>(res);
+        if (!res.ok) {
+          setLoadErrors((e) => ({
+            ...e,
+            applications: extractApiError(
+              parsed,
+              `Candidatures (${res.status}).`
+            ),
+          }));
+          setApplications([]);
+          return;
+        }
+        const data = Array.isArray(parsed) ? parsed : [];
+        setApplications(data as ArtisanApplication[]);
+      } catch (err) {
+        setLoadErrors((e) => ({
+          ...e,
+          applications:
+            err instanceof Error
+              ? err.message
+              : "Erreur réseau (candidatures).",
+        }));
+        setApplications([]);
       } finally {
         setLoadingApplications(false);
       }
@@ -114,17 +179,37 @@ export default function ArtisanSpacePage() {
 
     const fetchMemberProjects = async () => {
       setLoadingMemberProjects(true);
+      setLoadErrors((e) => ({ ...e, members: undefined }));
       try {
         const res = await fetch(
           `${API_URL}/projects/mine-as-artisan?artisanId=${encodeURIComponent(
             user._id
-          )}`
+          )}`,
+          { headers: artisanHeaders }
         );
-        if (!res.ok) return;
-        const data = (await res.json()) as MemberProject[];
-        setMemberProjects(data);
-      } catch {
-        // silencieux
+        const parsed = await readJsonSafe<unknown>(res);
+        if (!res.ok) {
+          setLoadErrors((e) => ({
+            ...e,
+            members: extractApiError(
+              parsed,
+              `Projets membres (${res.status}).`
+            ),
+          }));
+          setMemberProjects([]);
+          return;
+        }
+        const data = Array.isArray(parsed) ? parsed : [];
+        setMemberProjects(data as MemberProject[]);
+      } catch (err) {
+        setLoadErrors((e) => ({
+          ...e,
+          members:
+            err instanceof Error
+              ? err.message
+              : "Erreur réseau (projets membres).",
+        }));
+        setMemberProjects([]);
       } finally {
         setLoadingMemberProjects(false);
       }
@@ -144,19 +229,20 @@ export default function ArtisanSpacePage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-user-id": user._id,
         },
         body: JSON.stringify({ artisanId: user._id }),
       });
+      const body = await readJsonSafe<Record<string, unknown>>(res);
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
         throw new Error(
-          data.message ||
-            data.error ||
-            "Impossible de postuler à ce projet."
+          extractApiError(body, "Impossible de postuler à ce projet.")
         );
       }
-      const created = (await res.json()) as ArtisanApplication;
-      setApplications((prev) => [created, ...prev]);
+      const created = body as unknown as ArtisanApplication;
+      if (created?.projet?.titre || created?._id) {
+        setApplications((prev) => [created, ...prev]);
+      }
     } catch (err) {
       setError(
         err instanceof Error
@@ -211,6 +297,7 @@ export default function ArtisanSpacePage() {
   }
 
   return (
+    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950">
     <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-8 sm:py-10 space-y-8">
       {/* Header / hero */}
       <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-amber-950/30 via-gray-950/70 to-gray-950 p-6 sm:p-8">
@@ -236,19 +323,26 @@ export default function ArtisanSpacePage() {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 sm:items-center">
+            <Link
+              href="/gestion-chantier"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-3 text-sm font-medium text-emerald-100 hover:bg-emerald-500/20 transition"
+            >
+              <LayoutDashboard className="h-4 w-4 shrink-0" />
+              Gestion chantier
+            </Link>
             <Link
               href="/messages"
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-black/30 px-5 py-3 text-sm font-medium text-gray-200 hover:bg-amber-500/10 hover:text-amber-100 hover:border-amber-500/30 transition"
             >
-              <MessageCircle className="h-4 w-4" />
+              <MessageCircle className="h-4 w-4 shrink-0" />
               Messages
             </Link>
             <Link
               href="/espace/artisan/profil"
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-400 px-5 py-3 text-sm font-semibold text-gray-900 shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transition"
             >
-              <BadgeCheck className="h-4 w-4" />
+              <BadgeCheck className="h-4 w-4 shrink-0" />
               Mon profil
             </Link>
           </div>
@@ -261,26 +355,58 @@ export default function ArtisanSpacePage() {
         </div>
       )}
 
+      {(loadErrors.open ||
+        loadErrors.applications ||
+        loadErrors.members) && (
+        <div className="rounded-2xl border border-amber-500/25 bg-amber-950/25 px-5 py-4 text-sm text-amber-100/95 space-y-1">
+          <p className="font-medium text-amber-200">
+            Problème de chargement (vérifiez que le backend tourne sur le port
+            attendu par le proxy Next).
+          </p>
+          {loadErrors.open && (
+            <p className="text-xs text-amber-100/80">
+              <span className="text-amber-300/90">Projets ouverts :</span>{" "}
+              {loadErrors.open}
+            </p>
+          )}
+          {loadErrors.applications && (
+            <p className="text-xs text-amber-100/80">
+              <span className="text-amber-300/90">Candidatures :</span>{" "}
+              {loadErrors.applications}
+            </p>
+          )}
+          {loadErrors.members && (
+            <p className="text-xs text-amber-100/80">
+              <span className="text-amber-300/90">Projets membres :</span>{" "}
+              {loadErrors.members}
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Quick stats */}
       <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-          <p className="text-[11px] uppercase tracking-wider text-gray-500">
+        <div className="rounded-2xl border border-sky-500/20 bg-sky-950/20 p-4">
+          <p className="text-[11px] uppercase tracking-wider text-sky-200/80 flex items-center gap-2">
+            <Briefcase className="h-3.5 w-3.5" />
             Projets disponibles
           </p>
           <p className="mt-1 text-2xl font-bold text-white tabular-nums">
             {loadingOpenProjects ? "…" : openProjects.length}
           </p>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-          <p className="text-[11px] uppercase tracking-wider text-gray-500">
+        <div className="rounded-2xl border border-amber-500/20 bg-amber-950/20 p-4">
+          <p className="text-[11px] uppercase tracking-wider text-amber-200/80 flex items-center gap-2">
+            <ClipboardList className="h-3.5 w-3.5" />
             Candidatures
           </p>
           <p className="mt-1 text-2xl font-bold text-white tabular-nums">
             {loadingApplications ? "…" : applications.length}
           </p>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-          <p className="text-[11px] uppercase tracking-wider text-gray-500">
+        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-950/20 p-4">
+          <p className="text-[11px] uppercase tracking-wider text-emerald-200/80 flex items-center gap-2">
+            <Hammer className="h-3.5 w-3.5" />
             Projets actifs
           </p>
           <p className="mt-1 text-2xl font-bold text-white tabular-nums">
@@ -353,7 +479,10 @@ export default function ArtisanSpacePage() {
                     <span>
                       Budget estimé :{" "}
                       <span className="text-gray-200">
-                        {project.budget_estime.toLocaleString("fr-FR")} TND
+                        {Number(project.budget_estime ?? 0).toLocaleString(
+                          "fr-FR"
+                        )}{" "}
+                        TND
                       </span>
                     </span>
                     <span className="inline-flex items-center gap-1">
@@ -429,7 +558,7 @@ export default function ArtisanSpacePage() {
                     className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm"
                   >
                     <p className="font-medium text-white line-clamp-1">
-                      {app.projet.titre}
+                      {app.projet?.titre ?? "Projet"}
                     </p>
                     <span
                       className={`shrink-0 inline-flex items-center rounded-full px-3 py-1 text-[11px] font-medium ${
@@ -538,6 +667,13 @@ export default function ArtisanSpacePage() {
                               Contacter l&apos;expert
                             </Link>
                           )}
+                          <Link
+                            href={`/gestion-chantier/${encodeURIComponent(project._id)}`}
+                            className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-[11px] font-medium text-emerald-100 hover:bg-emerald-500/20"
+                          >
+                            <Camera className="h-4 w-4" />
+                            Upload photos chantier
+                          </Link>
                         </div>
                       )}
 
@@ -565,10 +701,12 @@ export default function ArtisanSpacePage() {
       </div>
 
       {isBusy && (
-        <p className="text-center text-xs text-gray-600">
+        <p className="text-center text-xs text-gray-600 flex items-center justify-center gap-2">
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-500/80" />
           Chargement des données…
         </p>
       )}
+    </div>
     </div>
   );
 }

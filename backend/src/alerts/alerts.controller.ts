@@ -1,4 +1,12 @@
-import { Body, Controller, Headers, Param, Put, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Headers,
+  Param,
+  Put,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { AlertsService } from './alerts.service';
 import { AlertResponseDto } from './dto/alert-response.dto';
 
@@ -15,12 +23,22 @@ export class AlertsController {
    * @returns Alerte mise à jour
    */
   @Put(':alertId/response')
-  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }))
+  @UsePipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  )
   async respond(
     @Param('alertId') alertId: string,
     @Headers('x-user-id') userId: string | undefined,
     @Body() dto: AlertResponseDto,
   ) {
-    return this.alertsService.setWorkerResponse(alertId, String(userId || ''), dto);
+    return this.alertsService.setWorkerResponse(
+      alertId,
+      String(userId || ''),
+      dto,
+    );
   }
 }

@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { AlertsService } from '../alerts/alerts.service';
@@ -13,7 +17,8 @@ type ClaudeResult = { percent: number; reason: string; raw: string };
 export class SuiviService {
   constructor(
     @InjectModel(Suivi.name) private readonly suiviModel: Model<SuiviDocument>,
-    @InjectModel(Project.name) private readonly projectModel: Model<ProjectDocument>,
+    @InjectModel(Project.name)
+    private readonly projectModel: Model<ProjectDocument>,
     private readonly projectService: ProjectService,
     private readonly alertsService: AlertsService,
     private readonly notificationsService: NotificationsService,
@@ -39,7 +44,10 @@ export class SuiviService {
     const projectId = String(input?.projectId || '').trim();
     const workerId = String(input?.workerId || '').trim();
     const photoUrl = String(input?.photoUrl || '').trim();
-    const photoBase64 = typeof input?.photoBase64 === 'string' ? input.photoBase64.trim() : undefined;
+    const photoBase64 =
+      typeof input?.photoBase64 === 'string'
+        ? input.photoBase64.trim()
+        : undefined;
 
     if (!Types.ObjectId.isValid(projectId)) {
       throw new BadRequestException('projectId invalide');
@@ -59,7 +67,9 @@ export class SuiviService {
 
     // Index: total entrées existantes + 1
     const progressIndex =
-      (await this.suiviModel.countDocuments({ projectId: new Types.ObjectId(projectId) }).exec()) + 1;
+      (await this.suiviModel
+        .countDocuments({ projectId: new Types.ObjectId(projectId) })
+        .exec()) + 1;
 
     const ai = await this.analyzePhotoWithClaudeOrFallback({
       photoBase64,
@@ -69,7 +79,9 @@ export class SuiviService {
     const proposed = this.clampPercent(ai.percent);
     const progressPercent = proposed <= currentMax ? currentMax : proposed;
 
-    const uploadedAt = input?.uploadedAt ? new Date(input.uploadedAt as any) : new Date();
+    const uploadedAt = input?.uploadedAt
+      ? new Date(input.uploadedAt as any)
+      : new Date();
     if (Number.isNaN(uploadedAt.getTime())) {
       throw new BadRequestException('uploadedAt invalide');
     }
@@ -93,7 +105,10 @@ export class SuiviService {
     });
 
     // Mettre à jour l'avancement global du projet (logique existante)
-    await this.projectService.updateStatusAndProgress(projectId, progressPercent);
+    await this.projectService.updateStatusAndProgress(
+      projectId,
+      progressPercent,
+    );
 
     const advancement = proposed > currentMax;
     try {
@@ -143,7 +158,9 @@ export class SuiviService {
    * @param projectId ID du projet
    * @returns max actuel (0-100)
    */
-  private async getCurrentMaxProgressPercent(projectId: string): Promise<number> {
+  private async getCurrentMaxProgressPercent(
+    projectId: string,
+  ): Promise<number> {
     const pid = new Types.ObjectId(projectId);
     const row = await this.suiviModel
       .findOne({ projectId: pid })
@@ -188,7 +205,10 @@ export class SuiviService {
       return {
         percent,
         reason: 'manual fallback (no photoBase64 provided)',
-        raw: JSON.stringify({ percent, reason: 'manual fallback (no photoBase64 provided)' }),
+        raw: JSON.stringify({
+          percent,
+          reason: 'manual fallback (no photoBase64 provided)',
+        }),
       };
     }
 
@@ -247,7 +267,8 @@ export class SuiviService {
     try {
       const parsed = JSON.parse(cleaned);
       const percent = this.clampPercent(parsed?.percent);
-      const reason = typeof parsed?.reason === 'string' ? parsed.reason : 'AI analysis';
+      const reason =
+        typeof parsed?.reason === 'string' ? parsed.reason : 'AI analysis';
       return { percent, reason, raw: String(text) };
     } catch (e: any) {
       const percent = Math.min(this.clampPercent(args.currentMax + 5), 100);
@@ -285,4 +306,3 @@ export class SuiviService {
     return Math.max(0, Math.min(100, x));
   }
 }
-

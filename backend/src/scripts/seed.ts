@@ -38,7 +38,7 @@ async function seed() {
     // Créer des utilisateurs de test
     if (existingUsers.length === 0) {
       console.log('📝 Creating test users...');
-      
+
       // Clients de démo
       client = await userService.create({
         nom: 'Ahmed Ben Ali',
@@ -119,16 +119,17 @@ async function seed() {
       });
     } else {
       console.log('📋 Using existing users...');
-      const clients = existingUsers.filter(u => u.role === 'client');
+      const clients = existingUsers.filter((u) => u.role === 'client');
       client = clients[0] || existingUsers[0];
       client2 = clients[1];
       client3 = clients[2];
-      expert = existingUsers.find(u => u.role === 'expert') || existingUsers[0];
+      expert =
+        existingUsers.find((u) => u.role === 'expert') || existingUsers[0];
       artisan =
-        existingUsers.find(u => u.email === 'mohamed@example.com') ||
-        existingUsers.find(u => u.role === 'artisan');
-      manufacturer = existingUsers.find(u => u.role === 'manufacturer');
-      admin = existingUsers.find(u => u.role === 'admin');
+        existingUsers.find((u) => u.email === 'mohamed@example.com') ||
+        existingUsers.find((u) => u.role === 'artisan');
+      manufacturer = existingUsers.find((u) => u.role === 'manufacturer');
+      admin = existingUsers.find((u) => u.role === 'admin');
     }
 
     // Toujours utiliser Ahmed comme client principal des démos (login ahmed@example.com)
@@ -232,28 +233,32 @@ async function seed() {
       if (!existing) {
         await userService.create(ex as any);
       } else {
-        await userService.update((existing as any)._id?.toString?.() ?? (existing as any)._id, {
-          prenom: (ex as any).prenom,
-          nom: (ex as any).nom,
-          competences: (ex as any).competences,
-          isAvailable: (ex as any).isAvailable,
-          rating: (ex as any).rating,
-          experienceYears: (ex as any).experienceYears,
-        } as any);
+        await userService.update(
+          (existing as any)._id?.toString?.() ?? (existing as any)._id,
+          {
+            prenom: (ex as any).prenom,
+            nom: (ex as any).nom,
+            competences: (ex as any).competences,
+            isAvailable: (ex as any).isAvailable,
+            rating: (ex as any).rating,
+            experienceYears: (ex as any).experienceYears,
+          } as any,
+        );
       }
     }
 
     // Créer des projets de test
     if (existingProjects.length === 0) {
       console.log('\n📝 Creating test projects for different clients...');
-      
+
       const clientForProject1 = client;
       const clientForProject2 = client2 || client;
       const clientForProject3 = client3 || client;
 
       const project1 = await projectService.create({
         titre: 'Construction Villa Moderne',
-        description: 'Construction d\'une villa moderne de 250m² avec jardin et piscine. Projet incluant 4 chambres, salon, cuisine équipée, et terrasse panoramique.',
+        description:
+          "Construction d'une villa moderne de 250m² avec jardin et piscine. Projet incluant 4 chambres, salon, cuisine équipée, et terrasse panoramique.",
         date_debut: new Date('2024-01-15'),
         date_fin_prevue: new Date('2024-12-31'),
         budget_estime: 350000,
@@ -265,7 +270,8 @@ async function seed() {
 
       const project2 = await projectService.create({
         titre: 'Rénovation Appartement',
-        description: 'Rénovation complète d\'un appartement de 80m² incluant électricité, plomberie, carrelage et peinture.',
+        description:
+          "Rénovation complète d'un appartement de 80m² incluant électricité, plomberie, carrelage et peinture.",
         date_debut: new Date('2024-03-01'),
         date_fin_prevue: new Date('2024-06-30'),
         budget_estime: 45000,
@@ -276,7 +282,8 @@ async function seed() {
 
       const project3 = await projectService.create({
         titre: 'Extension Maison',
-        description: 'Extension de 50m² pour une maison existante avec nouvelle chambre et salle de bain.',
+        description:
+          'Extension de 50m² pour une maison existante avec nouvelle chambre et salle de bain.',
         date_debut: new Date('2023-06-01'),
         date_fin_prevue: new Date('2024-02-28'),
         budget_estime: 75000,
@@ -300,7 +307,8 @@ async function seed() {
 
       const project4 = await projectService.create({
         titre: 'Construction Immeuble Résidentiel',
-        description: 'Construction d\'un immeuble de 6 étages avec 12 appartements, parking souterrain et espaces communs.',
+        description:
+          "Construction d'un immeuble de 6 étages avec 12 appartements, parking souterrain et espaces communs.",
         date_debut: new Date('2024-02-01'),
         date_fin_prevue: new Date('2025-08-31'),
         budget_estime: 1200000,
@@ -312,7 +320,8 @@ async function seed() {
 
       const project5 = await projectService.create({
         titre: 'Aménagement Bureau',
-        description: 'Aménagement complet d\'un espace de bureau de 200m² avec cloisons, éclairage LED et mobilier sur mesure.',
+        description:
+          "Aménagement complet d'un espace de bureau de 200m² avec cloisons, éclairage LED et mobilier sur mesure.",
         date_debut: new Date('2024-04-15'),
         date_fin_prevue: new Date('2024-07-15'),
         budget_estime: 85000,
@@ -350,7 +359,11 @@ async function seed() {
             titre: title,
             description:
               'Projet de démo créé par le script de seed pour tester la fonctionnalité de candidature des artisans.',
-            date_debut: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7),
+            date_debut: new Date(
+              now.getFullYear(),
+              now.getMonth(),
+              now.getDate() + 7,
+            ),
             date_fin_prevue: new Date(
               now.getFullYear(),
               now.getMonth(),
@@ -369,18 +382,22 @@ async function seed() {
       const artisanFeedbackTarget = artisan;
       const hasCompletedForTarget =
         !!artisanFeedbackTarget &&
-        projects.some((p: any) =>
-          p?.statut === 'Terminé' &&
-          (p?.applications || []).some(
-            (a: any) =>
-              a?.statut === 'acceptee' &&
-              a?.artisanId?.toString?.() === artisanFeedbackTarget._id?.toString?.(),
-          ),
+        projects.some(
+          (p: any) =>
+            p?.statut === 'Terminé' &&
+            (p?.applications || []).some(
+              (a: any) =>
+                a?.statut === 'acceptee' &&
+                a?.artisanId?.toString?.() ===
+                  artisanFeedbackTarget._id?.toString?.(),
+            ),
         );
 
       if (!hasCompletedForTarget && client && expert && artisanFeedbackTarget) {
         const artisanFeedbackTitle = `Projet démo – Feedback artisan (terminé) – ${artisanFeedbackTarget.email}`;
-        console.log('\n📝 Creating demo completed project with artisan feedback...');
+        console.log(
+          '\n📝 Creating demo completed project with artisan feedback...',
+        );
         const created = await projectService.create({
           titre: artisanFeedbackTitle,
           description:
@@ -410,14 +427,15 @@ async function seed() {
     // Créer des suivis de projets
     console.log('\n📝 Creating project follow-ups...');
     const existingSuivis = await suiviProjectService.findAll();
-    
+
     if (existingSuivis.length === 0 && projects.length > 0) {
-      const projectEnCours = projects.find(p => p.statut === 'En cours');
+      const projectEnCours = projects.find((p) => p.statut === 'En cours');
       if (projectEnCours) {
         await suiviProjectService.create({
           projectId: new Types.ObjectId(projectEnCours._id),
           date_suivi: new Date('2024-02-15'),
-          description_progression: 'Fondations terminées, début des murs porteurs. Travaux conformes au planning.',
+          description_progression:
+            'Fondations terminées, début des murs porteurs. Travaux conformes au planning.',
           pourcentage_avancement: 30,
           cout_actuel: 105000,
           photo_url: 'https://example.com/photos/fondations.jpg',
@@ -426,7 +444,8 @@ async function seed() {
         await suiviProjectService.create({
           projectId: new Types.ObjectId(projectEnCours._id),
           date_suivi: new Date('2024-03-01'),
-          description_progression: 'Murs porteurs terminés, début de la charpente. Légère avance sur le planning.',
+          description_progression:
+            'Murs porteurs terminés, début de la charpente. Légère avance sur le planning.',
           pourcentage_avancement: 45,
           cout_actuel: 157500,
         });
@@ -436,13 +455,20 @@ async function seed() {
     }
 
     // Données démo supplémentaires (idempotent) — suivi photo STEP 1 + projet pour matching
-    console.log('\n📝 Ensuring bonus demo data (suivi photo STEP 1, projet matching)...');
+    console.log(
+      '\n📝 Ensuring bonus demo data (suivi photo STEP 1, projet matching)...',
+    );
     const DEMO_SUIVI_TITLE = 'Projet démo BMP – Suivi photo (STEP 1)';
-    const DEMO_MATCHING_TITLE = 'Projet démo – Matching IA (rénovation cuisine)';
+    const DEMO_MATCHING_TITLE =
+      'Projet démo – Matching IA (rénovation cuisine)';
 
     const allProjList = await projectService.findAll(500);
-    let demoSuiviProject = allProjList.find((p: any) => p.titre === DEMO_SUIVI_TITLE);
-    let demoMatchingProject = allProjList.find((p: any) => p.titre === DEMO_MATCHING_TITLE);
+    let demoSuiviProject = allProjList.find(
+      (p: any) => p.titre === DEMO_SUIVI_TITLE,
+    );
+    let demoMatchingProject = allProjList.find(
+      (p: any) => p.titre === DEMO_MATCHING_TITLE,
+    );
 
     if (client && expert && artisan) {
       if (!demoSuiviProject) {
@@ -479,7 +505,8 @@ async function seed() {
     // Suivis avec champs STEP 1 (photoUrl, progressPercent, progressIndex, workerId, aiAnalysis)
     if (demoSuiviProject && artisan) {
       const pid = new Types.ObjectId(
-        (demoSuiviProject as any)._id?.toString?.() ?? (demoSuiviProject as any)._id,
+        (demoSuiviProject as any)._id?.toString?.() ??
+          (demoSuiviProject as any)._id,
       );
       const marker = 'demo-seed-suivi-photo';
       const exists = await suiviProjectModel.countDocuments({
@@ -532,7 +559,10 @@ async function seed() {
             }),
           });
         }
-        console.log('✅ Bonus demo suivis created (STEP 1 fields):', rows.length);
+        console.log(
+          '✅ Bonus demo suivis created (STEP 1 fields):',
+          rows.length,
+        );
       } else {
         console.log('📋 Bonus demo suivis already present (skipped).');
       }
@@ -545,7 +575,9 @@ async function seed() {
     const ninetyDaysMs = 90 * 24 * 60 * 60 * 1000;
 
     const projListForAlert = await projectService.findAll(500);
-    let alertDemoProject = projListForAlert.find((p: any) => p.titre === ALERT_DEMO_TITLE);
+    let alertDemoProject = projListForAlert.find(
+      (p: any) => p.titre === ALERT_DEMO_TITLE,
+    );
 
     if (client && expert && artisan) {
       if (!alertDemoProject) {
@@ -561,10 +593,13 @@ async function seed() {
           clientId: new Types.ObjectId(client._id),
           expertId: new Types.ObjectId(expert._id),
         });
-        console.log('✅ Demo alert project created (avancement 12 %, fin dans ~2 j)');
+        console.log(
+          '✅ Demo alert project created (avancement 12 %, fin dans ~2 j)',
+        );
 
         const pid = new Types.ObjectId(
-          (alertDemoProject as any)._id?.toString?.() ?? (alertDemoProject as any)._id,
+          (alertDemoProject as any)._id?.toString?.() ??
+            (alertDemoProject as any)._id,
         );
         const wid = new Types.ObjectId(artisan._id);
         const totalMs =
@@ -580,10 +615,13 @@ async function seed() {
           100,
         );
         const daysRemaining =
-          (new Date(alertDemoProject.date_fin_prevue).getTime() - today.getTime()) /
+          (new Date(alertDemoProject.date_fin_prevue).getTime() -
+            today.getTime()) /
           (1000 * 60 * 60 * 24);
 
-        const existingAlert = await alertModel.countDocuments({ projectId: pid });
+        const existingAlert = await alertModel.countDocuments({
+          projectId: pid,
+        });
         if (existingAlert === 0) {
           await alertModel.create({
             projectId: pid,
@@ -594,14 +632,19 @@ async function seed() {
             daysRemaining: Math.round(daysRemaining * 10) / 10,
             status: 'pending',
           });
-          console.log('✅ Demo alert document created in collection `alerts` (STEP 2)');
+          console.log(
+            '✅ Demo alert document created in collection `alerts` (STEP 2)',
+          );
         }
       } else {
         const pid = new Types.ObjectId(
-          (alertDemoProject as any)._id?.toString?.() ?? (alertDemoProject as any)._id,
+          (alertDemoProject as any)._id?.toString?.() ??
+            (alertDemoProject as any)._id,
         );
         const wid = new Types.ObjectId(artisan._id);
-        const existingAlert = await alertModel.countDocuments({ projectId: pid });
+        const existingAlert = await alertModel.countDocuments({
+          projectId: pid,
+        });
         if (existingAlert === 0) {
           const totalMs =
             new Date(alertDemoProject.date_fin_prevue).getTime() -
@@ -609,27 +652,32 @@ async function seed() {
           const totalDays = Math.max(totalMs / (1000 * 60 * 60 * 24), 1);
           const today = new Date();
           const daysElapsed =
-            (today.getTime() - new Date(alertDemoProject.date_debut).getTime()) /
+            (today.getTime() -
+              new Date(alertDemoProject.date_debut).getTime()) /
             (1000 * 60 * 60 * 24);
           const expectedProgress = Math.min(
             Math.max((daysElapsed / totalDays) * 100, 0),
             100,
           );
           const daysRemaining =
-            (new Date(alertDemoProject.date_fin_prevue).getTime() - today.getTime()) /
+            (new Date(alertDemoProject.date_fin_prevue).getTime() -
+              today.getTime()) /
             (1000 * 60 * 60 * 24);
           await alertModel.create({
             projectId: pid,
             workerId: wid,
             alertDate: new Date(),
             expectedProgress: Math.round(expectedProgress * 10) / 10,
-            realProgress: typeof alertDemoProject.avancement_global === 'number'
-              ? alertDemoProject.avancement_global
-              : 12,
+            realProgress:
+              typeof alertDemoProject.avancement_global === 'number'
+                ? alertDemoProject.avancement_global
+                : 12,
             daysRemaining: Math.round(daysRemaining * 10) / 10,
             status: 'pending',
           });
-          console.log('✅ Demo alert document created in collection `alerts` (STEP 2)');
+          console.log(
+            '✅ Demo alert document created in collection `alerts` (STEP 2)',
+          );
         }
       }
     }
@@ -637,7 +685,7 @@ async function seed() {
     // Créer des devis
     console.log('\n📝 Creating quotes (devis)...');
     const existingDevis = await devisService.findAll();
-    
+
     if (existingDevis.length === 0 && projects.length > 0) {
       const project1 = projects[0];
       const devis1 = await devisService.create({
@@ -677,11 +725,12 @@ async function seed() {
     // Créer des produits marketplace
     console.log('\n📝 Creating marketplace products...');
     const existingProduits = await marketplaceService.findAllProduits();
-    
+
     if (existingProduits.length === 0 && manufacturer) {
       const produit1 = await marketplaceService.createProduit({
         nom: 'Ciment Portland CPJ45',
-        description: 'Ciment de qualité supérieure pour tous types de travaux de construction',
+        description:
+          'Ciment de qualité supérieure pour tous types de travaux de construction',
         prix: 12.5,
         stock: 500,
         image_url: 'https://example.com/products/ciment.jpg',
@@ -697,7 +746,7 @@ async function seed() {
         vendeurId: new Types.ObjectId(manufacturer._id),
       });
 
-      const produit3 = await marketplaceService.createProduit({
+      await marketplaceService.createProduit({
         nom: 'Tôles Galvanisées',
         description: 'Tôles en acier galvanisé pour toiture, épaisseur 0.5mm',
         prix: 25.0,
@@ -736,7 +785,9 @@ async function seed() {
     }
 
     // Lot dédié ahmed@example.com — tout visible dans l’espace client + API
-    console.log('\n📝 Ensuring Ahmed bundle (ahmed@example.com / password123)...');
+    console.log(
+      '\n📝 Ensuring Ahmed bundle (ahmed@example.com / password123)...',
+    );
     const ahmedUser = await userService.findByEmail('ahmed@example.com');
     const saraExpert = await userService.findByEmail('sara@example.com');
     const mohamedArtisan = await userService.findByEmail('mohamed@example.com');
@@ -859,7 +910,11 @@ async function seed() {
       console.log(
         '\n📝 Ensuring Mohamed artisan projects (0% start, accepted application — IA photo from scratch)...',
       );
-      const MOHAMED_IA_TEST_PROJECTS: Array<{ titre: string; description: string; budget_estime: number }> = [
+      const MOHAMED_IA_TEST_PROJECTS: Array<{
+        titre: string;
+        description: string;
+        budget_estime: number;
+      }> = [
         {
           titre: '[MOHAMED IA TEST] Chantier neuf – gros œuvre',
           description:
@@ -921,17 +976,25 @@ async function seed() {
             },
           ],
         });
-        console.log(`   ✅ [MOHAMED IA] Créé: ${spec.titre} (0 %, artisan accepté)`);
+        console.log(
+          `   ✅ [MOHAMED IA] Créé: ${spec.titre} (0 %, artisan accepté)`,
+        );
       }
     } else {
-      console.log('⚠️  Ahmed / Sara / Mohamed introuvable — lot [AHMED TEST] ignoré.');
+      console.log(
+        '⚠️  Ahmed / Sara / Mohamed introuvable — lot [AHMED TEST] ignoré.',
+      );
     }
 
     // --- Vitrine : photos, bios, artisans supplémentaires, projets terminés avec avis ---
-    console.log('\n📝 Ensuring vitrine (photos, bios, projets [VITRINE] avec avis)...');
+    console.log(
+      '\n📝 Ensuring vitrine (photos, bios, projets [VITRINE] avec avis)...',
+    );
     const allUsersV = await userService.findAll(300);
     const byEmail = (e: string) =>
-      allUsersV.find((u: any) => (u.email || '').toLowerCase() === e.toLowerCase());
+      allUsersV.find(
+        (u: any) => (u.email || '').toLowerCase() === e.toLowerCase(),
+      );
 
     const expertVitrineMeta: Record<
       string,
@@ -1087,7 +1150,9 @@ async function seed() {
 
     const allUsersFresh = await userService.findAll(400);
     const userByEmail = (e: string) =>
-      allUsersFresh.find((u: any) => (u.email || '').toLowerCase() === e.toLowerCase());
+      allUsersFresh.find(
+        (u: any) => (u.email || '').toLowerCase() === e.toLowerCase(),
+      );
 
     const clientV = userByEmail('ahmed@example.com') || client;
     const projVitrine = await projectService.findAll(800);
@@ -1189,8 +1254,7 @@ async function seed() {
       },
       {
         titre: '[VITRINE] Terrasse bois — Hammamet',
-        description:
-          'Structure bois exotique, drainage et garde-corps inox.',
+        description: 'Structure bois exotique, drainage et garde-corps inox.',
         expertEmail: 'expert.reno@bmp.tn',
         artisanEmail: 'artisan.menuiserie@bmp.tn',
         clientComment:
@@ -1217,8 +1281,7 @@ async function seed() {
           'Nettoyage, fissures, enduit et peinture façade sur 3 niveaux.',
         expertEmail: 'expert.peinture@bmp.tn',
         artisanEmail: 'artisan.peinture@bmp.tn',
-        clientComment:
-          'Façade comme neuve. Échafaudage géré sans incident.',
+        clientComment: 'Façade comme neuve. Échafaudage géré sans incident.',
         clientRating: 5,
         expertRating: 4,
         artisanRating: 5,
@@ -1237,8 +1300,7 @@ async function seed() {
       },
       {
         titre: '[VITRINE] Rénovation loft — Tunis',
-        description:
-          'Ouverture des volumes, IPN, verrière et chape fluide.',
+        description: 'Ouverture des volumes, IPN, verrière et chape fluide.',
         expertEmail: 'expert.structure@bmp.tn',
         artisanEmail: 'mohamed@example.com',
         clientComment:
@@ -1273,8 +1335,7 @@ async function seed() {
       },
       {
         titre: '[VITRINE] Réfection plomberie — Appartement',
-        description:
-          'Remplacement colonnes montantes, salle d’eau et cuisine.',
+        description: 'Remplacement colonnes montantes, salle d’eau et cuisine.',
         expertEmail: 'expert.plomberie@bmp.tn',
         artisanEmail: 'artisan.carrelage@bmp.tn',
         clientComment:
@@ -1473,7 +1534,8 @@ async function seed() {
           vitrinePhotosApresPool[(vi + 9) % np],
         ],
         expertComment: vitrineExpertComments[vi % vitrineExpertComments.length],
-        artisanComment: vitrineArtisanComments[vi % vitrineArtisanComments.length],
+        artisanComment:
+          vitrineArtisanComments[vi % vitrineArtisanComments.length],
         showcaseReviews: [
           vitrineShowcaseReviewsPool[(vi * 3) % pr],
           vitrineShowcaseReviewsPool[(vi * 3 + 1) % pr],
@@ -1553,9 +1615,9 @@ async function seed() {
       let vitrineSuivis = 0;
       for (let vi = 0; vi < vitrineProjectSpecs.length; vi++) {
         const spec = vitrineProjectSpecs[vi];
-        const proj = allVitrineForSuivi.find((x: any) => x.titre === spec.titre) as
-          | { _id?: Types.ObjectId }
-          | undefined;
+        const proj = allVitrineForSuivi.find(
+          (x: any) => x.titre === spec.titre,
+        ) as { _id?: Types.ObjectId } | undefined;
         if (!proj?._id) continue;
         const pid = new Types.ObjectId(String(proj._id));
         const n = await suiviProjectModel.countDocuments({
@@ -1582,7 +1644,9 @@ async function seed() {
             pourcentage_avancement: pcts[si],
             cout_actuel: 22000 + vi * 800 + si * 4500,
             photoUrl:
-              vitrineChantierPhotoPool[(vi + si) % vitrineChantierPhotoPool.length],
+              vitrineChantierPhotoPool[
+                (vi + si) % vitrineChantierPhotoPool.length
+              ],
           } as any);
         }
         vitrineSuivis++;
@@ -1604,7 +1668,9 @@ async function seed() {
     const finalCommandes = await marketplaceService.findAllCommandes();
     const finalAlerts = await alertModel.countDocuments();
 
-    console.log(`   👥 Users: ${finalUsers.length} (${finalUsers.filter(u => u.role === 'client').length} clients, ${finalUsers.filter(u => u.role === 'expert').length} experts, ${finalUsers.filter(u => u.role === 'artisan').length} artisans)`);
+    console.log(
+      `   👥 Users: ${finalUsers.length} (${finalUsers.filter((u) => u.role === 'client').length} clients, ${finalUsers.filter((u) => u.role === 'expert').length} experts, ${finalUsers.filter((u) => u.role === 'artisan').length} artisans)`,
+    );
     console.log(`   🏗️  Projects: ${finalProjects.length}`);
     console.log(`   📈 Project Follow-ups: ${finalSuivis.length}`);
     console.log(`   🚨 Alerts (STEP 2): ${finalAlerts}`);

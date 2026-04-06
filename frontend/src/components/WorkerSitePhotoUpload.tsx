@@ -3,6 +3,8 @@
 import { useCallback, useRef, useState } from "react";
 import { Camera, Loader2, Send, ImagePlus } from "lucide-react";
 import { getApiBaseUrl } from "@/lib/api-base";
+import { FieldError, fieldTextareaClass } from "@/lib/form-ui";
+import { validateImageFile, validatePhotoComment } from "@/lib/validators";
 
 const DEFAULT_API = getApiBaseUrl();
 
@@ -44,14 +46,17 @@ export function WorkerSitePhotoUpload({
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [commentError, setCommentError] = useState<string | null>(null);
   const [result, setResult] = useState<UploadResult | null>(null);
 
   const pickFile = () => inputRef.current?.click();
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    setFile(f ?? null);
+    const f = e.target.files?.[0] ?? null;
+    setFile(f);
     setError(null);
+    setFileError(f ? validateImageFile(f) : null);
     setResult(null);
   };
 
@@ -70,10 +75,14 @@ export function WorkerSitePhotoUpload({
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file) {
-      setError("Choisissez une image.");
-      return;
-    }
+    setFileError(null);
+    setCommentError(null);
+    const fe = validateImageFile(file);
+    const ce = validatePhotoComment(comment);
+    if (fe) setFileError(fe);
+    if (ce) setCommentError(ce);
+    if (fe || ce) return;
+    if (!file) return;
 
     setLoading(true);
     setError(null);
@@ -152,6 +161,7 @@ export function WorkerSitePhotoUpload({
 
   return (
     <form
+      noValidate
       onSubmit={submit}
       className="rounded-2xl border border-white/10 bg-black/30 p-4 space-y-4"
     >
@@ -192,19 +202,28 @@ export function WorkerSitePhotoUpload({
           </span>
         )}
       </div>
+      <FieldError id="err-ws-file" message={fileError ?? undefined} />
 
       <div>
-        <label className="block text-[11px] text-gray-400 mb-1">
+        <label htmlFor="ws-comment" className="block text-[11px] text-gray-400 mb-1">
           Commentaire (optionnel)
         </label>
         <textarea
+          id="ws-comment"
           value={comment}
-          onChange={(e) => setComment(e.target.value)}
+          onChange={(e) => {
+            setComment(e.target.value);
+            setCommentError(null);
+          }}
           rows={2}
+          maxLength={2000}
           disabled={loading}
           placeholder="Ex. : dalle coulée zone salon…"
-          className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-amber-500/40 disabled:opacity-50"
+          aria-invalid={!!commentError}
+          aria-describedby={commentError ? "err-ws-comment" : undefined}
+          className={fieldTextareaClass(!!commentError, loading)}
         />
+        <FieldError id="err-ws-comment" message={commentError ?? undefined} />
       </div>
 
       <button

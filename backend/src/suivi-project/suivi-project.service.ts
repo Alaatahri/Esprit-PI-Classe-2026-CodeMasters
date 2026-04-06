@@ -1,7 +1,10 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { SuiviProject, SuiviProjectDocument } from './schemas/suivi-project.schema';
+import {
+  SuiviProject,
+  SuiviProjectDocument,
+} from './schemas/suivi-project.schema';
 import { ProjectService } from '../project/project.service';
 
 @Injectable()
@@ -14,14 +17,18 @@ export class SuiviProjectService {
   ) {}
 
   async create(createSuiviDto: Partial<SuiviProject>): Promise<SuiviProject> {
-    const createdSuivi = new this.suiviProjectModel(createSuiviDto);
+    const payload: Partial<SuiviProject> = { ...createSuiviDto };
+    if (!payload.date_suivi) {
+      payload.date_suivi = new Date();
+    }
+    const createdSuivi = new this.suiviProjectModel(payload);
     const savedSuivi = await createdSuivi.save();
 
     // Automatically update Project status and progress
-    const projectId = createSuiviDto.projectId.toString();
+    const projectId = payload.projectId!.toString();
     await this.projectService.updateStatusAndProgress(
       projectId,
-      createSuiviDto.pourcentage_avancement
+      payload.pourcentage_avancement!,
     );
 
     return savedSuivi;
@@ -56,19 +63,20 @@ export class SuiviProjectService {
     return this.suiviProjectModel.findById(id).exec();
   }
 
-  async update(id: string, updateSuiviDto: Partial<SuiviProject>): Promise<SuiviProject> {
-    const updatedSuivi = await this.suiviProjectModel.findByIdAndUpdate(
-      id,
-      updateSuiviDto,
-      { new: true }
-    ).exec();
+  async update(
+    id: string,
+    updateSuiviDto: Partial<SuiviProject>,
+  ): Promise<SuiviProject> {
+    const updatedSuivi = await this.suiviProjectModel
+      .findByIdAndUpdate(id, updateSuiviDto, { new: true })
+      .exec();
 
     // Update project if pourcentage_avancement changed
     if (updateSuiviDto.pourcentage_avancement !== undefined && updatedSuivi) {
       const projectId = updatedSuivi.projectId.toString();
       await this.projectService.updateStatusAndProgress(
         projectId,
-        updateSuiviDto.pourcentage_avancement
+        updateSuiviDto.pourcentage_avancement,
       );
     }
 
