@@ -1,13 +1,23 @@
-import { Controller, Get, Post, Body, Put, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Put,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { UserService } from './user.service';
-import { User } from './schemas/user.schema';
+import { CreateUserDto } from './dto/create-user.dto';
+import { LoginDto } from './dto/login.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
-  create(@Body() createUserDto: Partial<User>) {
+  create(@Body() createUserDto: CreateUserDto) {
     return this.userService.create(createUserDto);
   }
 
@@ -27,13 +37,10 @@ export class UserController {
   }
 
   @Post('login')
-  async login(@Body() loginDto: { email?: string; mot_de_passe?: string }) {
+  async login(@Body() loginDto: LoginDto) {
     try {
-      const email = loginDto?.email?.trim();
-      const mot_de_passe = loginDto?.mot_de_passe;
-      if (!email || !mot_de_passe) {
-        return { success: false, message: 'Email et mot de passe requis' };
-      }
+      const email = loginDto.email.trim();
+      const mot_de_passe = loginDto.mot_de_passe;
       const user = await this.userService.login(email, mot_de_passe);
       if (!user) {
         return { success: false, message: 'Email ou mot de passe incorrect' };
@@ -65,7 +72,7 @@ export class UserController {
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: Partial<User>) {
+  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.update(id, updateUserDto);
   }
 

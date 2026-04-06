@@ -101,9 +101,7 @@ export class NotificationsService {
 
     const clientId = String(payload.clientId);
     const workerId = String(payload.workerId);
-    const recipientIds = Array.from(
-      new Set([...adminIds, clientId, workerId]),
-    );
+    const recipientIds = Array.from(new Set([...adminIds, clientId, workerId]));
 
     const roles = await this.roleByIdMap();
     const type = 'delay_alert';

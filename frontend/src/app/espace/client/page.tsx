@@ -137,7 +137,7 @@ export default function ClientSpacePage() {
         }
         const data = (await res.json()) as Project[];
         setProjects(
-          data.filter((p) => p.clientId === user._id).sort((a, b) => {
+          data.filter((p) => String(p.clientId) === String(user._id)).sort((a, b) => {
             const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
             const db = b.createdAt ? new Date(b.createdAt).getTime() : 0;
             return db - da;

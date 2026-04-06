@@ -1,6 +1,10 @@
+import 'dotenv/config';
+
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { json, urlencoded } from 'express';
+import { join } from 'path';
 import { AppModule } from './app.module';
 
 /** Limite corps JSON (photos base64 sur /api/suivi/photo) — évite 413 Payload Too Large */
@@ -13,6 +17,12 @@ async function bootstrap() {
 
   app.use(json({ limit: BODY_LIMIT }));
   app.use(urlencoded({ extended: true, limit: BODY_LIMIT }));
+
+  // Static files (uploaded images): served at http://localhost:3001/uploads/<file>
+  app.useStaticAssets(join(process.cwd(), 'public', 'uploads'), {
+    prefix: '/uploads',
+    index: false,
+  });
 
   // Enable CORS for frontend (vitrine) and admin (backend-react)
   app.enableCors({
@@ -27,6 +37,15 @@ async function bootstrap() {
 
   // Global prefix for all routes
   app.setGlobalPrefix('api');
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+    }),
+  );
 
   await app.listen(3001);
   console.log('🚀 Backend server running on http://localhost:3001');

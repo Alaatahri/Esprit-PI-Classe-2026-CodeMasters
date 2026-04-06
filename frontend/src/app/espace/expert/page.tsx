@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getStoredUser, type BMPUser } from "@/lib/auth";
@@ -14,8 +14,16 @@ import {
   CheckCircle2,
   Clock,
   XCircle,
+  Sparkles,
+  ArrowRight,
+  LayoutGrid,
+  Inbox,
+  Loader2,
+  UserCircle,
 } from "lucide-react";
 import { getApiBaseUrl } from "@/lib/api-base";
+import { refId } from "@/lib/project-refs";
+import { readJsonSafe } from "@/lib/read-json-safe";
 
 const API_URL = getApiBaseUrl();
 
@@ -54,8 +62,28 @@ type ExpertProject = {
   date_debut?: string;
   date_fin_prevue?: string;
   avancement_global?: number;
+  requestStatus?: string;
   applications?: ArtisanApplication[];
 };
+
+/** Recrutement artisan : désactivé une fois le dossier engagé (contrat / exécution). */
+function projectAllowsArtisanRecruitment(p: ExpertProject): boolean {
+  if (p.statut === "Terminé") return false;
+  const rs = p.requestStatus;
+  if (
+    rs &&
+    [
+      "contract_pending_signatures",
+      "active",
+      "completed",
+      "cancelled",
+      "rejected",
+    ].includes(rs)
+  ) {
+    return false;
+  }
+  return true;
+}
 
 const exampleArtisans: Artisan[] = [
   {
@@ -195,6 +223,11 @@ export default function ExpertSpacePage() {
     applicationId: string,
     action: "accept" | "decline"
   ) => {
+    const u = getStoredUser();
+    if (!u || u.role !== "expert") {
+      setActionError("Session expert requise.");
+      return;
+    }
     setActionError(null);
     setActionLoadingId(applicationId);
     try {
@@ -204,14 +237,19 @@ export default function ExpertSpacePage() {
           : `${API_URL}/applications/${applicationId}/decline`;
       const res = await fetch(endpoint, {
         method: "POST",
+        headers: { "x-user-id": u._id },
       });
+      const data = await readJsonSafe<{
+        message?: string | string[];
+      }>(res);
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(
-          data.message ||
-            data.error ||
-            "Impossible de mettre à jour la candidature."
-        );
+        const raw = data?.message;
+        const msg = Array.isArray(raw)
+          ? raw.join(" ")
+          : typeof raw === "string"
+            ? raw
+            : "Impossible de mettre à jour la candidature.";
+        throw new Error(msg);
       }
       setProjects((prev) =>
         prev.map((project) => ({
@@ -254,27 +292,56 @@ export default function ExpertSpacePage() {
     return artisans.find((artisan) => artisan._id === rawArtisanId);
   };
 
+  /** Id utilisateur artisan pour la page publique /profil/[id] */
+  const artisanProfileId = (app: ArtisanApplication): string => {
+    const resolved = resolveArtisanForApplication(app);
+    const fromResolved =
+      resolved && "_id" in resolved && typeof resolved._id === "string"
+        ? resolved._id
+        : "";
+    const fromEmbedded =
+      typeof app.artisan?._id === "string" ? app.artisan._id : "";
+    return (
+      String(fromResolved || fromEmbedded || "").trim() ||
+      refId(app.artisanId)
+    );
+  };
+
+  const pendingApplicationsCount = useMemo(() => {
+    return projects.reduce((acc, p) => {
+      const n = (p.applications ?? []).filter((a) => a.statut === "en_attente").length;
+      return acc + n;
+    }, 0);
+  }, [projects]);
+
   if (!loadingUser && !user) {
     return (
-      <div className="max-w-2xl mx-auto text-center space-y-6">
-        <h1 className="text-2xl font-bold text-white">Espace expert</h1>
-        <p className="text-gray-400">
-          Connectez-vous en tant qu&apos;expert pour voir la liste des
-          artisans disponibles.
-        </p>
-        <button
-          onClick={() => router.push("/login")}
-          className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-gray-900 font-semibold shadow-lg shadow-amber-500/30"
-        >
-          Aller à la connexion
-        </button>
+      <div className="mx-auto max-w-2xl px-4 py-14 text-center space-y-6">
+        <div className="mx-auto w-fit rounded-3xl border border-amber-500/20 bg-gradient-to-br from-amber-950/40 to-gray-950/80 p-6 shadow-2xl shadow-black/50">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/15 border border-amber-500/35">
+            <Users className="h-7 w-7 text-amber-300" />
+          </div>
+          <h1 className="text-2xl font-bold text-white">Espace expert</h1>
+          <p className="mt-2 text-sm text-gray-400">
+            Connectez-vous pour gérer les artisans, les candidatures et vos projets
+            clients.
+          </p>
+          <button
+            type="button"
+            onClick={() => router.push("/login")}
+            className="mt-6 inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-400 px-6 py-3 text-sm font-semibold text-gray-900 shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transition"
+          >
+            Aller à la connexion
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
       </div>
     );
   }
 
   if (!loadingUser && user && user.role !== "expert") {
     return (
-      <div className="max-w-2xl mx-auto text-center space-y-4">
+      <div className="mx-auto max-w-2xl px-4 py-12 text-center space-y-4">
         <h1 className="text-2xl font-bold text-white">
           Espace réservé aux experts
         </h1>
@@ -290,58 +357,144 @@ export default function ExpertSpacePage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center border border-amber-500/40">
-            <Users className="w-5 h-5 text-amber-300" />
+    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950">
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-8 sm:py-10 space-y-8">
+        {/* Hero */}
+        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-amber-950/30 via-gray-950/70 to-gray-950 p-6 sm:p-8">
+          <div className="absolute -top-16 -right-16 h-56 w-56 rounded-full bg-amber-500/10 blur-3xl" />
+          <div className="absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-sky-500/10 blur-3xl" />
+          <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-start gap-4">
+              <div className="h-12 w-12 rounded-2xl bg-amber-500/15 border border-amber-500/35 flex items-center justify-center shrink-0">
+                <Users className="h-6 w-6 text-amber-300" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-300/80 inline-flex items-center gap-2">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Espace expert
+                </p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-white leading-tight">
+                  Artisans, projets et candidatures
+                </h1>
+                <p className="text-sm text-gray-400 max-w-2xl">
+                  Affectez les bons profils aux chantiers, suivez les dossiers et
+                  coordonnez avec les clients.
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2 sm:gap-3">
+              <Link
+                href="/expert/nouveaux-projets"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-500/35 bg-amber-500/10 px-4 py-2.5 text-sm font-medium text-amber-100 hover:bg-amber-500/20 transition"
+              >
+                <Inbox className="h-4 w-4 shrink-0" />
+                Invitations
+              </Link>
+              <Link
+                href="/expert/tous-les-projets"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-black/30 px-4 py-2.5 text-sm font-medium text-gray-200 hover:bg-white/10 transition"
+              >
+                <LayoutGrid className="h-4 w-4 shrink-0" />
+                Tous les projets
+              </Link>
+              <Link
+                href="/expert/projets"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-medium text-white/90 hover:bg-white/10 transition"
+              >
+                Mes projets
+              </Link>
+              <Link
+                href="/messages"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-400 px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-lg shadow-amber-500/20 hover:opacity-95 transition"
+              >
+                Messages
+              </Link>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-semibold text-white">Espace expert</h1>
-            <p className="text-xs text-gray-400">
-              Visualisez les artisans, les projets ouverts et affectez les
-              bons profils aux bons chantiers.
+        </div>
+
+        {error && (
+          <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-4 text-sm text-red-200">
+            {error}
+          </div>
+        )}
+        {actionError && (
+          <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-4 text-sm text-red-200">
+            {actionError}
+          </div>
+        )}
+
+        {/* Stats */}
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded-2xl border border-amber-500/20 bg-amber-950/20 p-4">
+            <p className="text-[11px] uppercase tracking-wider text-amber-200/70 flex items-center gap-2">
+              <Users className="h-3.5 w-3.5" />
+              Artisans
+            </p>
+            <p className="mt-1 text-2xl font-bold text-white tabular-nums">
+              {loadingArtisans ? "…" : artisans.length}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+            <p className="text-[11px] uppercase tracking-wider text-gray-500 flex items-center gap-2">
+              <ClipboardList className="h-3.5 w-3.5 text-amber-400/80" />
+              Mes projets
+            </p>
+            <p className="mt-1 text-2xl font-bold text-white tabular-nums">
+              {loadingProjects ? "…" : projects.length}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-sky-500/20 bg-sky-950/20 p-4">
+            <p className="text-[11px] uppercase tracking-wider text-sky-200/70 flex items-center gap-2">
+              <Clock className="h-3.5 w-3.5" />
+              Candidatures en attente
+            </p>
+            <p className="mt-1 text-2xl font-bold text-white tabular-nums">
+              {loadingProjects ? "…" : pendingApplicationsCount}
             </p>
           </div>
         </div>
-      </div>
 
-      {error && (
-        <div className="rounded-xl border border-red-500/40 bg-red-500/15 px-4 py-3 text-sm text-red-200">
-          {error}
-        </div>
-      )}
-      {actionError && (
-        <div className="rounded-xl border border-red-500/40 bg-red-500/15 px-4 py-3 text-sm text-red-200">
-          {actionError}
-        </div>
-      )}
+        <p className="text-xs text-gray-500 max-w-3xl">
+          Les artisans postulent depuis leur espace. Pour chaque projet dont vous êtes
+          l&apos;expert assigné, vous pouvez accepter ou refuser leurs candidatures ci-dessous
+          (identification sécurisée côté serveur).
+        </p>
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         {/* Colonne artisans */}
-        <section className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-amber-300" />
-            <h2 className="text-sm font-semibold text-white">
-              Artisans disponibles
-            </h2>
+        <section className="rounded-3xl border border-white/10 bg-white/[0.03] overflow-hidden flex flex-col min-h-[320px]">
+          <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-white/10">
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-amber-300" />
+              <h2 className="text-sm font-semibold text-white">
+                Artisans disponibles
+              </h2>
+            </div>
+            {loadingArtisans && (
+              <Loader2 className="w-4 h-4 animate-spin text-amber-400/80" />
+            )}
           </div>
 
           {loadingArtisans ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="w-8 h-8 rounded-full border-2 border-amber-500/40 border-t-amber-400 animate-spin" />
+            <div className="p-5 space-y-3 flex-1">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-24 rounded-2xl border border-white/10 bg-black/20 animate-pulse"
+                />
+              ))}
             </div>
           ) : artisans.length === 0 ? (
-            <p className="text-sm text-gray-400">
-              Aucun artisan trouvé pour le moment. Une fois les artisans
-              inscrits, vous les verrez ici.
-            </p>
+            <div className="p-6 text-sm text-gray-400 flex-1">
+              Aucun artisan pour le moment. Les profils inscrits apparaîtront ici.
+            </div>
           ) : (
-            <div className="space-y-3 max-h-[420px] overflow-auto pr-1">
+            <div className="space-y-3 max-h-[420px] overflow-y-auto p-5 pr-2 scrollbar-bmp">
               {artisans.map((artisan) => (
                 <div
                   key={artisan._id}
-                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm space-y-2"
+                  className="rounded-2xl border border-white/10 bg-black/20 px-4 py-4 text-sm space-y-2 hover:border-amber-500/25 transition"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div>
@@ -397,29 +550,39 @@ export default function ExpertSpacePage() {
         </section>
 
         {/* Colonne projets & candidatures */}
-        <section className="space-y-4">
-          <div className="flex items-center gap-2">
-            <ClipboardList className="w-5 h-5 text-amber-300" />
-            <h2 className="text-sm font-semibold text-white">
-              Projets des clients & candidatures
-            </h2>
+        <section className="rounded-3xl border border-white/10 bg-white/[0.03] overflow-hidden flex flex-col min-h-[360px]">
+          <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-white/10">
+            <div className="flex items-center gap-2">
+              <ClipboardList className="w-5 h-5 text-amber-300" />
+              <h2 className="text-sm font-semibold text-white">
+                Projets & candidatures
+              </h2>
+            </div>
+            {loadingProjects && (
+              <Loader2 className="w-4 h-4 animate-spin text-amber-400/80" />
+            )}
           </div>
 
           {loadingProjects ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="w-8 h-8 rounded-full border-2 border-amber-500/40 border-t-amber-400 animate-spin" />
+            <div className="p-5 space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-32 rounded-2xl border border-white/10 bg-black/20 animate-pulse"
+                />
+              ))}
             </div>
           ) : projects.length === 0 ? (
-            <p className="text-sm text-gray-400">
-              Aucun projet ouvert avec des candidatures pour le moment. Les
-              projets éligibles apparaîtront ici.
-            </p>
+            <div className="p-6 text-sm text-gray-400">
+              Aucun projet chargé pour le moment. Les dossiers auxquels vous êtes
+              associé apparaîtront ici avec les candidatures artisans.
+            </div>
           ) : (
-            <div className="space-y-4 max-h-[520px] overflow-auto pr-1">
+            <div className="space-y-4 max-h-[560px] overflow-y-auto p-5 pr-2 scrollbar-bmp">
               {projects.map((project) => (
                 <div
                   key={project._id}
-                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm space-y-3"
+                  className="rounded-2xl border border-white/10 bg-black/20 px-4 py-4 text-sm space-y-3 hover:border-amber-500/20 transition"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div>
@@ -451,13 +614,19 @@ export default function ExpertSpacePage() {
 
                   <div className="flex flex-col sm:flex-row flex-wrap gap-2">
                     <Link
-                      href={`/expert/projects/${project._id}/photos`}
+                      href={`/expert/projects/${encodeURIComponent(project._id)}?from=projets`}
+                      className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500/90 to-yellow-500/80 px-3 py-2 text-xs font-semibold text-gray-950 hover:opacity-95 transition"
+                    >
+                      Dossier projet
+                    </Link>
+                    <Link
+                      href={`/expert/projects/${encodeURIComponent(project._id)}/photos?from=projets`}
                       className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-200 hover:bg-emerald-500/20 transition"
                     >
                       Galerie avant / après
                     </Link>
                     <Link
-                      href={`/expert/projects/${project._id}/suivi-photo`}
+                      href={`/expert/projects/${encodeURIComponent(project._id)}/suivi-photo?from=projets`}
                       className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-200 hover:bg-amber-500/20 transition"
                     >
                       Suivi photo chantier
@@ -524,47 +693,62 @@ export default function ExpertSpacePage() {
                             app.artisan?.competences ||
                             [];
 
+                          const profileId = artisanProfileId(app);
+
                           return (
                             <div
                               key={app._id}
-                              className="flex items-center justify-between gap-3 rounded-xl bg-black/30 px-3 py-2 text-[11px]"
+                              className="rounded-xl border border-white/10 bg-black/30 px-3 py-3 text-[11px] space-y-2"
                             >
-                              <div className="space-y-0.5">
-                                <p className="font-medium text-white">
-                                  {artisanName}
-                                </p>
-                                <div className="flex items-center gap-2 text-gray-400">
-                                  {typeof artisanRating === "number" ? (
-                                    <span className="inline-flex items-center gap-1">
-                                      <Star className="w-3 h-3 text-amber-300 fill-amber-300" />
-                                      {artisanRating.toFixed(1)}
-                                    </span>
-                                  ) : null}
-                                  {artisanCompetences.length > 0 && (
-                                    <span className="line-clamp-1">
-                                      {artisanCompetences.join(", ")}
-                                    </span>
-                                  )}
+                              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                <div className="space-y-0.5 min-w-0">
+                                  <p className="font-medium text-white">
+                                    {artisanName}
+                                  </p>
+                                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-gray-400">
+                                    {typeof artisanRating === "number" ? (
+                                      <span className="inline-flex items-center gap-1">
+                                        <Star className="w-3 h-3 text-amber-300 fill-amber-300" />
+                                        {artisanRating.toFixed(1)}
+                                      </span>
+                                    ) : null}
+                                    {artisanCompetences.length > 0 && (
+                                      <span className="line-clamp-2">
+                                        {artisanCompetences.join(", ")}
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                              <div className="flex items-center gap-2">
                                 <span
-                                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-medium ${
+                                  className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-medium w-fit ${
                                     app.statut === "acceptee"
                                       ? "bg-emerald-500/15 text-emerald-300"
                                       : app.statut === "refusee"
-                                      ? "bg-red-500/15 text-red-300"
-                                      : "bg-amber-500/15 text-amber-300"
+                                        ? "bg-red-500/15 text-red-300"
+                                        : "bg-amber-500/15 text-amber-300"
                                   }`}
                                 >
                                   {app.statut === "en_attente"
                                     ? "En attente"
                                     : app.statut === "acceptee"
-                                    ? "Acceptée"
-                                    : "Refusée"}
+                                      ? "Acceptée"
+                                      : "Refusée"}
                                 </span>
-                                {app.statut === "en_attente" && (
-                                  <div className="flex items-center gap-1">
+                              </div>
+
+                              <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                                {profileId ? (
+                                  <Link
+                                    href={`/profil/${encodeURIComponent(profileId)}`}
+                                    className="inline-flex items-center gap-1.5 rounded-xl border border-sky-500/35 bg-sky-500/10 px-3 py-1.5 text-[11px] font-medium text-sky-100 hover:bg-sky-500/20 transition"
+                                  >
+                                    <UserCircle className="w-3.5 h-3.5" />
+                                    Voir le profil
+                                  </Link>
+                                ) : null}
+                                {app.statut === "en_attente" &&
+                                  projectAllowsArtisanRecruitment(project) && (
+                                  <>
                                     <button
                                       type="button"
                                       disabled={actionLoadingId === app._id}
@@ -574,10 +758,14 @@ export default function ExpertSpacePage() {
                                           "accept"
                                         )
                                       }
-                                      className="inline-flex items-center justify-center rounded-full bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 w-7 h-7 disabled:opacity-60"
-                                      title="Accepter"
+                                      className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-3 py-1.5 text-[11px] font-semibold text-gray-950 hover:opacity-95 disabled:opacity-60"
                                     >
-                                      <CheckCircle2 className="w-3.5 h-3.5" />
+                                      {actionLoadingId === app._id ? (
+                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                      ) : (
+                                        <CheckCircle2 className="w-3.5 h-3.5" />
+                                      )}
+                                      Accepter l&apos;artisan
                                     </button>
                                     <button
                                       type="button"
@@ -588,12 +776,12 @@ export default function ExpertSpacePage() {
                                           "decline"
                                         )
                                       }
-                                      className="inline-flex items-center justify-center rounded-full bg-red-500/15 text-red-300 hover:bg-red-500/25 w-7 h-7 disabled:opacity-60"
-                                      title="Refuser"
+                                      className="inline-flex items-center gap-1.5 rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-[11px] font-medium text-red-200 hover:bg-red-500/20 disabled:opacity-60"
                                     >
                                       <XCircle className="w-3.5 h-3.5" />
+                                      Refuser
                                     </button>
-                                  </div>
+                                  </>
                                 )}
                               </div>
                             </div>
@@ -607,6 +795,7 @@ export default function ExpertSpacePage() {
             </div>
           )}
         </section>
+        </div>
       </div>
     </div>
   );

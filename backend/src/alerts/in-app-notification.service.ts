@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { AppNotification, AppNotificationDocument } from './schemas/app-notification.schema';
+import {
+  AppNotification,
+  AppNotificationDocument,
+} from './schemas/app-notification.schema';
 
 export type CreateInAppNotificationInput = {
   recipientId: string;
@@ -32,9 +35,10 @@ export class InAppNotificationService {
       .map((e) => ({
         recipientId: new Types.ObjectId(e.recipientId),
         recipientRole: e.recipientRole,
-        projectId: e.projectId && Types.ObjectId.isValid(e.projectId)
-          ? new Types.ObjectId(e.projectId)
-          : undefined,
+        projectId:
+          e.projectId && Types.ObjectId.isValid(e.projectId)
+            ? new Types.ObjectId(e.projectId)
+            : undefined,
         message: e.message,
         type: e.type,
         read: false,
@@ -48,7 +52,10 @@ export class InAppNotificationService {
   /**
    * Liste les notifications d’un utilisateur, plus récentes en premier.
    */
-  async findByRecipient(recipientId: string, limit = 80): Promise<AppNotification[]> {
+  async findByRecipient(
+    recipientId: string,
+    limit = 80,
+  ): Promise<AppNotification[]> {
     if (!Types.ObjectId.isValid(recipientId)) return [];
     return this.model
       .find({ recipientId: new Types.ObjectId(recipientId) })
@@ -71,8 +78,14 @@ export class InAppNotificationService {
   /**
    * Marque une notification comme lue si elle appartient au destinataire.
    */
-  async markRead(notificationId: string, recipientId: string): Promise<{ ok: boolean }> {
-    if (!Types.ObjectId.isValid(notificationId) || !Types.ObjectId.isValid(recipientId)) {
+  async markRead(
+    notificationId: string,
+    recipientId: string,
+  ): Promise<{ ok: boolean }> {
+    if (
+      !Types.ObjectId.isValid(notificationId) ||
+      !Types.ObjectId.isValid(recipientId)
+    ) {
       throw new NotFoundException('Notification introuvable');
     }
     const res = await this.model

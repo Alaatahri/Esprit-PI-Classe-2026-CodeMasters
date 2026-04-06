@@ -23,11 +23,7 @@ import { NotificationsService } from './notifications.service';
     UserModule,
   ],
   controllers: [AlertsController, NotificationsController],
-  providers: [
-    AlertsService,
-    InAppNotificationService,
-    NotificationsService,
-  ],
+  providers: [AlertsService, InAppNotificationService, NotificationsService],
   exports: [AlertsService, NotificationsService, InAppNotificationService],
 })
 export class AlertsModule {}

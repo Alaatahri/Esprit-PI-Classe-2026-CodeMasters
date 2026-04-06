@@ -16,6 +16,8 @@ import {
   sendMessage,
   type MessageRow,
 } from "@/lib/messages-api";
+import { FieldError, fieldTextareaClass } from "@/lib/form-ui";
+import { validateMessageBody } from "@/lib/validators";
 
 const API_URL = getApiBaseUrl();
 
@@ -32,6 +34,7 @@ export default function MessageThreadPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [text, setText] = useState("");
+  const [textError, setTextError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
 
   const scrollBottom = () => {
@@ -80,7 +83,13 @@ export default function MessageThreadPage() {
   const onSend = async (e: React.FormEvent) => {
     e.preventDefault();
     const u = getStoredUser();
-    if (!u || !text.trim()) return;
+    if (!u) return;
+    setTextError(null);
+    const v = validateMessageBody(text);
+    if (v) {
+      setTextError(v);
+      return;
+    }
     setSending(true);
     setErr(null);
     try {
@@ -178,15 +187,25 @@ export default function MessageThreadPage() {
             <div ref={bottomRef} />
           </div>
 
-          <form onSubmit={onSend} className="flex gap-2 pt-2 border-t border-white/10">
-            <textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              rows={2}
-              placeholder="Votre message…"
-              disabled={sending}
-              className="flex-1 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-amber-500/40 resize-none"
-            />
+          <form noValidate onSubmit={onSend} className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-white/10">
+            <div className="flex-1 min-w-0">
+              <textarea
+                id="msg-body"
+                value={text}
+                onChange={(e) => {
+                  setText(e.target.value);
+                  setTextError(null);
+                }}
+                rows={2}
+                maxLength={8000}
+                placeholder="Votre message…"
+                disabled={sending}
+                aria-invalid={!!textError}
+                aria-describedby={textError ? "err-msg-body" : undefined}
+                className={fieldTextareaClass(!!textError, sending)}
+              />
+              <FieldError id="err-msg-body" message={textError ?? undefined} />
+            </div>
             <button
               type="submit"
               disabled={sending || !text.trim()}

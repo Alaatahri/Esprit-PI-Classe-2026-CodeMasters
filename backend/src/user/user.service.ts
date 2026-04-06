@@ -1,7 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { User, UserDocument, type WorkZone, type WorkZoneScope } from './schemas/user.schema';
+import {
+  User,
+  UserDocument,
+  type WorkZone,
+  type WorkZoneScope,
+} from './schemas/user.schema';
 import { ProjectService } from '../project/project.service';
 
 type SafeUser = Omit<User, 'mot_de_passe'>;
@@ -18,14 +23,16 @@ export class UserService {
 
     if (typeof dto.prenom === 'string') dto.prenom = dto.prenom.trim();
     if (typeof dto.nom === 'string') dto.nom = dto.nom.trim();
-    if (typeof dto.email === 'string') dto.email = dto.email.trim().toLowerCase();
+    if (typeof dto.email === 'string')
+      dto.email = dto.email.trim().toLowerCase();
     if (typeof dto.telephone === 'string') dto.telephone = dto.telephone.trim();
 
     if (dto.telephone === '') delete dto.telephone;
     if (dto.prenom === '') delete dto.prenom;
 
     if (dto.role === 'artisan') {
-      if (typeof dto.specialite === 'string') dto.specialite = dto.specialite.trim();
+      if (typeof dto.specialite === 'string')
+        dto.specialite = dto.specialite.trim();
       if (!dto.specialite) {
         throw new Error('Spécialité requise pour un artisan');
       }
@@ -33,11 +40,11 @@ export class UserService {
       if (dto.experience_annees !== undefined) {
         const n = Number(dto.experience_annees);
         if (!Number.isFinite(n) || n < 0) {
-          throw new Error("Expérience invalide (années)");
+          throw new Error('Expérience invalide (années)');
         }
         dto.experience_annees = Math.floor(n);
       } else {
-        throw new Error("Expérience requise pour un artisan");
+        throw new Error('Expérience requise pour un artisan');
       }
 
       dto.zones_travail = this.normalizeWorkZones(dto.zones_travail);
@@ -58,7 +65,12 @@ export class UserService {
   private normalizeWorkZones(raw: unknown): WorkZone[] {
     const arr: any[] = Array.isArray(raw) ? raw : raw ? [raw as any] : [];
 
-    const allowedScopes: WorkZoneScope[] = ['tn_all', 'tn_city', 'country', 'world'];
+    const allowedScopes: WorkZoneScope[] = [
+      'tn_all',
+      'tn_city',
+      'country',
+      'world',
+    ];
     const out: WorkZone[] = [];
 
     for (const item of arr) {
@@ -67,7 +79,8 @@ export class UserService {
       const scope = item.scope as WorkZoneScope;
       if (!scope || !allowedScopes.includes(scope)) continue;
 
-      const value = typeof item.value === 'string' ? item.value.trim() : undefined;
+      const value =
+        typeof item.value === 'string' ? item.value.trim() : undefined;
 
       // value requis pour tn_city et country
       if ((scope === 'tn_city' || scope === 'country') && !value) continue;
@@ -89,7 +102,12 @@ export class UserService {
   }
 
   async findAll(limit = 100): Promise<User[]> {
-    return this.userModel.find().sort({ createdAt: -1 }).limit(limit).lean().exec();
+    return this.userModel
+      .find()
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean()
+      .exec();
   }
 
   /** Artisans et experts pour la page d'accueil (sans mot de passe ni email). */
@@ -109,8 +127,15 @@ export class UserService {
     if (!Types.ObjectId.isValid(id)) {
       throw new NotFoundException('Profil introuvable');
     }
-    const user = await this.userModel.findById(id).select('-mot_de_passe -email').lean().exec();
-    if (!user || !['artisan', 'expert'].includes((user as { role?: string }).role || '')) {
+    const user = await this.userModel
+      .findById(id)
+      .select('-mot_de_passe -email')
+      .lean()
+      .exec();
+    if (
+      !user ||
+      !['artisan', 'expert'].includes((user as { role?: string }).role || '')
+    ) {
       throw new NotFoundException('Profil introuvable');
     }
 
@@ -159,7 +184,9 @@ export class UserService {
       }
     }
 
-    const completedCount = projects.filter((p) => p.statut === 'Terminé').length;
+    const completedCount = projects.filter(
+      (p) => p.statut === 'Terminé',
+    ).length;
 
     return {
       user,
@@ -194,10 +221,15 @@ export class UserService {
 
   async login(email: string, mot_de_passe: string): Promise<SafeUser | null> {
     try {
-      const user = await this.userModel.findOne({ email }).select('+mot_de_passe').lean().exec();
+      const user = await this.userModel
+        .findOne({ email })
+        .select('+mot_de_passe')
+        .lean()
+        .exec();
       if (!user) return null;
       if (user.mot_de_passe !== mot_de_passe) return null;
-      const { mot_de_passe: _password, ...rest } = user as any;
+      const rest = { ...(user as Record<string, unknown>) };
+      delete (rest as { mot_de_passe?: string }).mot_de_passe;
       return rest as SafeUser;
     } catch (error) {
       console.error('Login error:', error);
@@ -206,7 +238,9 @@ export class UserService {
   }
 
   async update(id: string, updateUserDto: Partial<User>): Promise<User> {
-    return this.userModel.findByIdAndUpdate(id, updateUserDto, { new: true }).exec();
+    return this.userModel
+      .findByIdAndUpdate(id, updateUserDto, { new: true })
+      .exec();
   }
 
   async remove(id: string): Promise<User> {

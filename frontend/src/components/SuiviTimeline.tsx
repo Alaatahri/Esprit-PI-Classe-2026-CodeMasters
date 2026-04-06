@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
 import { getApiBaseUrl } from "@/lib/api-base";
+import { readJsonSafe } from "@/lib/read-json-safe";
 
 const DEFAULT_API = getApiBaseUrl();
 
@@ -44,9 +45,18 @@ export function SuiviTimeline({
     try {
       const url = `${apiBaseUrl.replace(/\/$/, "")}/suivi-projects?projectId=${encodeURIComponent(projectId)}`;
       const res = await fetch(url, { cache: "no-store" });
-      if (!res.ok) throw new Error("Chargement impossible");
-      const data = (await res.json()) as SuiviEntry[];
-      const list = Array.isArray(data) ? data : [];
+      const parsed = await readJsonSafe<unknown>(res);
+      if (!res.ok) {
+        const msg =
+          parsed &&
+          typeof parsed === "object" &&
+          "message" in parsed &&
+          typeof (parsed as { message?: unknown }).message === "string"
+            ? (parsed as { message: string }).message
+            : "Chargement impossible";
+        throw new Error(msg);
+      }
+      const list = Array.isArray(parsed) ? (parsed as SuiviEntry[]) : [];
       list.sort((a, b) => {
         const ta = new Date(a.date_suivi || a.createdAt || 0).getTime();
         const tb = new Date(b.date_suivi || b.createdAt || 0).getTime();

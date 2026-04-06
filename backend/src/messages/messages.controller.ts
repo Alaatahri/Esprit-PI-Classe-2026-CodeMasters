@@ -7,6 +7,7 @@ import {
   Param,
   Post,
 } from '@nestjs/common';
+import { SendMessageDto } from './dto/send-message.dto';
 import { MessagesService } from './messages.service';
 
 @Controller('messages')
@@ -44,18 +45,11 @@ export class MessagesController {
   }
 
   @Post()
-  send(
-    @Headers('x-user-id') fromUserId: string,
-    @Body() body: { toUserId?: string; body?: string },
-  ) {
+  send(@Headers('x-user-id') fromUserId: string, @Body() body: SendMessageDto) {
     const from = fromUserId?.trim();
     if (!from) {
       throw new BadRequestException('En-tête x-user-id requis.');
     }
-    return this.messagesService.send(
-      from,
-      String(body?.toUserId ?? ''),
-      String(body?.body ?? ''),
-    );
+    return this.messagesService.send(from, body.toUserId, body.body);
   }
 }

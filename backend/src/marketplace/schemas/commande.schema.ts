@@ -11,10 +11,10 @@ export class Commande {
   @Prop({ required: true, min: 0 })
   montant_total: number;
 
-  @Prop({ 
+  @Prop({
     required: true,
     enum: ['En attente', 'Payée', 'Livrée'],
-    default: 'En attente'
+    default: 'En attente',
   })
   statut: string;
 

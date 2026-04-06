@@ -14,10 +14,10 @@ export class SuiviProject {
   @Prop({ required: true })
   description_progression: string;
 
-  @Prop({ 
+  @Prop({
     required: true,
     min: 0,
-    max: 100
+    max: 100,
   })
   pourcentage_avancement: number;
 

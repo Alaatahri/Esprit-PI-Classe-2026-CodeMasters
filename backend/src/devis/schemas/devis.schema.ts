@@ -17,10 +17,10 @@ export class Devis {
   @Prop({ required: true })
   montant_total: number;
 
-  @Prop({ 
+  @Prop({
     required: true,
     enum: ['En attente', 'Accepté', 'Refusé'],
-    default: 'En attente'
+    default: 'En attente',
   })
   statut: string;
 

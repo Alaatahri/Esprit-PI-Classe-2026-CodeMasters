@@ -9,6 +9,7 @@ import {
   Briefcase,
   ShoppingCart,
   FileText,
+  ClipboardList,
   Mail,
   LogOut,
   Menu,
@@ -17,6 +18,7 @@ import {
   Camera,
   MessageCircle,
   FolderKanban,
+  Layers,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -164,6 +166,9 @@ export default function GlobalNavbar() {
     if (href === "/expert/projets") {
       return pathname.startsWith("/expert/projets");
     }
+    if (href === "/expert/tous-les-projets") {
+      return pathname.startsWith("/expert/tous-les-projets");
+    }
     return pathname.startsWith(href);
   };
 
@@ -251,6 +256,20 @@ export default function GlobalNavbar() {
 
             {user && (
               <div className="flex items-center gap-1 ml-2 pl-2 border-l border-white/5 shrink-0">
+                {(normalizeRole(user.role) === "expert" ||
+                  user.role === "admin") && (
+                  <Link
+                    href="/expert/tous-les-projets"
+                    className={`inline-flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap shrink-0 ${
+                      isActive("/expert/tous-les-projets")
+                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                        : "text-gray-300/80 hover:text-amber-100 hover:bg-amber-500/10"
+                    }`}
+                  >
+                    <Layers className="w-4 h-4" />
+                    Tous les projets
+                  </Link>
+                )}
                 {normalizeRole(user.role) === "expert" && (
                   <Link
                     href="/expert/projets"
@@ -262,6 +281,19 @@ export default function GlobalNavbar() {
                   >
                     <FolderKanban className="w-4 h-4" />
                     Projets
+                  </Link>
+                )}
+                {normalizeRole(user.role) === "expert" && (
+                  <Link
+                    href="/expert/nouveaux-projets"
+                    className={`inline-flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap shrink-0 ${
+                      isActive("/expert/nouveaux-projets")
+                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                        : "text-gray-300/80 hover:text-amber-100 hover:bg-amber-500/10"
+                    }`}
+                  >
+                    <ClipboardList className="w-4 h-4" />
+                    Invitations
                   </Link>
                 )}
                 <Link
@@ -425,6 +457,22 @@ export default function GlobalNavbar() {
 
             {user && (
               <div className="mt-2 pt-2 border-t border-white/5 space-y-1">
+                {(normalizeRole(user.role) === "expert" ||
+                  user.role === "admin") && (
+                  <Link
+                    href="/expert/tous-les-projets"
+                    onClick={() => setMobileOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition ${
+                      isActive("/expert/tous-les-projets")
+                        ? "bg-amber-500/15 text-amber-200 border border-amber-500/20"
+                        : "text-gray-200/80 hover:bg-amber-500/10 hover:text-amber-100"
+                    }`}
+                  >
+                    <Layers className="w-5 h-5" />
+                    Tous les projets
+                    <ChevronRight className="w-4 h-4 ml-auto opacity-60" />
+                  </Link>
+                )}
                 {normalizeRole(user.role) === "expert" && (
                   <Link
                     href="/expert/projets"
@@ -437,6 +485,21 @@ export default function GlobalNavbar() {
                   >
                     <FolderKanban className="w-5 h-5" />
                     Mes projets
+                    <ChevronRight className="w-4 h-4 ml-auto opacity-60" />
+                  </Link>
+                )}
+                {normalizeRole(user.role) === "expert" && (
+                  <Link
+                    href="/expert/nouveaux-projets"
+                    onClick={() => setMobileOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition ${
+                      isActive("/expert/nouveaux-projets")
+                        ? "bg-amber-500/15 text-amber-200 border border-amber-500/20"
+                        : "text-gray-200/80 hover:bg-amber-500/10 hover:text-amber-100"
+                    }`}
+                  >
+                    <ClipboardList className="w-5 h-5" />
+                    Invitations
                     <ChevronRight className="w-4 h-4 ml-auto opacity-60" />
                   </Link>
                 )}

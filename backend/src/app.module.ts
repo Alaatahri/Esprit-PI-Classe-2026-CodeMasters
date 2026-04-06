@@ -11,6 +11,8 @@ import { MatchingModule } from './matching/matching.module';
 import { SuiviModule } from './suivi/suivi.module';
 import { AlertsModule } from './alerts/alerts.module';
 import { MessagesModule } from './messages/messages.module';
+import { ProposalsModule } from './proposals/proposals.module';
+import { ContractsModule } from './contracts/contracts.module';
 
 @Module({
   imports: [
@@ -30,6 +32,8 @@ import { MessagesModule } from './messages/messages.module';
     MarketplaceModule,
     MatchingModule,
     MessagesModule,
+    ProposalsModule,
+    ContractsModule,
   ],
   controllers: [AppController],
 })

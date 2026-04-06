@@ -1,4 +1,10 @@
-import { IsDateString, IsIn, IsOptional, IsString, MinLength } from 'class-validator';
+import {
+  IsDateString,
+  IsIn,
+  IsOptional,
+  IsString,
+  MinLength,
+} from 'class-validator';
 
 /**
  * Corps attendu pour `PUT /api/alerts/:alertId/response`.

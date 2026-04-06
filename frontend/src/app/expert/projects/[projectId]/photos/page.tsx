@@ -1,17 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import {
   ArrowLeft,
   Images,
   Loader2,
   Plus,
+  Upload,
   AlertCircle,
 } from "lucide-react";
 import { getStoredUser, normalizeRole, type BMPUser } from "@/lib/auth";
 import { getApiBaseUrl } from "@/lib/api-base";
+import { FieldError, fieldTextareaClass } from "@/lib/form-ui";
+import {
+  parseImageUrls,
+  validateExpertPhotoUrlsText,
+  validateImageFilesList,
+} from "@/lib/validators";
 
 const API_URL = getApiBaseUrl();
 
@@ -25,13 +32,6 @@ type Project = {
   photosApres?: string[];
 };
 
-function parseUrls(raw: string): string[] {
-  return raw
-    .split(/[\n,;]+/)
-    .map((s) => s.trim())
-    .filter((s) => /^https?:\/\//i.test(s));
-}
-
 function expertIdString(p: Project): string | null {
   const e = p.expertId;
   if (!e) return null;
@@ -42,7 +42,10 @@ function expertIdString(p: Project): string | null {
 export default function ExpertProjectPhotosPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const projectId = params?.projectId as string;
+  const fromQ = searchParams.get("from") ?? "projets";
+  const hubHref = `/expert/projects/${encodeURIComponent(projectId)}?from=${encodeURIComponent(fromQ)}`;
 
   const [user, setUser] = useState<BMPUser | null>(null);
   const [project, setProject] = useState<Project | null>(null);
@@ -53,7 +56,14 @@ export default function ExpertProjectPhotosPage() {
   const [urlsText, setUrlsText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [urlsInputError, setUrlsInputError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  const [uploadFiles, setUploadFiles] = useState<FileList | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [filesInputError, setFilesInputError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     setUser(getStoredUser());
@@ -116,13 +126,13 @@ export default function ExpertProjectPhotosPage() {
         setSubmitError("Session invalide.");
         return;
       }
-      const urls = parseUrls(urlsText);
-      if (urls.length === 0) {
-        setSubmitError(
-          "Indiquez au moins une URL commençant par http:// ou https:// (une par ligne).",
-        );
+      const urlErr = validateExpertPhotoUrlsText(urlsText);
+      if (urlErr) {
+        setUrlsInputError(urlErr);
         return;
       }
+      setUrlsInputError(null);
+      const urls = parseImageUrls(urlsText);
 
       setSubmitting(true);
       setSubmitError(null);
@@ -173,6 +183,78 @@ export default function ExpertProjectPhotosPage() {
     [album, projectId, urlsText],
   );
 
+  const onUpload = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      const u = getStoredUser();
+      if (!u || normalizeRole(u.role) !== "expert") {
+        setUploadError("Session invalide.");
+        return;
+      }
+      const files = uploadFiles ? Array.from(uploadFiles) : [];
+      const fileErr = validateImageFilesList(files);
+      if (fileErr) {
+        setFilesInputError(fileErr);
+        return;
+      }
+      setFilesInputError(null);
+
+      setUploading(true);
+      setUploadError(null);
+      setUploadSuccess(null);
+
+      try {
+        const fd = new FormData();
+        fd.append("album", album);
+        for (const f of files) fd.append("files", f);
+
+        const res = await fetch(
+          `${API_URL}/projects/${projectId}/expert/photos/upload`,
+          {
+            method: "POST",
+            headers: { "x-user-id": u._id },
+            body: fd,
+          },
+        );
+
+        const data = (await res.json().catch(() => null)) as
+          | { message?: unknown }
+          | Project
+          | null;
+
+        if (!res.ok) {
+          const raw =
+            data && typeof data === "object"
+              ? (data as { message?: unknown }).message
+              : undefined;
+          const msg = Array.isArray(raw)
+            ? raw.join(" ")
+            : typeof raw === "string"
+              ? raw
+              : `Erreur ${res.status}`;
+          throw new Error(msg);
+        }
+
+        setUploadSuccess(
+          `${files.length} image(s) uploadée(s) dans « ${album === "avant" ? "Avant travaux" : "Après travaux"} ».`,
+        );
+        setUploadFiles(null);
+
+        const resP = await fetch(`${API_URL}/projects/${projectId}`, {
+          cache: "no-store",
+        });
+        if (resP.ok) setProject((await resP.json()) as Project);
+      } catch (err) {
+        setUploadError(
+          err instanceof Error ? err.message : "Échec de l’upload.",
+        );
+      } finally {
+        setUploading(false);
+      }
+    },
+    [album, projectId, uploadFiles],
+  );
+
   if (user && normalizeRole(user.role) !== "expert") {
     return (
       <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center px-4">
@@ -188,11 +270,11 @@ export default function ExpertProjectPhotosPage() {
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 text-white">
       <div className="container mx-auto px-4 py-10 max-w-3xl">
         <Link
-          href="/espace/expert"
+          href={hubHref}
           className="inline-flex items-center gap-2 text-sm text-amber-400/90 hover:text-amber-300 mb-6"
         >
           <ArrowLeft className="w-4 h-4" />
-          Retour à l&apos;espace expert
+          Retour au dossier
         </Link>
 
         <h1 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
@@ -215,6 +297,23 @@ export default function ExpertProjectPhotosPage() {
           </div>
         ) : project ? (
           <>
+            <div className="mb-6 flex flex-col sm:flex-row gap-3">
+              <Link
+                href={`/expert/projects/${projectId}/suivi-photo?from=${encodeURIComponent(fromQ)}`}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-5 py-2.5 text-sm font-medium text-white/90 hover:bg-white/10"
+              >
+                <Plus className="w-4 h-4 text-amber-300" />
+                Uploader une photo (avancement)
+              </Link>
+              <a
+                href="#ajout-urls"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-400 px-5 py-2.5 text-sm font-semibold text-gray-900 hover:opacity-95"
+              >
+                <Plus className="w-4 h-4" />
+                Ajouter à la galerie (URLs)
+              </a>
+            </div>
+
             <div className="rounded-2xl border border-white/10 bg-white/5 p-5 mb-8 space-y-2">
               <p className="text-lg font-semibold text-white">{project.titre}</p>
               <p className="text-xs text-gray-500">
@@ -239,7 +338,96 @@ export default function ExpertProjectPhotosPage() {
             </div>
 
             <form
+              noValidate
+              onSubmit={onUpload}
+              className="rounded-2xl border border-white/10 bg-black/30 p-5 space-y-4"
+            >
+              <p className="text-sm font-semibold text-white flex items-center gap-2">
+                <Upload className="w-4 h-4 text-amber-300" />
+                Uploader des images (fichiers)
+              </p>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Sélectionnez une ou plusieurs images depuis votre appareil. Elles
+                seront hébergées par le backend et visibles dans le détail du
+                projet.
+              </p>
+
+              <div className="flex flex-wrap gap-3">
+                <label className="inline-flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="album-upload"
+                    checked={album === "apres"}
+                    onChange={() => setAlbum("apres")}
+                    className="text-amber-500"
+                  />
+                  <span className="text-sm text-gray-200">Après travaux</span>
+                </label>
+                <label className="inline-flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="album-upload"
+                    checked={album === "avant"}
+                    onChange={() => setAlbum("avant")}
+                    className="text-amber-500"
+                  />
+                  <span className="text-sm text-gray-200">Avant travaux</span>
+                </label>
+              </div>
+
+              <input
+                id="expert-photos-files"
+                type="file"
+                accept="image/*"
+                multiple
+                disabled={uploading}
+                aria-invalid={filesInputError ? "true" : "false"}
+                aria-describedby={
+                  filesInputError ? "expert-photos-files-err" : undefined
+                }
+                onChange={(e) => {
+                  setFilesInputError(null);
+                  setUploadFiles(e.target.files);
+                }}
+                className={`block w-full rounded-xl bg-black/40 px-3 py-2 text-sm text-gray-200 file:mr-4 file:rounded-lg file:border-0 file:bg-amber-500/20 file:px-3 file:py-2 file:text-amber-100 hover:file:bg-amber-500/30 border ${
+                  filesInputError
+                    ? "border-red-400/55"
+                    : "border-white/10"
+                }`}
+              />
+              <FieldError id="expert-photos-files-err" message={filesInputError ?? undefined} />
+
+              <button
+                type="submit"
+                disabled={uploading}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-gray-900 font-semibold px-4 py-2.5 text-sm hover:opacity-95 transition disabled:opacity-40 w-full sm:w-auto"
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Upload…
+                  </>
+                ) : (
+                  "Uploader"
+                )}
+              </button>
+
+              {uploadError ? (
+                <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+                  {uploadError}
+                </div>
+              ) : null}
+              {uploadSuccess ? (
+                <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-100">
+                  {uploadSuccess}
+                </div>
+              ) : null}
+            </form>
+
+            <form
+              noValidate
               onSubmit={onSubmit}
+              id="ajout-urls"
               className="rounded-2xl border border-white/10 bg-black/30 p-5 space-y-4"
             >
               <p className="text-sm font-semibold text-white flex items-center gap-2">
@@ -275,19 +463,32 @@ export default function ExpertProjectPhotosPage() {
               </div>
 
               <div>
-                <label className="block text-[11px] text-gray-400 mb-1">
+                <label
+                  htmlFor="expert-photo-urls"
+                  className="block text-[11px] text-gray-400 mb-1"
+                >
                   URLs des images
                 </label>
                 <textarea
+                  id="expert-photo-urls"
                   value={urlsText}
-                  onChange={(e) => setUrlsText(e.target.value)}
+                  onChange={(e) => {
+                    setUrlsInputError(null);
+                    setUrlsText(e.target.value);
+                  }}
                   rows={5}
                   disabled={submitting}
-                  className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-amber-500/40 font-mono text-xs"
+                  maxLength={50000}
+                  aria-invalid={urlsInputError ? "true" : "false"}
+                  aria-describedby={
+                    urlsInputError ? "expert-photo-urls-err" : undefined
+                  }
+                  className={`${fieldTextareaClass(!!urlsInputError, submitting)} font-mono text-xs bg-black/40 placeholder:text-gray-600`}
                   placeholder={
                     "https://images.unsplash.com/photo-...\nhttps://..."
                   }
                 />
+                <FieldError id="expert-photo-urls-err" message={urlsInputError ?? undefined} />
               </div>
 
               <button
@@ -370,7 +571,7 @@ export default function ExpertProjectPhotosPage() {
               Pour envoyer une photo depuis votre appareil avec analyse
               d&apos;avancement, utilisez aussi{" "}
               <Link
-                href={`/expert/projects/${projectId}/suivi-photo`}
+                href={`/expert/projects/${projectId}/suivi-photo?from=${encodeURIComponent(fromQ)}`}
                 className="text-amber-400/90 hover:underline"
               >
                 Suivi photo chantier

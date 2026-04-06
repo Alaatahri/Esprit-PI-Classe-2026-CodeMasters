@@ -17,7 +17,8 @@ const MS_PER_DAY = 1000 * 60 * 60 * 24;
 export class AlertsService {
   constructor(
     @InjectModel(Alert.name) private readonly alertModel: Model<AlertDocument>,
-    @InjectModel(Project.name) private readonly projectModel: Model<ProjectDocument>,
+    @InjectModel(Project.name)
+    private readonly projectModel: Model<ProjectDocument>,
     private readonly notificationsService: NotificationsService,
   ) {}
 
@@ -35,16 +36,29 @@ export class AlertsService {
     workerId: string,
     realProgress: number,
   ): Promise<AlertDocument | null> {
-    if (!Types.ObjectId.isValid(projectId) || !Types.ObjectId.isValid(workerId)) {
+    if (
+      !Types.ObjectId.isValid(projectId) ||
+      !Types.ObjectId.isValid(workerId)
+    ) {
       return null;
     }
 
-    const project: any = await this.projectModel.findById(projectId).lean().exec();
+    const project: any = await this.projectModel
+      .findById(projectId)
+      .lean()
+      .exec();
     if (!project) return null;
 
     const start = project.date_debut ? new Date(project.date_debut) : null;
-    const end = project.date_fin_prevue ? new Date(project.date_fin_prevue) : null;
-    if (!start || !end || Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    const end = project.date_fin_prevue
+      ? new Date(project.date_fin_prevue)
+      : null;
+    if (
+      !start ||
+      !end ||
+      Number.isNaN(start.getTime()) ||
+      Number.isNaN(end.getTime())
+    ) {
       return null;
     }
 
@@ -128,7 +142,9 @@ export class AlertsService {
     }
 
     if (dto.type === 'estimatedDate' && !dto.estimatedDate) {
-      throw new BadRequestException('estimatedDate requis pour type=estimatedDate');
+      throw new BadRequestException(
+        'estimatedDate requis pour type=estimatedDate',
+      );
     }
 
     const alert = await this.alertModel.findById(alertId).exec();
@@ -279,7 +295,15 @@ export class AlertsService {
       Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0),
     );
     const endUtc = new Date(
-      Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 23, 59, 59, 999),
+      Date.UTC(
+        d.getUTCFullYear(),
+        d.getUTCMonth(),
+        d.getUTCDate(),
+        23,
+        59,
+        59,
+        999,
+      ),
     );
     return { startUtc, endUtc };
   }

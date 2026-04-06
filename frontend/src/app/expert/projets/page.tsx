@@ -7,8 +7,6 @@ import {
   FolderKanban,
   Loader2,
   MessageCircle,
-  Camera,
-  Images,
   ClipboardList,
   Send,
 } from "lucide-react";
@@ -146,8 +144,7 @@ export default function ExpertProjetsPage() {
           <div>
             <h1 className="text-2xl font-bold text-white">Mes projets</h1>
             <p className="text-sm text-gray-500 mt-1">
-              Accès rapide aux photos, suivi chantier, messages et retours sur
-              chaque dossier où vous êtes expert référent.
+              Ouvrez un dossier pour proposition, photos et suivi.
             </p>
           </div>
         </div>
@@ -191,14 +188,23 @@ export default function ExpertProjetsPage() {
               >
                 <div className="p-5 sm:p-6 space-y-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <h2 className="text-lg font-semibold text-white">
+                    <div className="min-w-0">
+                      <Link
+                        href={`/expert/projects/${encodeURIComponent(p._id)}?from=projets`}
+                        className="text-lg font-semibold text-white hover:text-amber-200 transition"
+                      >
                         {p.titre}
-                      </h2>
+                      </Link>
                       <p className="text-xs text-gray-500 mt-0.5">
                         {p.statut ?? "—"} · Avancement{" "}
                         {p.avancement_global ?? 0}%
                       </p>
+                      <Link
+                        href={`/expert/projects/${encodeURIComponent(p._id)}?from=projets`}
+                        className="mt-2 inline-flex text-xs font-medium text-amber-300/90 hover:underline"
+                      >
+                        Ouvrir le dossier →
+                      </Link>
                     </div>
                   </div>
                   {p.description && (
@@ -208,20 +214,6 @@ export default function ExpertProjetsPage() {
                   )}
 
                   <div className="flex flex-wrap gap-2">
-                    <Link
-                      href={`/expert/projects/${p._id}/photos`}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/35 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-200 hover:bg-emerald-500/20"
-                    >
-                      <Images className="w-4 h-4" />
-                      Galerie avant / après
-                    </Link>
-                    <Link
-                      href={`/expert/projects/${p._id}/suivi-photo`}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-200 hover:bg-amber-500/20"
-                    >
-                      <Camera className="w-4 h-4" />
-                      Suivi photo
-                    </Link>
                     {clientId && (
                       <Link
                         href={`/messages/${clientId}`}

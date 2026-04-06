@@ -34,7 +34,7 @@ export class MatchingRequest {
   respondedAt?: Date;
 }
 
-export const MatchingRequestSchema = SchemaFactory.createForClass(MatchingRequest);
+export const MatchingRequestSchema =
+  SchemaFactory.createForClass(MatchingRequest);
 
 MatchingRequestSchema.index({ projectId: 1, expertId: 1 }, { unique: true });
-
