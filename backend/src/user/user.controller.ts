@@ -6,6 +6,7 @@ import {
   Put,
   Param,
   Delete,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -17,8 +18,8 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
+  register(@Body() createUserDto: CreateUserDto) {
+    return this.userService.register(createUserDto);
   }
 
   @Get()
@@ -61,6 +62,9 @@ export class UserController {
       };
       return { success: true, user: safeUser };
     } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
       console.error('Login error:', error);
       return { success: false, message: 'Erreur lors de la connexion' };
     }

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { motion } from "framer-motion";
 import {
   Star,
@@ -16,12 +15,16 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { SafeImageFill } from "@/components/SafeImageFill";
 import {
   fetchPublicWorkers,
   fetchShowcaseProjects,
   profileImageUrl,
   workerDisplayName,
   showcaseCoverImage,
+  FALLBACK_SHOWCASE_IMAGE,
+  avatarUrlForWorker,
+  filterWorkingImageUrls,
   type PublicWorker,
   type ShowcaseProjectApi,
 } from "@/lib/public-workers";
@@ -56,7 +59,9 @@ function zoneLabel(z: { scope: string; value?: string }): string {
 const PREVIEW_COUNT = 6;
 
 function showcasePhotoCount(p: ShowcaseProjectApi): number {
-  return (p.photosAvant?.length ?? 0) + (p.photosApres?.length ?? 0);
+  const av = filterWorkingImageUrls(p.photosAvant?.filter(Boolean));
+  const ap = filterWorkingImageUrls(p.photosApres?.filter(Boolean));
+  return av.length + ap.length;
 }
 
 /** Intervalle de rafraîchissement automatique (ms) */
@@ -226,8 +231,9 @@ export function GuestLandingShowcase() {
                   className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 rounded-2xl"
                 >
                 <div className="relative aspect-[16/11] overflow-hidden">
-                  <Image
+                  <SafeImageFill
                     src={showcaseCoverImage(p, i)}
+                    fallbackSrc={FALLBACK_SHOWCASE_IMAGE}
                     alt=""
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
@@ -353,8 +359,9 @@ export function GuestLandingShowcase() {
                     >
                       <div className="flex items-center gap-3">
                         <div className="relative h-16 w-16 rounded-xl overflow-hidden ring-2 ring-amber-500/30 shrink-0">
-                          <Image
+                          <SafeImageFill
                             src={profileImageUrl(a)}
+                            fallbackSrc={avatarUrlForWorker(a)}
                             alt=""
                             fill
                             className="object-cover"
@@ -471,8 +478,9 @@ export function GuestLandingShowcase() {
                   >
                     <div className="flex items-center gap-4">
                       <div className="relative h-[4.5rem] w-[4.5rem] rounded-2xl overflow-hidden ring-2 ring-sky-500/30 shrink-0">
-                        <Image
+                        <SafeImageFill
                           src={profileImageUrl(ex)}
+                          fallbackSrc={avatarUrlForWorker(ex)}
                           alt=""
                           fill
                           className="object-cover"

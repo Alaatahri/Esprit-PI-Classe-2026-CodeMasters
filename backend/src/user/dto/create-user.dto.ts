@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   ArrayMinSize,
   IsArray,
@@ -24,7 +24,13 @@ export class CreateUserDto {
   @MinLength(1)
   nom: string;
 
-  @IsEmail()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim().toLowerCase() : value,
+  )
+  @IsEmail(
+    { allow_utf8_local_part: false },
+    { message: 'Adresse e-mail invalide (vérifiez le format, ex. nom@domaine.com).' },
+  )
   email: string;
 
   @IsString()

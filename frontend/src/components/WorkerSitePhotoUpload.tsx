@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Camera, Loader2, Send, ImagePlus } from "lucide-react";
 import { getApiBaseUrl } from "@/lib/api-base";
 import { FieldError, fieldTextareaClass } from "@/lib/form-ui";
+import { fileToBase64 } from "@/lib/imageUtils";
 import { validateImageFile, validatePhotoComment } from "@/lib/validators";
 
 const DEFAULT_API = getApiBaseUrl();
@@ -14,12 +15,16 @@ type UploadResult =
       percent: number;
       previousMax: number;
       reason?: string;
+      hasDelay?: boolean;
+      delayReason?: string | null;
     }
   | {
       kind: "no_advancement";
       percent: number;
       previousMax: number;
       reason?: string;
+      hasDelay?: boolean;
+      delayReason?: string | null;
     };
 
 type Props = {
@@ -60,19 +65,6 @@ export function WorkerSitePhotoUpload({
     setResult(null);
   };
 
-  const readBase64 = useCallback((f: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = String(reader.result ?? "");
-        const raw = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
-        resolve(raw);
-      };
-      reader.onerror = () => reject(new Error("Lecture du fichier impossible"));
-      reader.readAsDataURL(f);
-    });
-  }, []);
-
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFileError(null);
@@ -91,7 +83,7 @@ export function WorkerSitePhotoUpload({
     const base = apiBaseUrl.replace(/\/$/, "");
 
     try {
-      const photoBase64 = await readBase64(file);
+      const photoBase64 = await fileToBase64(file);
       const photoUrl = `inline-upload-${Date.now()}`;
 
       const res = await fetch(`${base}/suivi/photo`, {
@@ -108,7 +100,13 @@ export function WorkerSitePhotoUpload({
 
       const data = (await res.json().catch(() => null)) as
         | {
-            ai?: { percent?: number; reason?: string };
+            ai?: {
+              percent?: number;
+              reason?: string;
+              hasProgression?: boolean;
+              hasDelay?: boolean;
+              delayReason?: string | null;
+            };
             currentMaxBefore?: number;
             suivi?: { progressPercent?: number; pourcentage_avancement?: number };
             message?: string;
@@ -126,24 +124,34 @@ export function WorkerSitePhotoUpload({
       }
 
       const previous = Number(data?.currentMaxBefore ?? 0);
-      const proposed = Number(data?.ai?.percent ?? 0);
       const finalPct = Number(
-        data?.suivi?.progressPercent ?? data?.suivi?.pourcentage_avancement ?? proposed,
+        data?.suivi?.progressPercent ??
+          data?.suivi?.pourcentage_avancement ??
+          data?.ai?.percent ??
+          previous,
       );
+      const safeFinal = Number.isFinite(finalPct) ? finalPct : previous;
+      const hasDelay = data?.ai?.hasDelay === true;
+      const delayReason =
+        typeof data?.ai?.delayReason === "string" ? data.ai.delayReason : null;
 
-      if (proposed > previous) {
+      if (safeFinal > previous) {
         setResult({
           kind: "advancement",
-          percent: Number.isFinite(finalPct) ? finalPct : proposed,
+          percent: safeFinal,
           previousMax: previous,
           reason: data?.ai?.reason,
+          hasDelay,
+          delayReason,
         });
       } else {
         setResult({
           kind: "no_advancement",
-          percent: Number.isFinite(finalPct) ? finalPct : previous,
+          percent: safeFinal,
           previousMax: previous,
           reason: data?.ai?.reason,
+          hasDelay,
+          delayReason,
         });
       }
 
@@ -170,8 +178,9 @@ export function WorkerSitePhotoUpload({
         Envoyer une photo du chantier
       </div>
       <p className="text-xs text-gray-400">
-        L&apos;image est analysée automatiquement (gratuit : sans clé API, le serveur
-        utilise une estimation locale). Formats courants : JPG, PNG, WebP.
+        L&apos;image est envoyée en JPEG redimensionné (max 1024px) pour l&apos;analyse.
+        Avec clé API Anthropic côté serveur : analyse visuelle ; sinon l&apos;avancement
+        actuel est conservé sans hausse artificielle. Formats : JPG, PNG, WebP.
       </p>
 
       <input
@@ -251,25 +260,71 @@ export function WorkerSitePhotoUpload({
       ) : null}
 
       {result?.kind === "advancement" ? (
-        <div className="rounded-xl border border-emerald-500/35 bg-emerald-500/10 px-3 py-3 text-sm text-emerald-100 space-y-1">
+        <div
+          className={`rounded-xl px-3 py-3 text-sm space-y-1 ${
+            result.hasDelay
+              ? "border border-red-400/40 bg-red-950/40 text-red-100"
+              : "border border-emerald-500/35 bg-emerald-500/10 text-emerald-100"
+          }`}
+        >
+          {result.hasDelay ? (
+            <p className="font-semibold">⚠️ Retard ou perturbation détecté</p>
+          ) : null}
           <p className="font-semibold">
-            ✅ Avancement détecté : {Math.round(result.percent)}% d&apos;avancement
-            atteint.
+            ✅ Avancement : {Math.round(result.percent)}% atteint sur le projet.
           </p>
           {result.reason ? (
-            <p className="text-xs text-emerald-200/80">{result.reason}</p>
+            <p
+              className={`text-xs ${
+                result.hasDelay ? "text-red-200/90" : "text-emerald-200/80"
+              }`}
+            >
+              {result.reason}
+            </p>
+          ) : null}
+          {result.hasDelay && result.delayReason ? (
+            <p className="text-xs text-red-200/90 mt-1">{result.delayReason}</p>
+          ) : null}
+          {result.hasDelay ? (
+            <p className="text-xs text-red-300/80 mt-1">
+              Le client et l&apos;admin ont été notifiés automatiquement.
+            </p>
           ) : null}
         </div>
       ) : null}
 
       {result?.kind === "no_advancement" ? (
-        <div className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-3 py-3 text-sm text-amber-100 space-y-1">
+        <div
+          className={`rounded-xl px-3 py-3 text-sm space-y-1 ${
+            result.hasDelay
+              ? "border border-red-400/40 bg-red-950/40 text-red-100"
+              : "border border-amber-500/35 bg-amber-500/10 text-amber-100"
+          }`}
+        >
+          {result.hasDelay ? (
+            <p className="font-semibold">⚠️ Retard ou perturbation détecté</p>
+          ) : (
+            <p className="font-semibold">Analyse IA</p>
+          )}
           <p className="font-semibold">
-            ⚠️ Aucune progression détectée (avancement actuel :{" "}
-            {Math.round(result.percent)}%).
+            Avancement inchangé : {Math.round(result.percent)}%.
           </p>
           {result.reason ? (
-            <p className="text-xs text-amber-200/80">{result.reason}</p>
+            <p
+              className={`text-xs ${
+                result.hasDelay ? "text-red-200/90" : "text-amber-200/80"
+              }`}
+            >
+              {result.reason}
+            </p>
+          ) : null}
+          {result.hasDelay && result.delayReason ? (
+            <p className="text-xs text-red-200/90 mt-1">{result.delayReason}</p>
+          ) : null}
+          {result.hasDelay ? (
+            <p className="text-xs text-red-300/80 mt-1">
+              Le client et l&apos;admin ont été notifiés automatiquement.
+            </p>
           ) : null}
         </div>
       ) : null}

@@ -648,4 +648,18 @@ export class ProjectService {
 
     return applications;
   }
+
+  /**
+   * Retourne les IDs de tous les utilisateurs avec le rôle admin.
+   */
+  async getAdminIds(): Promise<string[]> {
+    const admins = await this.userModel
+      .find({ role: 'admin' })
+      .select('_id')
+      .lean()
+      .exec();
+    return (admins as Array<{ _id: Types.ObjectId }>).map((a) =>
+      String(a._id),
+    );
+  }
 }

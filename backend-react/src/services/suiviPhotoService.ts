@@ -2,7 +2,13 @@ import api from './api';
 
 export type SuiviPhotoResponse = {
   suivi?: Record<string, unknown>;
-  ai?: { percent?: number; reason?: string };
+  ai?: {
+    percent?: number;
+    reason?: string;
+    hasProgression?: boolean;
+    hasDelay?: boolean;
+    delayReason?: string | null;
+  };
   currentMaxBefore?: number;
 };
 

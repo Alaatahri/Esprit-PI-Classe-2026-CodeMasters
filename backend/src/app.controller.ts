@@ -12,9 +12,12 @@ export class AppController {
         users: {
           getAll: 'GET /api/users',
           getOne: 'GET /api/users/:id',
-          create: 'POST /api/users',
+          register: 'POST /api/users (inscription + e-mail de vérification)',
           update: 'PUT /api/users/:id',
           delete: 'DELETE /api/users/:id',
+        },
+        auth: {
+          verifyEmail: 'GET /api/auth/verify-email?token=',
         },
         projects: {
           getAll: 'GET /api/projects',
