@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ChatbotLayout } from "@/components/ChatbotLayout";
+import { KeyboardTTS } from "@/components/KeyboardTTS";
+import { LanguageProvider } from "@/components/LanguageProvider";
+import { AccessibilityProvider } from "@/components/AccessibilityProvider";
 import GlobalNavbar from "@/components/GlobalNavbar";
 import SiteFooter from "@/components/SiteFooter";
 
@@ -35,11 +38,15 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-gray-950 text-white scrollbar-bmp`}
       >
-        <GlobalNavbar />
-        <div className="flex min-h-0 flex-1 flex-col">{children}</div>
-        <SiteFooter />
-        {/* Chatbot intégré - affiché sur toutes les pages */}
-        <ChatbotLayout />
+        <AccessibilityProvider>
+          <LanguageProvider>
+            <GlobalNavbar />
+            <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+            <SiteFooter />
+            <KeyboardTTS />
+            <ChatbotLayout />
+          </LanguageProvider>
+        </AccessibilityProvider>
       </body>
     </html>
   );

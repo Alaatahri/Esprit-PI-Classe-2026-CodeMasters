@@ -210,3 +210,47 @@ body::-webkit-scrollbar-thumb:hover {
 .animate-float {
   animation: float linear infinite;
 }
+
+/* Accessibilité : classes sur <html> pour que les tailles en rem (Tailwind) réagissent */
+html.access-malvoyant {
+  font-size: 112.5% !important;
+  font-weight: 500 !important;
+  filter: contrast(115%) brightness(105%);
+}
+
+html.access-daltonien {
+  filter: grayscale(100%) contrast(120%) brightness(110%) !important;
+}
+
+html.access-dyslexique {
+  font-family: "Comic Sans MS", "Arial", sans-serif !important;
+  letter-spacing: 0.1em !important;
+  word-spacing: 0.2em !important;
+  line-height: 1.6 !important;
+}
+html.access-dyslexique * {
+  font-family: "Comic Sans MS", "Arial", sans-serif !important;
+}
+
+html.access-senior {
+  font-size: 108% !important;
+  filter: contrast(110%);
+}
+
+html.access-concentration * {
+  animation: none !important;
+  transition: none !important;
+}
+
+html.access-mobilite * {
+  animation: none !important;
+  transition: none !important;
+  outline-color: #f59e0b !important;
+  outline-width: 3px !important;
+  outline-offset: 2px !important;
+}
+html.access-mobilite button,
+html.access-mobilite a,
+html.access-mobilite input {
+  cursor: pointer !important;
+}

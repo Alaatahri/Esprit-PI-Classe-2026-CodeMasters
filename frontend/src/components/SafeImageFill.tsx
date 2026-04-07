@@ -12,7 +12,7 @@ type Props = Omit<ImageProps, "src"> & {
 /**
  * `next/image` avec `fill` : si `src` échoue (404), bascule sur `fallbackSrc`.
  */
-export function SafeImageFill({ src, fallbackSrc, onError, ...rest }: Props) {
+export function SafeImageFill({ src, fallbackSrc, onError, alt = "", ...rest }: Props) {
   const [current, setCurrent] = useState(src);
 
   useEffect(() => {
@@ -22,6 +22,7 @@ export function SafeImageFill({ src, fallbackSrc, onError, ...rest }: Props) {
   return (
     <Image
       {...rest}
+      alt={alt}
       src={current}
       onError={(e) => {
         if (current !== fallbackSrc) {

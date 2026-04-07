@@ -30,16 +30,23 @@ import {
   type BMPUser,
 } from "@/lib/auth";
 import { fetchUnreadCount } from "@/lib/messages-api";
+import { useLanguage, type TranslationKeys } from "@/components/LanguageProvider";
 
-const baseNavItems = [
-  { key: "home", href: "/espace", label: "Mon espace", icon: Home },
-  { key: "chantier", href: "/gestion-chantier", label: "Chantier", icon: Briefcase },
-  { key: "devis", href: "/gestion-devis-facturation", label: "Devis", icon: FileText },
-  { key: "marketplace", href: "/gestion-marketplace", label: "Marketplace", icon: ShoppingCart },
-  { key: "contact", href: "/contact", label: "Contact", icon: Mail },
+const baseNavDefs: Array<{
+  key: string;
+  href: string;
+  labelKey: TranslationKeys;
+  icon: LucideIcon;
+}> = [
+  { key: "home", href: "/espace", labelKey: "mon_espace", icon: Home },
+  { key: "chantier", href: "/gestion-chantier", labelKey: "nav_chantier", icon: Briefcase },
+  { key: "devis", href: "/gestion-devis-facturation", labelKey: "nav_devis", icon: FileText },
+  { key: "marketplace", href: "/gestion-marketplace", labelKey: "marketplace", icon: ShoppingCart },
+  { key: "contact", href: "/contact", labelKey: "contact", icon: Mail },
 ];
 
 export default function GlobalNavbar() {
+  const { t } = useLanguage();
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<BMPUser | null>(null);
@@ -98,7 +105,7 @@ export default function GlobalNavbar() {
     const role = user?.role;
     const canSeeChantier = role === "admin" || role === "artisan" || role === "ouvrier";
 
-    const filteredBase = baseNavItems.filter((item) => {
+    const filteredBase = baseNavDefs.filter((item) => {
       if (item.key === "chantier") return canSeeChantier;
       return true;
     });
@@ -125,19 +132,19 @@ export default function GlobalNavbar() {
 
   const extraClientItems: Array<{
     href: string;
-    label: string;
+    labelKey: TranslationKeys;
     icon?: LucideIcon;
-    title?: string;
+    titleKey?: TranslationKeys;
   }> = isClientRole(user?.role)
     ? [
         {
           href: "/espace/client/suivi",
-          label: "Suivi de mes projets",
+          labelKey: "nav_suivi_mes_projets",
           icon: Camera,
-          title: "Voir le taux d'avancement et les photos de chantier",
+          titleKey: "title_suivi_photos",
         },
-        { href: "/espace/client", label: "Mes projets" },
-        { href: "/espace/client/nouveau-projet", label: "+ Nouveau projet" },
+        { href: "/espace/client", labelKey: "mes_projets" },
+        { href: "/espace/client/nouveau-projet", labelKey: "nav_plus_nouveau_projet" },
       ]
     : [];
 
@@ -205,7 +212,7 @@ export default function GlobalNavbar() {
                 BMP.tn
               </span>
               <div className="text-[10px] text-amber-400/80 font-medium tracking-widest">
-                PLATEFORME
+                {t("tagline_plateforme")}
               </div>
             </div>
           </Link>
@@ -224,12 +231,12 @@ export default function GlobalNavbar() {
                   }`}
                 >
                   <Icon className="w-4 h-4" />
-                  {item.label}
+                  {t(item.labelKey)}
                 </Link>
               );
             })}
 
-            {extraClientItems.length > 0 && (
+                {extraClientItems.length > 0 && (
               <div className="flex items-center gap-1 ml-2 pl-2 border-l border-white/5 shrink-0">
                 {extraClientItems.map((it) => {
                   const ExtraIcon = it.icon;
@@ -237,7 +244,7 @@ export default function GlobalNavbar() {
                     <Link
                       key={it.href}
                       href={it.href}
-                      title={it.title}
+                      title={it.titleKey ? t(it.titleKey) : undefined}
                       className={`inline-flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap shrink-0 ${
                         isActive(it.href)
                           ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
@@ -247,7 +254,7 @@ export default function GlobalNavbar() {
                       {ExtraIcon ? (
                         <ExtraIcon className="w-4 h-4 shrink-0 opacity-90" />
                       ) : null}
-                      {it.label}
+                      {t(it.labelKey)}
                     </Link>
                   );
                 })}
@@ -267,7 +274,7 @@ export default function GlobalNavbar() {
                     }`}
                   >
                     <Layers className="w-4 h-4" />
-                    Tous les projets
+                    {t("nav_tous_les_projets")}
                   </Link>
                 )}
                 {normalizeRole(user.role) === "expert" && (
@@ -280,7 +287,7 @@ export default function GlobalNavbar() {
                     }`}
                   >
                     <FolderKanban className="w-4 h-4" />
-                    Projets
+                    {t("nav_projets")}
                   </Link>
                 )}
                 {normalizeRole(user.role) === "expert" && (
@@ -293,7 +300,7 @@ export default function GlobalNavbar() {
                     }`}
                   >
                     <ClipboardList className="w-4 h-4" />
-                    Invitations
+                    {t("nav_invitations")}
                   </Link>
                 )}
                 <Link
@@ -305,7 +312,7 @@ export default function GlobalNavbar() {
                   }`}
                 >
                   <MessageCircle className="w-4 h-4" />
-                  Messages
+                  {t("nav_messages")}
                   {unreadMessages > 0 && (
                     <span className="min-w-[1.25rem] h-5 px-1.5 rounded-full bg-amber-500 text-gray-900 text-[10px] font-bold flex items-center justify-center">
                       {unreadMessages > 99 ? "99+" : unreadMessages}
@@ -333,10 +340,10 @@ export default function GlobalNavbar() {
                 <button
                   onClick={handleLogout}
                   className="hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-xl bg-black/30 border border-white/5 text-gray-300/80 hover:text-amber-200 hover:border-amber-500/30 hover:bg-amber-500/10 transition-all"
-                  title="Déconnexion"
+                  title={t("deconnexion")}
                 >
                   <LogOut className="w-4 h-4" />
-                  <span className="text-sm">Déconnexion</span>
+                  <span className="text-sm">{t("deconnexion")}</span>
                 </button>
               </>
             ) : (
@@ -344,7 +351,7 @@ export default function GlobalNavbar() {
                 href="/login"
                 className="hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-gray-900 font-semibold hover:shadow-lg hover:shadow-amber-500/30 transition-all"
               >
-                Connexion
+                {t("connexion")}
               </Link>
             )}
 
@@ -373,7 +380,7 @@ export default function GlobalNavbar() {
           className={`absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity ${
             mobileOpen ? "opacity-100" : "opacity-0"
           }`}
-          aria-label="Fermer le menu"
+          aria-label={t("aria_fermer_menu")}
         />
 
         {/* Panel */}
@@ -392,7 +399,7 @@ export default function GlobalNavbar() {
                   BMP.tn
                 </p>
                 <p className="text-[11px] text-gray-500">
-                  Menu
+                  {t("mobile_menu")}
                   {user ? ` · ${user.nom}` : ""}
                 </p>
               </div>
@@ -401,7 +408,7 @@ export default function GlobalNavbar() {
               type="button"
               onClick={() => setMobileOpen(false)}
               className="p-2 rounded-xl text-gray-300/80 hover:text-amber-100 hover:bg-amber-500/10"
-              aria-label="Fermer"
+              aria-label={t("aria_fermer")}
             >
               <X className="w-6 h-6" />
             </button>
@@ -422,7 +429,7 @@ export default function GlobalNavbar() {
                   }`}
                 >
                   <Icon className="w-5 h-5" />
-                  {item.label}
+                  {t(item.labelKey)}
                   <ChevronRight className="w-4 h-4 ml-auto opacity-60" />
                 </Link>
               );
@@ -436,7 +443,7 @@ export default function GlobalNavbar() {
                     <Link
                       key={it.href}
                       href={it.href}
-                      title={it.title}
+                      title={it.titleKey ? t(it.titleKey) : undefined}
                       onClick={() => setMobileOpen(false)}
                       className={`flex items-center gap-3 px-4 py-3 rounded-xl transition ${
                         isActive(it.href)
@@ -447,7 +454,7 @@ export default function GlobalNavbar() {
                       {ExtraIcon ? (
                         <ExtraIcon className="w-5 h-5 shrink-0 opacity-90" />
                       ) : null}
-                      {it.label}
+                      {t(it.labelKey)}
                       <ChevronRight className="w-4 h-4 ml-auto opacity-60" />
                     </Link>
                   );
@@ -469,7 +476,7 @@ export default function GlobalNavbar() {
                     }`}
                   >
                     <Layers className="w-5 h-5" />
-                    Tous les projets
+                    {t("nav_tous_les_projets")}
                     <ChevronRight className="w-4 h-4 ml-auto opacity-60" />
                   </Link>
                 )}
@@ -484,7 +491,7 @@ export default function GlobalNavbar() {
                     }`}
                   >
                     <FolderKanban className="w-5 h-5" />
-                    Mes projets
+                    {t("nav_projets")}
                     <ChevronRight className="w-4 h-4 ml-auto opacity-60" />
                   </Link>
                 )}
@@ -499,7 +506,7 @@ export default function GlobalNavbar() {
                     }`}
                   >
                     <ClipboardList className="w-5 h-5" />
-                    Invitations
+                    {t("nav_invitations")}
                     <ChevronRight className="w-4 h-4 ml-auto opacity-60" />
                   </Link>
                 )}
@@ -513,7 +520,7 @@ export default function GlobalNavbar() {
                   }`}
                 >
                   <MessageCircle className="w-5 h-5" />
-                  Messages
+                  {t("nav_messages")}
                   {unreadMessages > 0 && (
                     <span className="min-w-[1.25rem] h-6 px-2 rounded-full bg-amber-500 text-gray-900 text-[11px] font-bold flex items-center justify-center">
                       {unreadMessages > 99 ? "99+" : unreadMessages}
@@ -531,7 +538,7 @@ export default function GlobalNavbar() {
                   className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-200/80 hover:bg-amber-500/10 hover:text-amber-200 border border-white/5 bg-black/20"
                 >
                   <LogOut className="w-5 h-5" />
-                  Déconnexion
+                  {t("deconnexion")}
                 </button>
               ) : (
                 <Link
@@ -539,7 +546,7 @@ export default function GlobalNavbar() {
                   onClick={() => setMobileOpen(false)}
                   className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-gray-900 font-semibold"
                 >
-                  Connexion
+                  {t("connexion")}
                 </Link>
               )}
             </div>
