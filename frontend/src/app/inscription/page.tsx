@@ -219,20 +219,14 @@ export default function InscriptionPage() {
                   : le backend utilise Ethereal (test). Rien n&apos;est envoyé dans
                   votre vraie boîte. Pour une livraison réelle : dans{" "}
                   <code className="text-xs text-amber-200/90">backend/.env</code>,{" "}
-                  définissez{" "}
-                  <code className="text-xs text-amber-200/90">RESEND_API_KEY</code>{" "}
-                  (clé sur resend.com) et{" "}
-                  <code className="text-xs text-amber-200/90">MAIL_FROM</code>{" "}
-                  (ex. expéditeur{" "}
-                  <code className="text-xs text-amber-200/90">onboarding@resend.dev</code>
-                  ), puis redémarrez le serveur. (Pas besoin de couper{" "}
-                  <code className="text-xs text-amber-200/90">
-                    USE_ETHEREAL_IN_DEV
-                  </code>
-                  : Resend est prioritaire.) Alternative : SMTP Gmail avec{" "}
-                  <code className="text-xs text-amber-200/90">MAIL_*</code>. Ici,
-                  ouvrez le lien pour le test et cliquez sur{" "}
-                  <strong>Confirmer mon email</strong>.
+                  configurez Gmail SMTP (
+                  <code className="text-xs text-amber-200/90">MAIL_HOST</code>,{" "}
+                  <code className="text-xs text-amber-200/90">MAIL_PORT</code>,{" "}
+                  <code className="text-xs text-amber-200/90">MAIL_USER</code>,{" "}
+                  <code className="text-xs text-amber-200/90">MAIL_PASS</code>,{" "}
+                  <code className="text-xs text-amber-200/90">MAIL_FROM</code>
+                  ), puis redémarrez le serveur. Ici, ouvrez le lien pour le test et
+                  cliquez sur <strong>Confirmer mon email</strong>.
                 </p>
                 <a
                   href={etherealPreviewUrl}

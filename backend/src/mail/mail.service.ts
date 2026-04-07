@@ -1,11 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { MailerService } from '@nestjs-modules/mailer';
 import * as nodemailer from 'nodemailer';
-import {
-  isEmailOutboundConfigured,
-  isResendConfigured,
-  isSmtpConfigured,
-} from './smtp-env';
+import { isSmtpConfigured } from './smtp-env';
+import { sendMailViaGmailSmtp } from './gmail-mail.util';
 
 export type SendVerificationResult = {
   /** Lien de prévisualisation Ethereal (dev uniquement, pas de livraison dans une vraie boîte) */
@@ -18,16 +14,13 @@ export type SendVerificationResult = {
 export class MailService {
   private readonly logger = new Logger(MailService.name);
 
-  constructor(private readonly mailer: MailerService) {}
-
   isConfigured(): boolean {
-    return isEmailOutboundConfigured();
+    return isSmtpConfigured();
   }
 
   /**
    * Envoie l’e-mail de vérification vers **args.to** (l’adresse saisie à l’inscription).
-   * - RESEND_API_KEY → API Resend (pas de mot de passe mail perso).
-   * - MAIL_* → SMTP (Gmail, etc.).
+   * - MAIL_* (Gmail SMTP via Nodemailer) → livraison réelle.
    * - Sinon, dev + USE_ETHEREAL_IN_DEV=true → Ethereal (pas de livraison réelle).
    */
   async sendVerificationEmail(args: {
@@ -38,39 +31,26 @@ export class MailService {
     const html = this.buildVerificationHtml(args);
     const subject = 'BMP.tn — Confirmez votre adresse e-mail';
 
-    if (isResendConfigured()) {
-      await this.sendViaResend(args.to, subject, html);
-      this.logger.log(
-        `E-mail de vérification envoyé vers ${args.to} (Resend)`,
-      );
-      return {};
-    }
-
     if (isSmtpConfigured()) {
-      // Destinataire = toujours l’e-mail du formulaire (MAIL_USER = compte SMTP expéditeur uniquement).
-      await this.mailer.sendMail({
-        to: args.to,
-        subject,
-        html,
-      });
+      await sendMailViaGmailSmtp({ to: args.to, subject, html });
       this.logger.log(
-        `E-mail de vérification envoyé vers ${args.to} (SMTP réel)`,
+        `E-mail de vérification envoyé vers ${args.to} (Gmail SMTP / Nodemailer)`,
       );
       return {};
     }
 
     if (process.env.NODE_ENV === 'production') {
       throw new Error(
-        'E-mail sortant non configuré : définissez RESEND_API_KEY ou MAIL_HOST + MAIL_USER + MAIL_PASS en production.',
+        'E-mail sortant non configuré : définissez MAIL_HOST, MAIL_USER, MAIL_PASS et MAIL_FROM dans backend/.env en production.',
       );
     }
 
     if (process.env.USE_ETHEREAL_IN_DEV?.trim() === 'true') {
-      return this.sendViaEthereal(args.to, html);
+      return this.sendViaEthereal(args.to, html, subject);
     }
 
     throw new Error(
-      'E-mail sortant non configuré : RESEND_API_KEY (recommandé) ou MAIL_HOST/MAIL_USER/MAIL_PASS, ou USE_ETHEREAL_IN_DEV=true en dev.',
+      'E-mail sortant non configuré : MAIL_HOST/MAIL_USER/MAIL_PASS/MAIL_FROM, ou USE_ETHEREAL_IN_DEV=true en dev.',
     );
   }
 
@@ -128,86 +108,28 @@ export class MailService {
 </body>
 </html>`;
 
-    if (isResendConfigured()) {
-      await this.sendViaResend(args.to, subject, html);
-      return;
-    }
     if (isSmtpConfigured()) {
-      await this.mailer.sendMail({ to: args.to, subject, html });
+      await sendMailViaGmailSmtp({ to: args.to, subject, html });
       return;
     }
     if (process.env.NODE_ENV === 'production') {
       throw new Error(
-        'E-mail sortant non configuré : définissez RESEND_API_KEY ou MAIL_HOST + MAIL_USER + MAIL_PASS en production.',
+        'E-mail sortant non configuré : définissez MAIL_HOST, MAIL_USER, MAIL_PASS et MAIL_FROM dans backend/.env en production.',
       );
     }
     if (process.env.USE_ETHEREAL_IN_DEV?.trim() === 'true') {
-      await this.sendViaEthereal(args.to, html);
+      await this.sendViaEthereal(args.to, html, subject);
       return;
     }
     throw new Error(
-      'E-mail sortant non configuré : RESEND_API_KEY (recommandé) ou MAIL_HOST/MAIL_USER/MAIL_PASS, ou USE_ETHEREAL_IN_DEV=true en dev.',
-    );
-  }
-
-  private async sendViaResend(
-    to: string,
-    subject: string,
-    html: string,
-  ): Promise<void> {
-    const key = process.env.RESEND_API_KEY?.trim();
-    if (!key) throw new Error('RESEND_API_KEY manquant');
-    const from =
-      process.env.MAIL_FROM?.trim() ||
-      'BMP.tn <onboarding@resend.dev>';
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${key}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from,
-        to: [to],
-        subject,
-        html,
-      }),
-    });
-    const body = await res.text();
-    if (!res.ok) {
-      this.throwResendHttpError(res.status, body);
-    }
-  }
-
-  /** Message lisible côté inscription (évite d’afficher du JSON brut). */
-  private throwResendHttpError(status: number, body: string): never {
-    let apiMessage = body;
-    try {
-      const j = JSON.parse(body) as { message?: string };
-      if (typeof j.message === 'string') apiMessage = j.message;
-    } catch {
-      /* corps non JSON */
-    }
-
-    if (
-      status === 401 ||
-      /API key is invalid|invalid api key|Unauthorized/i.test(apiMessage)
-    ) {
-      throw new Error(
-        'Clé Resend invalide ou expirée : sur https://resend.com/api-keys, créez une nouvelle clé, collez-la dans backend/.env comme RESEND_API_KEY=re_... (sans guillemets, sans espace avant/après), enregistrez et redémarrez le backend.',
-      );
-    }
-
-    throw new Error(
-      apiMessage.trim()
-        ? `Resend (${status}) : ${apiMessage}`
-        : `Resend : erreur HTTP ${status}`,
+      'E-mail sortant non configuré : MAIL_HOST/MAIL_USER/MAIL_PASS/MAIL_FROM, ou USE_ETHEREAL_IN_DEV=true en dev.',
     );
   }
 
   private async sendViaEthereal(
     to: string,
     html: string,
+    subject: string,
   ): Promise<SendVerificationResult> {
     const testAccount = await nodemailer.createTestAccount();
     const transporter = nodemailer.createTransport({
@@ -223,7 +145,7 @@ export class MailService {
     const info = await transporter.sendMail({
       from: `"BMP.tn (dev)" <${testAccount.user}>`,
       to,
-      subject: 'BMP.tn — Confirmez votre adresse e-mail',
+      subject,
       html,
     });
 

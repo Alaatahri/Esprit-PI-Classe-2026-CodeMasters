@@ -30,17 +30,3 @@ export function isSmtpConfigured(): boolean {
   return getSmtpCredentials() !== null;
 }
 
-/** https://resend.com — envoi par API (clé uniquement, pas de SMTP / mot de passe Gmail). */
-export function getResendApiKey(): string | null {
-  const k = process.env.RESEND_API_KEY?.trim();
-  return k || null;
-}
-
-export function isResendConfigured(): boolean {
-  return getResendApiKey() !== null;
-}
-
-/** SMTP classique ou Resend : au moins un des deux suffit pour envoyer la vérification. */
-export function isEmailOutboundConfigured(): boolean {
-  return isSmtpConfigured() || isResendConfigured();
-}

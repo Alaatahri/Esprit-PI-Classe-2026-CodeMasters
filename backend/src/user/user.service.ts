@@ -44,7 +44,7 @@ export class UserService {
   ) {}
 
   /**
-   * Inscription : envoi vers l’e-mail du formulaire (Resend API ou SMTP si configuré).
+   * Inscription : envoi vers l’e-mail du formulaire (Gmail SMTP / Nodemailer si configuré).
    * Sinon : erreur sauf USE_ETHEREAL_IN_DEV=true (faux SMTP) ou ALLOW_REGISTRATION_WITHOUT_SMTP.
    */
   async register(
@@ -93,12 +93,12 @@ export class UserService {
     if (!smtpOk && !explicitNoEmailBypass) {
       if (isProd) {
         throw new BadRequestException(
-          'Inscription indisponible en production : configurez RESEND_API_KEY (recommandé, sans mot de passe Gmail) ou MAIL_HOST + MAIL_USER + MAIL_PASS dans backend/.env.',
+          'Inscription indisponible en production : configurez MAIL_HOST, MAIL_PORT, MAIL_USER, MAIL_PASS et MAIL_FROM dans backend/.env.',
         );
       }
       if (!etherealDev) {
         throw new BadRequestException(
-          'Pour envoyer la confirmation : RESEND_API_KEY dans backend/.env (recommandé), ou MAIL_* pour Gmail, ou USE_ETHEREAL_IN_DEV=true pour un test sans vraie boîte.',
+          'Pour envoyer la confirmation : MAIL_HOST, MAIL_USER, MAIL_PASS, MAIL_FROM dans backend/.env, ou USE_ETHEREAL_IN_DEV=true pour un test sans vraie boîte.',
         );
       }
     }
@@ -144,7 +144,7 @@ export class UserService {
       throw new BadRequestException(
         hint
           ? `Envoi impossible : ${hint}`
-          : "L'envoi de l'e-mail de vérification a échoué. Vérifiez RESEND_API_KEY ou MAIL_* (Gmail : mot de passe d'application).",
+          : "L'envoi de l'e-mail de vérification a échoué. Vérifiez MAIL_* (Gmail : mot de passe d'application).",
       );
     }
 
