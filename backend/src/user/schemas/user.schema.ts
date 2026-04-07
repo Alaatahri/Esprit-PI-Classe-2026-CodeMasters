@@ -73,6 +73,24 @@ export class User {
   /** Présentation courte pour la vitrine */
   @Prop()
   bio?: string;
+
+  /** Anciens comptes : true par défaut (schéma) ; nouvelles inscriptions mises à false jusqu’à vérification. */
+  @Prop({ type: Boolean, default: true })
+  isEmailVerified?: boolean;
+
+  @Prop({ type: String, default: null, select: false })
+  emailVerificationToken?: string | null;
+
+  @Prop({ type: Date, default: null, select: false })
+  emailVerificationExpires?: Date | null;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+
+UserSchema.index(
+  { emailVerificationToken: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { emailVerificationToken: { $type: 'string' } },
+  },
+);

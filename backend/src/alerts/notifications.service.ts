@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Types } from 'mongoose';
 import { UserService } from '../user/user.service';
 import { InAppNotificationService } from './in-app-notification.service';
 
@@ -34,6 +35,27 @@ export class NotificationsService {
     private readonly userService: UserService,
     private readonly inAppNotificationService: InAppNotificationService,
   ) {}
+
+  /**
+   * Crée une notification in-app pour un utilisateur (schéma Mongo existant).
+   */
+  async create(input: {
+    userId: string;
+    type: string;
+    message: string;
+    projectId?: string;
+    read?: boolean;
+  }): Promise<void> {
+    if (!Types.ObjectId.isValid(input.userId)) return;
+    await this.inAppNotificationService.createMany([
+      {
+        recipientId: input.userId,
+        message: input.message,
+        type: input.type,
+        projectId: input.projectId,
+      },
+    ]);
+  }
 
   private roleByIdMap(): Promise<Map<string, string>> {
     return this.userService.findAll(500).then((users) => {

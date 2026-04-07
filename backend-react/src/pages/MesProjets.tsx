@@ -4,25 +4,13 @@ import api from '../services/api';
 import projectService, { Project } from '../services/projectService';
 import { uploadSuiviPhoto } from '../services/suiviPhotoService';
 import { useAuth } from '../contexts/AuthContext';
+import { fileToBase64 } from '../utils/imageUtils';
 import './MesProjets.css';
 
 function clampPct(n: unknown) {
   const x = Number(n ?? 0);
   if (!Number.isFinite(x)) return 0;
   return Math.min(100, Math.max(0, x));
-}
-
-function readFileAsBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = String(reader.result ?? '');
-      const raw = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
-      resolve(raw);
-    };
-    reader.onerror = () => reject(new Error('Lecture fichier impossible'));
-    reader.readAsDataURL(file);
-  });
 }
 
 /**
@@ -40,7 +28,11 @@ const MesProjets = () => {
   const [commentByProject, setCommentByProject] = useState<Record<string, string>>({});
   const [submittingId, setSubmittingId] = useState<string | null>(null);
   const [feedbackByProject, setFeedbackByProject] = useState<
-    Record<string, { ok: boolean; text: string } | undefined>
+    Record<
+      string,
+      | { ok: boolean; text: string; hasDelay?: boolean; percent?: number }
+      | undefined
+    >
   >({});
 
   const load = useCallback(async () => {
@@ -105,9 +97,9 @@ const MesProjets = () => {
     });
 
     try {
-      const photoBase64 = await readFileAsBase64(file);
+      const photoBase64 = await fileToBase64(file);
       const photoUrl = `backoffice-upload-${Date.now()}`;
-      await uploadSuiviPhoto({
+      const { data } = await uploadSuiviPhoto({
         projectId,
         workerId: user._id,
         photoUrl,
@@ -118,12 +110,27 @@ const MesProjets = () => {
         console.log('[MesProjets] commentaire (non persisté par l’API actuelle):', comment);
       }
 
+      const pct = data?.ai?.percent;
+      const reason = data?.ai?.reason;
+      const hasDelay = data?.ai?.hasDelay === true;
+      const lines: string[] = ['Photo envoyée.'];
+      if (typeof pct === 'number' && Number.isFinite(pct)) {
+        lines.push(`Avancement projet : ${Math.round(pct)}%.`);
+      }
+      if (reason) lines.push(reason);
+      if (hasDelay) {
+        lines.push(
+          'Retard ou perturbation signalé : le client et les admins ont été notifiés.',
+        );
+      }
+
       setFeedbackByProject((prev) => ({
         ...prev,
         [projectId]: {
           ok: true,
-          text:
-            'Photo envoyée. L’IA a mis à jour l’avancement ; les parties prenantes sont notifiées côté serveur (journal BMP-NOTIFY).',
+          text: lines.join(' '),
+          hasDelay,
+          percent: typeof pct === 'number' ? pct : undefined,
         },
       }));
       setFileByProject((prev) => ({ ...prev, [projectId]: null }));
@@ -270,7 +277,9 @@ const MesProjets = () => {
                     <p
                       className={
                         feedbackByProject[p._id!]!.ok
-                          ? 'mes-projets-feedback ok'
+                          ? feedbackByProject[p._id!]!.hasDelay
+                            ? 'mes-projets-feedback ok warn'
+                            : 'mes-projets-feedback ok'
                           : 'mes-projets-feedback err'
                       }
                     >

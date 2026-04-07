@@ -13,6 +13,7 @@ import { AlertsModule } from './alerts/alerts.module';
 import { MessagesModule } from './messages/messages.module';
 import { ProposalsModule } from './proposals/proposals.module';
 import { ContractsModule } from './contracts/contracts.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { ContractsModule } from './contracts/contracts.module';
       },
     ),
     UserModule,
+    AuthModule,
     ProjectModule,
     DashboardModule,
     SuiviProjectModule,

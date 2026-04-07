@@ -10,7 +10,6 @@ import {
   Phone,
   Loader2,
   AlertCircle,
-  CheckCircle,
 } from "lucide-react";
 import { formatApiError } from "@/lib/api-error";
 import { getApiBaseUrl } from "@/lib/api-base";
@@ -50,6 +49,18 @@ export default function InscriptionPage() {
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldKey, string>>>({});
   const [success, setSuccess] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  /** true = e-mail de vérification réellement envoyé par le serveur SMTP */
+  const [verificationEmailSent, setVerificationEmailSent] = useState<
+    boolean | undefined
+  >(undefined);
+  /** true = backend ALLOW_REGISTRATION_WITHOUT_SMTP (dev uniquement) */
+  const [devBypass, setDevBypass] = useState(false);
+  /** Lien Ethereal (dev sans Gmail) pour ouvrir le faux e-mail et cliquer Confirmer */
+  const [etherealPreviewUrl, setEtherealPreviewUrl] = useState<string | null>(
+    null,
+  );
   const [loading, setLoading] = useState(false);
 
   const isArtisan = role === "artisan";
@@ -132,7 +143,7 @@ export default function InscriptionPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           nom: nom.trim(),
-          email: email.trim(),
+          email: email.trim().toLowerCase(),
           telephone: telephone.trim() || undefined,
           role: role,
           mot_de_passe: password,
@@ -154,6 +165,22 @@ export default function InscriptionPage() {
         return;
       }
 
+      const msg =
+        typeof data?.message === "string" && data.message.trim()
+          ? data.message.trim()
+          : "Inscription réussie. Vérifiez votre email.";
+      setRegisteredEmail(email.trim().toLowerCase());
+      setSuccessMessage(msg);
+      setVerificationEmailSent(
+        typeof data?.emailSent === "boolean" ? data.emailSent : undefined,
+      );
+      setDevBypass(data?.devBypass === true);
+      setEtherealPreviewUrl(
+        typeof data?.etherealPreviewUrl === "string" &&
+          data.etherealPreviewUrl.startsWith("http")
+          ? data.etherealPreviewUrl
+          : null,
+      );
       setSuccess(true);
     } catch (err: unknown) {
       setError(
@@ -166,23 +193,114 @@ export default function InscriptionPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 text-white flex items-center justify-center px-4">
-        <div className="w-full max-w-md text-center">
-          <div className="backdrop-blur-2xl bg-white/10 rounded-3xl p-8 border border-white/20">
-            <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-6">
-              <CheckCircle className="w-10 h-10 text-green-400" />
+      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 text-white flex items-center justify-center px-4 py-10">
+        <div className="w-full max-w-lg text-center">
+          <div className="backdrop-blur-2xl bg-white/[0.08] rounded-3xl p-8 sm:p-10 border border-white/15 shadow-2xl">
+            <div
+              className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
+              style={{ backgroundColor: "rgba(245, 166, 35, 0.18)" }}
+            >
+              <Mail className="w-9 h-9" style={{ color: "#F5A623" }} />
             </div>
-            <h1 className="text-2xl font-bold text-white mb-2">
-              Inscription réussie
+            <h1 className="text-2xl font-bold text-white mb-3">
+              {devBypass
+                ? "Compte créé (mode développement)"
+                : verificationEmailSent === true
+                  ? "Presque terminé"
+                  : "Inscription"}
             </h1>
-            <p className="text-gray-400 mb-8">
-              Votre compte a été créé. Vous pouvez maintenant vous connecter.
-            </p>
+            {verificationEmailSent === true && !devBypass && etherealPreviewUrl && (
+              <div
+                className="rounded-2xl border border-sky-500/35 bg-sky-950/30 px-4 py-3 text-left text-sm mb-6 space-y-3"
+                role="status"
+              >
+                <p className="text-gray-200 leading-relaxed">
+                  <span className="text-[#F5A623] font-semibold">E-mail simulé</span>{" "}
+                  : le backend utilise Ethereal (test). Rien n&apos;est envoyé dans
+                  votre vraie boîte. Pour une livraison réelle : dans{" "}
+                  <code className="text-xs text-amber-200/90">backend/.env</code>,{" "}
+                  définissez{" "}
+                  <code className="text-xs text-amber-200/90">RESEND_API_KEY</code>{" "}
+                  (clé sur resend.com) et{" "}
+                  <code className="text-xs text-amber-200/90">MAIL_FROM</code>{" "}
+                  (ex. expéditeur{" "}
+                  <code className="text-xs text-amber-200/90">onboarding@resend.dev</code>
+                  ), puis redémarrez le serveur. (Pas besoin de couper{" "}
+                  <code className="text-xs text-amber-200/90">
+                    USE_ETHEREAL_IN_DEV
+                  </code>
+                  : Resend est prioritaire.) Alternative : SMTP Gmail avec{" "}
+                  <code className="text-xs text-amber-200/90">MAIL_*</code>. Ici,
+                  ouvrez le lien pour le test et cliquez sur{" "}
+                  <strong>Confirmer mon email</strong>.
+                </p>
+                <a
+                  href={etherealPreviewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex w-full sm:w-auto justify-center items-center gap-2 rounded-xl bg-sky-500/20 border border-sky-400/40 px-4 py-2.5 text-sky-100 font-medium text-xs break-all hover:bg-sky-500/30 transition-colors"
+                >
+                  Ouvrir la prévisualisation Ethereal (e-mail simulé)
+                </a>
+              </div>
+            )}
+            {verificationEmailSent === true && !devBypass && !etherealPreviewUrl && (
+              <>
+                <p className="text-gray-300 text-sm sm:text-base leading-relaxed mb-2">
+                  <span className="text-[#F5A623] font-semibold">📧</span> Un
+                  e-mail de vérification a été envoyé à{" "}
+                  <span className="text-white font-medium break-all">
+                    {registeredEmail}
+                  </span>
+                  . Sur Gmail, regardez l&apos;onglet{" "}
+                  <strong className="text-gray-200">Principale</strong>, puis{" "}
+                  <strong className="text-gray-200">Promotions</strong> et{" "}
+                  <strong className="text-gray-200">Indésirables</strong> si besoin.
+                  Ouvrez le message puis cliquez sur le lien de confirmation.
+                </p>
+                <p className="text-gray-500 text-sm mb-6">
+                  Si le mail est dans Promotions, vous pouvez le glisser vers
+                  Principale pour les prochains envois. Sans confirmation, la
+                  connexion reste bloquée.
+                </p>
+              </>
+            )}
+            {devBypass && (
+              <div
+                className="rounded-2xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-left text-amber-100/95 text-sm mb-6"
+                role="status"
+              >
+                <p className="font-medium text-[#F5A623] mb-1">
+                  SMTP désactivé volontairement (dev)
+                </p>
+                <p className="leading-relaxed text-gray-200">
+                  Le backend a{" "}
+                  <code className="text-xs text-amber-200/90">
+                    ALLOW_REGISTRATION_WITHOUT_SMTP=true
+                  </code>
+                  . Aucun e-mail n&apos;est envoyé et la connexion est autorisée
+                  sans vérification. En production, retirez cette variable et
+                  configurez{" "}
+                  <code className="text-xs text-amber-200/90">MAIL_*</code>.
+                </p>
+              </div>
+            )}
+            {verificationEmailSent === undefined && !devBypass && (
+              <p className="text-gray-400 text-sm mb-6">{successMessage}</p>
+            )}
+            {devBypass && (
+              <p className="text-gray-500 text-xs text-left mb-6 leading-relaxed">
+                {successMessage}
+              </p>
+            )}
             <Link
               href="/login"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-gray-900 font-bold shadow-xl"
+              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-gray-900 font-bold shadow-xl border border-[#F5A623]/40 transition-opacity hover:opacity-90"
+              style={{
+                background: "linear-gradient(90deg, #F5A623, #f0c04a)",
+              }}
             >
-              Se connecter
+              Aller à la connexion
             </Link>
           </div>
         </div>
@@ -279,7 +397,7 @@ export default function InscriptionPage() {
                 <input
                   id="email"
                   name="email"
-                  type="text"
+                  type="email"
                   inputMode="email"
                   autoComplete="email"
                   maxLength={254}

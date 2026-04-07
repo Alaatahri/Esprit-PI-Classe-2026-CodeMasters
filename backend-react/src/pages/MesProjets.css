@@ -213,3 +213,7 @@
 .mes-projets-feedback.err {
   color: #b91c1c;
 }
+
+.mes-projets-feedback.warn {
+  color: #b45309;
+}

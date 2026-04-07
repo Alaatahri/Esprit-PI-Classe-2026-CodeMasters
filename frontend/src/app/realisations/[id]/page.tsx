@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import {
   fetchShowcaseProjectById,
+  filterWorkingImageUrls,
+  FALLBACK_SHOWCASE_IMAGE,
   type ShowcaseProjectDetailApi,
   type ShowcaseReviewEntry,
 } from "@/lib/public-workers";
@@ -153,14 +155,21 @@ export default function RealisationDetailPage() {
     );
   }
 
-  const avant = project.photosAvant?.filter(Boolean) ?? [];
-  const apres = project.photosApres?.filter(Boolean) ?? [];
-  const hero = apres[0] ?? avant[0] ?? null;
+  const avant = filterWorkingImageUrls(project.photosAvant?.filter(Boolean));
+  const apres = filterWorkingImageUrls(project.photosApres?.filter(Boolean));
+  const hero =
+    apres[0] ??
+    avant[0] ??
+    (project.photosAvant?.length || project.photosApres?.length
+      ? FALLBACK_SHOWCASE_IMAGE
+      : null);
   const pairCount = Math.min(avant.length, apres.length);
   const extraAvant = avant.slice(pairCount);
   const extraApres = apres.slice(pairCount);
   const reviews = project.reviews ?? [];
-  const chantier = project.chantierPhotos?.filter(Boolean) ?? [];
+  const chantier = filterWorkingImageUrls(
+    project.chantierPhotos?.filter(Boolean),
+  );
 
   return (
     <>

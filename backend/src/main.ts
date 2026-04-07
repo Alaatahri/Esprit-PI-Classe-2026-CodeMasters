@@ -52,6 +52,7 @@ async function bootstrap() {
   console.log('📋 API Base URL: http://localhost:3001/api');
   console.log('📝 Available endpoints:');
   console.log('   - GET  /api/users');
+  console.log('   - GET  /api/auth/verify-email?token=');
   console.log('   - GET  /api/projects');
   console.log('   - GET  /api/suivi-projects');
   console.log('   - GET  /api/devis');

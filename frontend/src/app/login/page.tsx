@@ -19,6 +19,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [emailVerifyHint, setEmailVerifyHint] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<LoginField, string>>>({});
   const [loading, setLoading] = useState(false);
 
@@ -51,6 +52,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
+    setEmailVerifyHint(false);
     setFieldErrors({});
 
     const eEmail = validateEmail(email);
@@ -79,13 +81,19 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(formatApiError(data, "Email ou mot de passe incorrect"));
+        const msg = formatApiError(data, "Email ou mot de passe incorrect");
+        setError(msg);
+        setEmailVerifyHint(
+          res.status === 401 && /vérifier votre email/i.test(msg),
+        );
         setLoading(false);
         return;
       }
 
       if (!data.success || !data.user) {
-        setError(data.message || "Email ou mot de passe incorrect");
+        const msg = data.message || "Email ou mot de passe incorrect";
+        setError(msg);
+        setEmailVerifyHint(/vérifier votre email/i.test(msg));
         setLoading(false);
         return;
       }
@@ -151,7 +159,11 @@ export default function LoginPage() {
           <form noValidate onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
             {error && (
               <div
-                className="flex items-start gap-3 p-4 rounded-xl bg-red-500/20 border border-red-500/30 text-red-200"
+                className={
+                  emailVerifyHint
+                    ? "flex items-start gap-3 p-4 rounded-xl bg-amber-500/15 border border-[#F5A623]/45 text-amber-100"
+                    : "flex items-start gap-3 p-4 rounded-xl bg-red-500/20 border border-red-500/30 text-red-200"
+                }
                 role="alert"
               >
                 <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
@@ -230,6 +242,12 @@ export default function LoginPage() {
                 />
               </div>
               <FieldError id="err-login-password" message={fieldErrors.password} />
+              <div style={{ textAlign: 'right', marginTop: '6px' }}>
+                <a href="/forgot-password"
+                  style={{ color: '#F5A623', fontSize: '13px', textDecoration: 'none' }}>
+                  Mot de passe oublié ?
+                </a>
+              </div>
             </div>
 
             <button

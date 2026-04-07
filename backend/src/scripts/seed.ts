@@ -980,6 +980,36 @@ async function seed() {
           `   ✅ [MOHAMED IA] Créé: ${spec.titre} (0 %, artisan accepté)`,
         );
       }
+
+      // Projet unique pour tester vite l’upload photo / IA (avancement initial modéré)
+      const IA_QUICK_TITLE = '[DÉMO IA] Test upload photo & avancement';
+      const allForIaQuick = await projectService.findAll(800);
+      const hasIaQuick = allForIaQuick.some(
+        (p: any) =>
+          p.titre === IA_QUICK_TITLE && String(p.clientId) === String(ahmedId),
+      );
+      if (!hasIaQuick) {
+        await projectService.create({
+          titre: IA_QUICK_TITLE,
+          description:
+            'Chantier dédié au test du flux suivi photo (analyse IA). Client Ahmed, expert Sara, artisan Mohamed accepté. Avancement de départ 18 %.',
+          date_debut: new Date(Date.now() - 20 * 86400000),
+          date_fin_prevue: new Date(Date.now() + 60 * 86400000),
+          budget_estime: 62000,
+          statut: 'En cours',
+          avancement_global: 18,
+          clientId: ahmedId,
+          expertId: expertOid,
+          applications: [
+            {
+              artisanId: artisanOid,
+              statut: 'acceptee',
+              createdAt: new Date(),
+            },
+          ],
+        });
+        console.log(`   ✅ [IA QUICK] Créé: ${IA_QUICK_TITLE}`);
+      }
     } else {
       console.log(
         '⚠️  Ahmed / Sara / Mohamed introuvable — lot [AHMED TEST] ignoré.',
@@ -1684,6 +1714,74 @@ async function seed() {
     console.log(
       '\n   🔑 Client test: ahmed@example.com / password123 — projets « [AHMED TEST] … » (suivi, matching, alerte).',
     );
+
+    console.log('\n' + '='.repeat(72));
+    console.log(
+      '🔐 COMPTES DE TEST BMP.tn — mot de passe par défaut: password123 (admin: admin123)',
+    );
+    console.log('='.repeat(72));
+    const accountLines: Array<{ role: string; email: string; pass: string; note: string }> = [
+      {
+        role: 'client',
+        email: 'ahmed@example.com',
+        pass: 'password123',
+        note: 'Espace client, suivi, [AHMED TEST], [MOHAMED IA TEST], [DÉMO IA]',
+      },
+      {
+        role: 'client',
+        email: 'leila@example.com',
+        pass: 'password123',
+        note: 'Client démo secondaire',
+      },
+      {
+        role: 'client',
+        email: 'omar@example.com',
+        pass: 'password123',
+        note: 'Client démo tertiaire',
+      },
+      {
+        role: 'expert',
+        email: 'sara@example.com',
+        pass: 'password123',
+        note: 'Expert principal démo — suivi photo, dossiers Ahmed',
+      },
+      {
+        role: 'artisan',
+        email: 'mohamed@example.com',
+        pass: 'password123',
+        note: 'Gestion chantier / upload photo IA (projets acceptés)',
+      },
+      {
+        role: 'manufacturer',
+        email: 'fatma@example.com',
+        pass: 'password123',
+        note: 'Fournisseur marketplace',
+      },
+      {
+        role: 'admin',
+        email: 'admin@bmp.tn',
+        pass: 'admin123',
+        note: 'Admin — matching, notifications, alertes',
+      },
+    ];
+    for (const a of accountLines) {
+      console.log(
+        `   • [${a.role.padEnd(12)}] ${a.email.padEnd(28)} / ${a.pass.padEnd(12)} — ${a.note}`,
+      );
+    }
+    console.log(
+      '   • [expert       ] expert.peinture@bmp.tn … expert.carrelage@bmp.tn / password123 — experts matching (8 comptes)',
+    );
+    console.log(
+      '   • [artisan      ] artisan.menuiserie@bmp.tn (+ autres @bmp.tn) / password123 — vitrine',
+    );
+    console.log(
+      '\n   📷 Test analyse photo IA (Next.js): connectez-vous expert (sara@…) ou artisan (mohamed@…),',
+    );
+    console.log(
+      '      ouvrez un projet assigné → suivi photo / gestion chantier. Clé ANTHROPIC_API_KEY requise pour Claude.',
+    );
+    console.log('='.repeat(72));
   } catch (error) {
     console.error('❌ Error seeding database:', error);
     throw error;
