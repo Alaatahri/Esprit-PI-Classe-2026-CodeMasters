@@ -6,6 +6,7 @@ import { getStoredUser, type BMPUser } from "@/lib/auth";
 import { formatApiError } from "@/lib/api-error";
 import { getApiBaseUrl } from "@/lib/api-base";
 import { FieldError, fieldInputClass, fieldTextareaClass } from "@/lib/form-ui";
+import { DictationButton } from "@/components/DictationButton";
 import {
   validateNewProjectForm,
   type NewProjectFormInput,
@@ -224,17 +225,27 @@ export default function NouveauProjetPage() {
           >
             Titre du projet <span className="text-red-400/90">*</span>
           </label>
-          <input
-            id="np-titre"
-            type="text"
-            maxLength={200}
-            value={form.titre}
-            onChange={(e) => handleChange("titre", e.target.value)}
-            placeholder="Ex: Construction maison familiale, Extension chambre, Rénovation cuisine…"
-            aria-invalid={!!fieldErrors.titre}
-            aria-describedby={fieldErrors.titre ? "err-np-titre" : undefined}
-            className={fieldInputClass(!!fieldErrors.titre, submitting)}
-          />
+          <div className="relative">
+            <input
+              id="np-titre"
+              type="text"
+              maxLength={200}
+              value={form.titre}
+              onChange={(e) => handleChange("titre", e.target.value)}
+              placeholder="Ex: Construction maison familiale, Extension chambre, Rénovation cuisine…"
+              aria-invalid={!!fieldErrors.titre}
+              aria-describedby={fieldErrors.titre ? "err-np-titre" : undefined}
+              className={`${fieldInputClass(!!fieldErrors.titre, submitting)} pr-12`}
+            />
+            <div className="absolute right-2 top-1/2 -translate-y-1/2">
+              <DictationButton
+                onResult={(text) =>
+                  handleChange("titre", `${form.titre} ${text}`.trim())
+                }
+                className="!p-2 w-9 h-9"
+              />
+            </div>
+          </div>
           <FieldError id="err-np-titre" message={fieldErrors.titre} />
         </div>
 
@@ -281,17 +292,29 @@ export default function NouveauProjetPage() {
           >
             Description <span className="text-red-400/90">*</span>
           </label>
-          <textarea
-            id="np-desc"
-            value={form.description}
-            onChange={(e) => handleChange("description", e.target.value)}
-            rows={4}
-            maxLength={8000}
-            placeholder="Décrivez votre besoin, la surface, le budget estimé, les délais souhaités, etc."
-            aria-invalid={!!fieldErrors.description}
-            aria-describedby={fieldErrors.description ? "err-np-desc" : undefined}
-            className={fieldTextareaClass(!!fieldErrors.description, submitting)}
-          />
+          <div className="relative">
+            <textarea
+              id="np-desc"
+              value={form.description}
+              onChange={(e) => handleChange("description", e.target.value)}
+              rows={4}
+              maxLength={8000}
+              placeholder="Décrivez votre besoin, la surface, le budget estimé, les délais souhaités, etc."
+              aria-invalid={!!fieldErrors.description}
+              aria-describedby={
+                fieldErrors.description ? "err-np-desc" : undefined
+              }
+              className={`${fieldTextareaClass(!!fieldErrors.description, submitting)} pr-12`}
+            />
+            <div className="absolute right-2 top-3">
+              <DictationButton
+                onResult={(text) =>
+                  handleChange("description", `${form.description} ${text}`.trim())
+                }
+                className="!p-2 w-9 h-9"
+              />
+            </div>
+          </div>
           <FieldError id="err-np-desc" message={fieldErrors.description} />
         </div>
 

@@ -15,6 +15,63 @@ export function VoiceAssistant() {
   const [isSupported, setIsSupported] = useState(false);
   const recognitionRef = useRef<any>(null);
 
+  const routeAliases: Array<{
+    href: string;
+    keys: string[];
+    speak: { fr: string; en: string; ar: string };
+  }> = [
+    {
+      href: "/",
+      keys: ["accueil", "home", "الرئيسية", "main"],
+      speak: { fr: "Accueil", en: "Home", ar: "الصفحة الرئيسية" },
+    },
+    {
+      href: "/espace",
+      keys: ["espace", "dashboard", "mon espace", "space", "مساحتي"],
+      speak: { fr: "Retour à votre espace", en: "Back to your space", ar: "العودة إلى مساحتك" },
+    },
+    {
+      href: "/gestion-chantier",
+      keys: ["chantier", "projet", "projects", "worksite", "site", "مشاريع", "مشروع", "ورشة"],
+      speak: { fr: "Ouverture des chantiers", en: "Opening site management", ar: "فتح إدارة المشاريع" },
+    },
+    {
+      href: "/gestion-devis-facturation",
+      keys: ["devis", "facture", "facturation", "invoice", "quote", "فواتير", "فاتورة"],
+      speak: { fr: "Devis et facturation", en: "Quotes and invoicing", ar: "عروض الأسعار والفواتير" },
+    },
+    {
+      href: "/gestion-marketplace",
+      keys: ["marketplace", "boutique", "magasin", "store", "shop", "سوق", "متجر"],
+      speak: { fr: "Marketplace", en: "Marketplace", ar: "السوق" },
+    },
+    {
+      href: "/messages",
+      keys: ["message", "messages", "chat", "messagerie", "الرسائل"],
+      speak: { fr: "Messages", en: "Messages", ar: "الرسائل" },
+    },
+    {
+      href: "/contact",
+      keys: ["contact", "support", "aide", "help", "اتصل", "مساعدة", "دعم"],
+      speak: { fr: "Page de contact", en: "Contact page", ar: "صفحة الاتصال" },
+    },
+    {
+      href: "/login",
+      keys: ["login", "connexion", "se connecter", "تسجيل الدخول", "دخول"],
+      speak: { fr: "Page de connexion", en: "Login page", ar: "صفحة الدخول" },
+    },
+    {
+      href: "/inscription",
+      keys: ["inscription", "register", "signup", "سجل", "حساب جديد"],
+      speak: { fr: "Page d'inscription", en: "Registration page", ar: "صفحة التسجيل" },
+    },
+    {
+      href: "/espace/client/nouveau-projet",
+      keys: ["nouveau projet", "créer projet", "create project", "new project", "إنشاء مشروع", "مشروع جديد"],
+      speak: { fr: "Création de projet", en: "Create a new project", ar: "إنشاء مشروع جديد" },
+    },
+  ];
+
   const speakBack = (text: string, forceLang?: string) => {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
@@ -75,41 +132,55 @@ export function VoiceAssistant() {
   }, [lang]);
 
   const handleCommand = (transcript: string, routerInstance: ReturnType<typeof useRouter>) => {
+    const raw = String(transcript || "").trim();
+    const t = raw.toLowerCase();
+
+    // Allow "go to /some/path"
+    const pathMatch = raw.match(/(\/[a-z0-9\-\/\[\]]+)/i);
+    if (pathMatch?.[1]) {
+      const p = pathMatch[1];
+      speakBack(
+        lang === "fr-FR" ? `Ouverture ${p}` : lang === "ar-SA" ? `فتح ${p}` : `Opening ${p}`,
+      );
+      routerInstance.push(p);
+      return;
+    }
+
     const isLangCommand =
-      transcript.includes("langue") ||
-      transcript.includes("language") ||
-      transcript.includes("لغة") ||
-      transcript.includes("تغيير") ||
-      transcript.includes("بدل");
+      t.includes("langue") || t.includes("language") || t.includes("لغة") || t.includes("تغيير") || t.includes("بدل");
     if (
       isLangCommand ||
-      transcript.includes("arabe") ||
-      transcript.includes("français") ||
-      transcript.includes("anglais") ||
-      transcript.includes("عرب") ||
-      transcript.includes("فرنس") ||
-      transcript.includes("انجليز")
+      t.includes("arabe") ||
+      t.includes("français") ||
+      t.includes("francais") ||
+      t.includes("anglais") ||
+      t.includes("arabic") ||
+      t.includes("french") ||
+      t.includes("english") ||
+      t.includes("عرب") ||
+      t.includes("فرنس") ||
+      t.includes("انجليز")
     ) {
-      if (transcript.includes("arabe") || transcript.includes("arabic") || transcript.includes("عرب")) {
+      if (t.includes("arabe") || t.includes("arabic") || t.includes("عرب")) {
         setLang("ar-SA");
         speakBack("تم تغيير اللغة إلى العربية", "ar-SA");
         return;
       }
       if (
-        transcript.includes("français") ||
-        transcript.includes("francais") ||
-        transcript.includes("french") ||
-        transcript.includes("فرنس")
+        t.includes("français") ||
+        t.includes("francais") ||
+        t.includes("french") ||
+        t.includes("فرنس")
       ) {
         setLang("fr-FR");
         speakBack("Changement de langue en français", "fr-FR");
         return;
       }
       if (
-        transcript.includes("anglais") ||
-        transcript.includes("english") ||
-        transcript.includes("إنجليز") ||
-        transcript.includes("انجليز")
+        t.includes("anglais") ||
+        t.includes("english") ||
+        t.includes("إنجليز") ||
+        t.includes("انجليز")
       ) {
         setLang("en-US");
         speakBack("Language changed to English", "en-US");
@@ -117,232 +188,58 @@ export function VoiceAssistant() {
       }
     }
 
-    const isGo =
-      transcript.includes("va") ||
-      transcript.includes("aller") ||
-      transcript.includes("ouvre") ||
-      transcript.includes("go") ||
-      transcript.includes("open") ||
-      transcript.includes("إذهب") ||
-      transcript.includes("افتح") ||
-      transcript.includes("اذهب") ||
-      transcript.includes("امشي") ||
-      transcript.includes("وريني") ||
-      transcript.includes("اعرض") ||
-      transcript.includes("هزني") ||
-      transcript.includes("ريني") ||
-      transcript.includes("صفحة");
+    // Generic navigation to "any page" by keywords.
+    const wantsNav =
+      t.includes("va") ||
+      t.includes("aller") ||
+      t.includes("ouvre") ||
+      t.includes("go") ||
+      t.includes("open") ||
+      t.includes("take me") ||
+      t.includes("navigate") ||
+      t.includes("إذهب") ||
+      t.includes("افتح") ||
+      t.includes("اذهب") ||
+      t.includes("صفحة");
 
-    if (
-      transcript.includes("inscription") ||
-      transcript.includes("register") ||
-      transcript.includes("signup") ||
-      transcript.includes("حساب جديد") ||
-      transcript.includes("سجل")
-    ) {
-      speakBack(
-        lang === "fr-FR"
-          ? "Page d'inscription"
-          : lang === "ar-SA"
-            ? "صفحة التسجيل"
-            : "Registration page",
-      );
-      routerInstance.push("/inscription");
-      return;
-    }
-    if (
-      transcript.includes("connexion") ||
-      transcript.includes("login") ||
-      transcript.includes("تسجيل الدخول") ||
-      transcript.includes("دخول")
-    ) {
-      speakBack(
-        lang === "fr-FR"
-          ? "Page de connexion"
-          : lang === "ar-SA"
-            ? "صفحة الدخول"
-            : "Login page",
-      );
-      routerInstance.push("/login");
-      return;
-    }
-
-    if (
-      transcript.includes("contact") ||
-      transcript.includes("support") ||
-      transcript.includes("aide") ||
-      transcript.includes("اتصل") ||
-      transcript.includes("مساعدة") ||
-      transcript.includes("دعم")
-    ) {
-      speakBack(
-        lang === "fr-FR"
-          ? "Page de contact"
-          : lang === "ar-SA"
-            ? "صفحة الاتصال"
-            : "Contact page",
-      );
-      routerInstance.push("/contact");
-      return;
-    }
-
-    if (
-      transcript.includes("profil") ||
-      transcript.includes("compte") ||
-      transcript.includes("profile") ||
-      transcript.includes("account") ||
-      transcript.includes("حسابي") ||
-      transcript.includes("ملفي") ||
-      transcript.includes("بروفايل")
-    ) {
-      speakBack(
-        lang === "fr-FR"
-          ? "Votre profil"
-          : lang === "ar-SA"
-            ? "الملف الشخصي"
-            : "Your profile",
-      );
-      routerInstance.push("/espace/profil");
-      return;
-    }
-
-    if (
-      transcript.includes("admin") ||
-      transcript.includes("administrateur") ||
-      transcript.includes("ادارة") ||
-      transcript.includes("مدير")
-    ) {
-      speakBack(
-        lang === "fr-FR"
-          ? "Espace Administrateur"
-          : lang === "ar-SA"
-            ? "مساحة الإدارة"
-            : "Admin Space",
-      );
-      routerInstance.push("/espace/admin");
-      return;
-    }
-    if (transcript.includes("expert") || transcript.includes("خبير")) {
-      speakBack(
-        lang === "fr-FR"
-          ? "Espace Expert"
-          : lang === "ar-SA"
-            ? "مساحة الخبير"
-            : "Expert Space",
-      );
-      routerInstance.push("/espace/expert");
-      return;
-    }
-    if (transcript.includes("artisan") || transcript.includes("صنايعي") || transcript.includes("حرفي")) {
-      speakBack(
-        lang === "fr-FR"
-          ? "Espace Artisan"
-          : lang === "ar-SA"
-            ? "مساحة الحرفي"
-            : "Artisan Space",
-      );
-      routerInstance.push("/espace/artisan");
-      return;
-    }
-    if (
-      transcript.includes("fournisseur") ||
-      transcript.includes("supplier") ||
-      transcript.includes("مزود") ||
-      transcript.includes("مورد")
-    ) {
-      speakBack(
-        lang === "fr-FR"
-          ? "Espace Fournisseur"
-          : lang === "ar-SA"
-            ? "مساحة المزود"
-            : "Supplier Space",
-      );
-      routerInstance.push("/espace/fournisseur");
-      return;
-    }
-
-    if (
-      isGo ||
-      transcript.includes("الرئيسية") ||
-      transcript.includes("مشاريع") ||
-      transcript.includes("فواتير") ||
-      transcript.includes("سوق")
-    ) {
-      if (
-        transcript.includes("chantier") ||
-        transcript.includes("projet") ||
-        transcript.includes("project") ||
-        transcript.includes("مشاريع") ||
-        transcript.includes("مشروع") ||
-        transcript.includes("ورشة") ||
-        transcript.includes("شوانط") ||
-        transcript.includes("شانطي")
-      ) {
-        speakBack(
-          lang === "fr-FR"
-            ? "Ouverture des chantiers"
-            : lang === "ar-SA"
-              ? "فتح لوحة المشاريع"
-              : "Opening projects",
-        );
-        routerInstance.push("/gestion-chantier");
+    if (wantsNav) {
+      // Prefer role-aware /espace route if user says "espace"
+      if (t.includes("espace") || t.includes("dashboard") || t.includes("مساح")) {
+        const user = getStoredUser();
+        const targetRole = user?.role || "client";
+        const href = `/espace/${targetRole}`;
+        speakBack(routeAliases[1]?.speak?.fr || "Retour à votre espace");
+        routerInstance.push(href);
         return;
       }
-      if (
-        transcript.includes("devis") ||
-        transcript.includes("facturation") ||
-        transcript.includes("facture") ||
-        transcript.includes("quote") ||
-        transcript.includes("invoice") ||
-        transcript.includes("فاتورة") ||
-        transcript.includes("فواتير") ||
-        transcript.includes("ديفي") ||
-        transcript.includes("حساب") ||
-        transcript.includes("فلوس")
-      ) {
-        speakBack(
-          lang === "fr-FR"
-            ? "Vos devis et factures"
-            : lang === "ar-SA"
-              ? "الذهاب إلى الفواتير"
-              : "Your quotes and invoices",
-        );
-        routerInstance.push("/gestion-devis-facturation");
-        return;
+
+      for (const r of routeAliases) {
+        if (r.keys.some((k) => t.includes(k))) {
+          const speak =
+            lang === "fr-FR" ? r.speak.fr : lang === "ar-SA" ? r.speak.ar : r.speak.en;
+          speakBack(speak);
+          routerInstance.push(r.href);
+          return;
+        }
       }
+    }
+
+    if (
+      wantsNav ||
+      t.includes("الرئيسية") ||
+      t.includes("مشاريع") ||
+      t.includes("فواتير") ||
+      t.includes("سوق")
+    ) {
       if (
-        transcript.includes("marketplace") ||
-        transcript.includes("boutique") ||
-        transcript.includes("magasin") ||
-        transcript.includes("store") ||
-        transcript.includes("متجر") ||
-        transcript.includes("سوق") ||
-        transcript.includes("منتجات") ||
-        transcript.includes("شراء") ||
-        transcript.includes("سلعة") ||
-        transcript.includes("مواد")
-      ) {
-        speakBack(
-          lang === "fr-FR"
-            ? "Accès au magasin"
-            : lang === "ar-SA"
-              ? "الوصول إلى السوق"
-              : "Accessing the store",
-        );
-        routerInstance.push("/gestion-marketplace");
-        return;
-      }
-      if (
-        transcript.includes("espace") ||
-        transcript.includes("client") ||
-        transcript.includes("accueil") ||
-        transcript.includes("home") ||
-        transcript.includes("dashboard") ||
-        transcript.includes("الرئيسية") ||
-        transcript.includes("حساب") ||
-        transcript.includes("بداية") ||
-        transcript.includes("دار") ||
-        transcript.includes("أكوي")
+        t.includes("espace") ||
+        t.includes("client") ||
+        t.includes("accueil") ||
+        t.includes("home") ||
+        t.includes("dashboard") ||
+        t.includes("الرئيسية") ||
+        t.includes("حساب") ||
+        t.includes("بداية")
       ) {
         const user = getStoredUser();
         const targetRole = user?.role || "client";
@@ -359,29 +256,26 @@ export function VoiceAssistant() {
     }
 
     const isCreate =
-      transcript.includes("créer") ||
-      transcript.includes("nouveau") ||
-      transcript.includes("creer") ||
-      transcript.includes("ajoute") ||
-      transcript.includes("create") ||
-      transcript.includes("new") ||
-      transcript.includes("add") ||
-      transcript.includes("إنشاء") ||
-      transcript.includes("جديد") ||
-      transcript.includes("اضافة") ||
-      transcript.includes("زيد") ||
-      transcript.includes("اعمل") ||
-      transcript.includes("اصنع") ||
-      transcript.includes("صب");
+      t.includes("créer") ||
+      t.includes("nouveau") ||
+      t.includes("creer") ||
+      t.includes("ajoute") ||
+      t.includes("create") ||
+      t.includes("new") ||
+      t.includes("add") ||
+      t.includes("إنشاء") ||
+      t.includes("جديد") ||
+      t.includes("اضافة") ||
+      t.includes("اعمل") ||
+      t.includes("اصنع");
     if (isCreate) {
       if (
-        transcript.includes("projet") ||
-        transcript.includes("chantier") ||
-        transcript.includes("project") ||
-        transcript.includes("مشروع") ||
-        transcript.includes("مشاريع") ||
-        transcript.includes("بناء") ||
-        transcript.includes("شانطي")
+        t.includes("projet") ||
+        t.includes("chantier") ||
+        t.includes("project") ||
+        t.includes("مشروع") ||
+        t.includes("مشاريع") ||
+        t.includes("بناء")
       ) {
         const user = getStoredUser();
         const targetRole = user?.role || "client";
@@ -392,14 +286,20 @@ export function VoiceAssistant() {
               ? "فتح صفحة إنشاء مشروع جديد"
               : "Creating new project",
         );
-        if (targetRole === "client") {
-          routerInstance.push("/espace/client/nouveau-projet");
-        } else {
-          routerInstance.push(`/espace/${targetRole}`);
-        }
+        routerInstance.push(
+          targetRole === "client" ? "/espace/client/nouveau-projet" : `/espace/${targetRole}`,
+        );
         return;
       }
     }
+
+    speakBack(
+      lang === "fr-FR"
+        ? "Je n'ai pas compris. Dites par exemple : « ouvre marketplace », « va à devis », ou « ouvre /messages »."
+        : lang === "ar-SA"
+          ? "لم أفهم. قل مثلاً: افتح السوق، أو اذهب إلى الفواتير، أو افتح /messages."
+          : "I didn't understand. Say for example: open marketplace, go to invoices, or open /messages.",
+    );
   };
 
   const toggleListen = () => {

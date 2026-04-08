@@ -19,36 +19,122 @@ const DEFAULT_MESSAGES: ChatLine[] = [
 const CHAT_AI_URL =
   typeof process !== "undefined" ? process.env.NEXT_PUBLIC_CHATBOT_AI_URL?.trim() || "" : "";
 
-function getBotResponse(userMessage: string): string {
+function guideCreateProject(lang: string): string {
+  if (lang === "ar-SA") {
+    return [
+      "لإنشاء مشروع جديد في BMP.tn:",
+      "1) سجّل الدخول (Connexion).",
+      "2) ادخل إلى مساحة العميل: Espace client.",
+      "3) افتح: « + مشروع جديد » أو الرابط /espace/client/nouveau-projet",
+      "4) املأ على الأقل: عنوان المشروع، الفئة، الوصف، المدينة، العنوان (المطلوبة).",
+      "5) (اختياري) أضف صور الموقع والوثائق لمساعدة الخبير.",
+      "6) اضغط « إنشاء المشروع ». بعد ذلك سيتم تحويلك إلى /espace/client.",
+      "",
+      "نصيحة: اكتب في الوصف (المساحة، الهدف، الميزانية التقريبية، المواعيد، صور).",
+    ].join("\n");
+  }
+  if (lang === "en-US") {
+    return [
+      "To create a new project in BMP.tn:",
+      "1) Log in.",
+      "2) Go to Client space.",
+      "3) Open “+ New project” or /espace/client/nouveau-projet",
+      "4) Fill at least: Title, Category, Description, City, Exact address (required).",
+      "5) (Optional) Upload site photos and documents to help the expert.",
+      "6) Click “Create project”. You’ll be redirected to /espace/client.",
+      "",
+      "Tip: In the description, add surface, scope, budget range, deadlines, and constraints.",
+    ].join("\n");
+  }
+  return [
+    "Pour créer un projet sur BMP.tn :",
+    "1) Connectez-vous.",
+    "2) Allez dans l’espace client.",
+    "3) Ouvrez « + Nouveau projet » ou /espace/client/nouveau-projet",
+    "4) Renseignez au minimum : Titre, Catégorie, Description, Ville, Adresse (obligatoires).",
+    "5) (Optionnel) Ajoutez des plans/documents et des photos du site pour aider l’expert.",
+    "6) Cliquez sur « Créer le projet » (puis retour automatique vers /espace/client).",
+    "",
+    "Astuce : dans la description, mentionnez surface, budget estimé, délais, contraintes, photos.",
+  ].join("\n");
+}
+
+function getBotResponse(userMessage: string, lang: string, role?: string): string {
   const lower = userMessage.toLowerCase();
+  const r = String(role || "").toLowerCase();
+
+  if (
+    lower.includes("créer un projet") ||
+    lower.includes("create a project") ||
+    lower.includes("nouveau projet") ||
+    lower.includes("new project") ||
+    lower.includes("comment créer") ||
+    lower.includes("how to create") ||
+    lower.includes("إنشاء مشروع") ||
+    (lower.includes("projet") && lower.includes("créer"))
+  ) {
+    if (r && r !== "client") {
+      return lang === "ar-SA"
+        ? "إنشاء مشروع متاح في مساحة العميل. قم بتسجيل الدخول بحساب عميل أو غيّر الدور إلى client."
+        : lang === "en-US"
+          ? "Project creation is available in Client space. Log in as a client (role: client)."
+          : "La création de projet est disponible dans l’espace client. Connectez-vous en tant que client (rôle: client).";
+    }
+    return guideCreateProject(lang);
+  }
+
   if (
     lower.includes("login") ||
     lower.includes("connexion") ||
     lower.includes("se connecter")
   ) {
-    return "Pour vous connecter, cliquez sur le bouton Login dans la barre de navigation ou allez sur la page /login.";
+    return lang === "ar-SA"
+      ? "للتسجيل: اضغط Connexion في الشريط العلوي أو افتح /login."
+      : lang === "en-US"
+        ? "To log in, click “Login” in the navbar or open /login."
+        : "Pour vous connecter, cliquez sur Connexion dans la barre de navigation ou allez sur /login.";
   }
   if (
     lower.includes("inscription") ||
     lower.includes("s'inscrire") ||
     lower.includes("créer un compte")
   ) {
-    return "Pour créer un compte, rendez-vous sur la page /inscription.";
+    return lang === "ar-SA"
+      ? "لإنشاء حساب: افتح /inscription."
+      : lang === "en-US"
+        ? "To create an account, open /inscription."
+        : "Pour créer un compte, rendez-vous sur /inscription.";
   }
   if (
     lower.includes("projet") ||
     lower.includes("chantier") ||
     lower.includes("construction")
   ) {
-    return "BMP.tn propose des modules pour la gestion de chantier, les devis et facturation, et une marketplace B2B.";
+    return lang === "ar-SA"
+      ? "BMP.tn فيها: إدارة المشاريع (chantier)، عروض أسعار/فواتير (devis & facturation)، وسوق (marketplace)."
+      : lang === "en-US"
+        ? "BMP.tn includes: site/project management, quotes & invoicing, and a B2B marketplace."
+        : "BMP.tn propose : gestion de chantier, devis & facturation, et marketplace B2B.";
   }
   if (lower.includes("contact") || lower.includes("aide")) {
-    return "Vous pouvez nous contacter via la page Contact ou contact@bmp.tn.";
+    return lang === "ar-SA"
+      ? "يمكنك التواصل عبر صفحة Contact."
+      : lang === "en-US"
+        ? "You can contact us via the Contact page."
+        : "Vous pouvez nous contacter via la page Contact.";
   }
   if (lower.includes("bonjour") || lower.includes("salut") || lower.includes("hello")) {
-    return "Bonjour ! En quoi puis-je vous aider ?";
+    return lang === "ar-SA"
+      ? "مرحباً! كيف أساعدك؟"
+      : lang === "en-US"
+        ? "Hi! How can I help?"
+        : "Bonjour ! En quoi puis-je vous aider ?";
   }
-  return "Merci pour votre message. Explorez les pages Gestion de Chantier, Devis & Facturation, et Marketplace pour en savoir plus.";
+  return lang === "ar-SA"
+    ? "قل لي ما تريد فعله بالضبط: إنشاء مشروع، تتبع مشروع، فتح السوق، أو الرسائل."
+    : lang === "en-US"
+      ? "Tell me what you want to do: create a project, track a project, open marketplace, or messages."
+      : "Dites-moi ce que vous voulez faire : créer un projet, suivre un projet, ouvrir la marketplace, ou consulter les messages.";
 }
 
 function offlineAiError(lang: string): string {
@@ -101,7 +187,8 @@ export function ChatbotWidget({ onToggle }: { onToggle?: (state: boolean) => voi
 
     if (!CHAT_AI_URL) {
       await new Promise((r) => setTimeout(r, 400));
-      const botReply = getBotResponse(trimmed);
+      const role = getStoredUser()?.role || "";
+      const botReply = getBotResponse(trimmed, lang, role);
       setMessages((prev) => [...prev, { role: "bot", text: botReply }]);
       speakBack(botReply);
       setLoading(false);
@@ -139,7 +226,8 @@ export function ChatbotWidget({ onToggle }: { onToggle?: (state: boolean) => voi
       speakBack(reply);
     } catch (error) {
       console.error("Erreur Chatbot AI:", error);
-      const fallback = getBotResponse(trimmed);
+      const role = getStoredUser()?.role || "";
+      const fallback = getBotResponse(trimmed, lang, role);
       const errText = `${offlineAiError(lang)} — ${fallback}`;
       setMessages((prev) => [...prev, { role: "bot", text: errText }]);
       speakBack(fallback);
