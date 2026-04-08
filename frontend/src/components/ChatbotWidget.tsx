@@ -59,19 +59,28 @@ function guideCreateProject(lang: string): string {
   ].join("\n");
 }
 
+function normalizeForIntent(s: string): string {
+  return String(s || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function getBotResponse(userMessage: string, lang: string, role?: string): string {
-  const lower = userMessage.toLowerCase();
+  const lower = normalizeForIntent(userMessage);
   const r = String(role || "").toLowerCase();
 
   if (
-    lower.includes("créer un projet") ||
+    lower.includes("creer un projet") ||
     lower.includes("create a project") ||
     lower.includes("nouveau projet") ||
     lower.includes("new project") ||
-    lower.includes("comment créer") ||
+    lower.includes("comment creer") ||
     lower.includes("how to create") ||
     lower.includes("إنشاء مشروع") ||
-    (lower.includes("projet") && lower.includes("créer"))
+    (lower.includes("projet") && (lower.includes("creer") || lower.includes("create")))
   ) {
     if (r && r !== "client") {
       return lang === "ar-SA"
@@ -81,6 +90,19 @@ function getBotResponse(userMessage: string, lang: string, role?: string): strin
           : "La création de projet est disponible dans l’espace client. Connectez-vous en tant que client (rôle: client).";
     }
     return guideCreateProject(lang);
+  }
+
+  if (
+    lower.includes("c'est quoi chantier") ||
+    lower.includes("c est quoi chantier") ||
+    (lower.includes("chantier") &&
+      (lower.includes("quoi") || lower.includes("what") || lower.includes("meaning")))
+  ) {
+    return lang === "ar-SA"
+      ? "« chantier » يعني متابعة وتنظيم مشروع البناء/الترميم: التقدم، الصور، المهام، التنسيق بين العميل/الخبير/الحرفي."
+      : lang === "en-US"
+        ? "“Chantier” means the worksite/project execution: tracking progress, photos, tasks, and coordination between client/expert/artisan."
+        : "« Chantier » = l’exécution du projet sur le terrain : suivi d’avancement, photos, tâches, coordination (client/expert/artisan).";
   }
 
   if (
