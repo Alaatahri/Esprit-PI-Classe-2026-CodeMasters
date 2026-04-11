@@ -12,7 +12,8 @@ export function getBackendOriginForPublicFiles(): string {
     if (t.startsWith("http") && t.endsWith("/api")) return t.slice(0, -4);
     if (t.startsWith("http")) return t;
   }
-  return "http://localhost:3001";
+  // Plus fiable que `localhost` sur Windows (évite les cas IPv6 ::1 vs IPv4).
+  return "http://127.0.0.1:3001";
 }
 
 export function publicFileUrl(path: string | undefined | null): string | null {
