@@ -16,6 +16,12 @@ export class UserController {
     return this.userService.findAll();
   }
 
+  /** Vitrine — doit être déclaré avant @Get(':id') sinon « public » est pris pour un id. */
+  @Get('public/workers')
+  publicWorkers() {
+    return this.userService.findPublicWorkers();
+  }
+
   @Post('login')
   async login(@Body() loginDto: { email?: string; mot_de_passe?: string }) {
     try {

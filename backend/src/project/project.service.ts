@@ -28,6 +28,61 @@ export class ProjectService {
     return this.projectModel.findById(id).lean().exec();
   }
 
+  /** Vitrine : projets visibles (terminés ou en cours). */
+  async findPublicShowcase(): Promise<Record<string, unknown>[]> {
+    const projects = await this.projectModel
+      .find({ statut: { $in: ['Terminé', 'En cours'] } })
+      .sort({ updatedAt: -1, createdAt: -1 })
+      .limit(24)
+      .lean()
+      .exec();
+
+    return projects.map((p: any) => ({
+      _id: p._id?.toString?.() ?? String(p._id),
+      titre: p.titre,
+      description: p.description,
+      statut: p.statut,
+      avancement_global: p.avancement_global,
+      clientRating: p.clientRating,
+      clientComment: p.clientComment,
+      expertRating: p.expertRating,
+      artisanRating: p.artisanRating,
+      photosAvant: p.photosAvant ?? [],
+      photosApres: p.photosApres ?? [],
+      updatedAt: p.updatedAt,
+      createdAt: p.createdAt,
+    }));
+  }
+
+  async findPublicShowcaseById(id: string): Promise<Record<string, unknown>> {
+    if (!this.isValidObjectId(id)) {
+      throw new NotFoundException('Projet introuvable.');
+    }
+    const p: any = await this.projectModel.findById(id).lean().exec();
+    if (!p) {
+      throw new NotFoundException('Projet introuvable.');
+    }
+    return {
+      _id: p._id?.toString?.() ?? String(p._id),
+      titre: p.titre,
+      description: p.description,
+      statut: p.statut,
+      avancement_global: p.avancement_global,
+      clientRating: p.clientRating,
+      clientComment: p.clientComment,
+      expertRating: p.expertRating,
+      artisanRating: p.artisanRating,
+      expertComment: p.expertComment,
+      artisanComment: p.artisanComment,
+      photosAvant: p.photosAvant ?? [],
+      photosApres: p.photosApres ?? [],
+      reviews: p.reviews ?? [],
+      chantierPhotos: p.chantierPhotos ?? [],
+      updatedAt: p.updatedAt,
+      createdAt: p.createdAt,
+    };
+  }
+
   async update(id: string, updateProjectDto: Partial<Project>): Promise<Project> {
     return this.projectModel.findByIdAndUpdate(id, updateProjectDto, { new: true }).exec();
   }

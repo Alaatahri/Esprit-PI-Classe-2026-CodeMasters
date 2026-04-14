@@ -27,6 +27,17 @@ export class ProjectController {
     return this.projectService.findAll();
   }
 
+  /** Vitrine — avant @Get(':id') sinon « public » est capturé comme id. */
+  @Get('public/showcase')
+  publicShowcase() {
+    return this.projectService.findPublicShowcase();
+  }
+
+  @Get('public/showcase/:id')
+  publicShowcaseById(@Param('id') id: string) {
+    return this.projectService.findPublicShowcaseById(id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.projectService.findOne(id);

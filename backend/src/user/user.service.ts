@@ -46,4 +46,34 @@ export class UserService {
   async remove(id: string): Promise<User> {
     return this.userModel.findByIdAndDelete(id).exec();
   }
+
+  /**
+   * Vitrine : artisans / experts / fabricants — champs publics uniquement (sans mot de passe).
+   */
+  async findPublicWorkers(): Promise<Record<string, unknown>[]> {
+    const users = await this.userModel
+      .find({ role: { $in: ['artisan', 'expert', 'manufacturer'] } })
+      .sort({ createdAt: -1 })
+      .limit(48)
+      .select('-mot_de_passe')
+      .lean()
+      .exec();
+
+    return users.map((u: any) => ({
+      _id: u._id?.toString?.() ?? String(u._id),
+      nom: u.nom ?? 'Membre',
+      prenom: u.prenom,
+      role: u.role,
+      telephone: u.telephone,
+      specialite: u.specialite,
+      competences: u.competences,
+      rating: u.rating,
+      experienceYears: u.experienceYears ?? u.experience_annees,
+      experience_annees: u.experience_annees,
+      isAvailable: u.isAvailable ?? true,
+      zones_travail: u.zones_travail,
+      avatarUrl: u.avatarUrl,
+      bio: u.bio,
+    }));
+  }
 }
