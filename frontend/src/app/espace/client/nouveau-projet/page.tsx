@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { getStoredUser, type BMPUser } from "@/lib/auth";
 import { formatApiError } from "@/lib/api-error";
 import { getApiBaseUrl } from "@/lib/api-base";
+import { bmpAuthHeaders } from "@/lib/api-user-headers";
 import { FieldError, fieldInputClass, fieldTextareaClass } from "@/lib/form-ui";
 import { DictationButton } from "@/components/DictationButton";
 import {
@@ -102,6 +103,7 @@ export default function NouveauProjetPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...bmpAuthHeaders(user),
         },
         body: JSON.stringify(payload),
       });

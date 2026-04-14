@@ -13,13 +13,13 @@ import {
 } from "lucide-react";
 
 const footerLinkClass =
-  "inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-gray-200 transition hover:border-amber-500/35 hover:bg-amber-500/10 hover:text-amber-100 min-h-[44px]";
+  "inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-gray-200 transition duration-200 ease-out hover:border-amber-500/35 hover:bg-amber-500/10 hover:text-amber-100 motion-safe:active:scale-[0.99]";
 
 export default function SiteFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="mt-auto border-t border-white/10 bg-gradient-to-b from-gray-950 to-black text-gray-400">
+    <footer className="mt-auto border-t border-border/40 bg-gradient-to-b from-background to-black text-muted-foreground">
       <div className="container mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-12 lg:gap-8">
           <div className="lg:col-span-4">

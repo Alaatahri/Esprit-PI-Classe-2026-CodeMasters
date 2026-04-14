@@ -11,7 +11,8 @@ import {
   Upload,
   AlertCircle,
 } from "lucide-react";
-import { getStoredUser, normalizeRole, type BMPUser } from "@/lib/auth";
+import { getStoredUser, type BMPUser } from "@/lib/auth";
+import { isExpertAreaUser } from "@/lib/roles";
 import { getApiBaseUrl } from "@/lib/api-base";
 import { FieldError, fieldTextareaClass } from "@/lib/form-ui";
 import {
@@ -72,7 +73,7 @@ export default function ExpertProjectPhotosPage() {
   useEffect(() => {
     if (!projectId) return;
     const u = getStoredUser();
-    if (!u || normalizeRole(u.role) !== "expert") {
+    if (!u || !isExpertAreaUser(u.role)) {
       setLoadProject(false);
       setProjectError("Accès réservé aux experts connectés.");
       return;
@@ -122,7 +123,7 @@ export default function ExpertProjectPhotosPage() {
     async (e: React.FormEvent) => {
       e.preventDefault();
       const u = getStoredUser();
-      if (!u || normalizeRole(u.role) !== "expert") {
+      if (!u || !isExpertAreaUser(u.role)) {
         setSubmitError("Session invalide.");
         return;
       }
@@ -187,7 +188,7 @@ export default function ExpertProjectPhotosPage() {
     async (e: React.FormEvent) => {
       e.preventDefault();
       const u = getStoredUser();
-      if (!u || normalizeRole(u.role) !== "expert") {
+      if (!u || !isExpertAreaUser(u.role)) {
         setUploadError("Session invalide.");
         return;
       }
@@ -255,7 +256,7 @@ export default function ExpertProjectPhotosPage() {
     [album, projectId, uploadFiles],
   );
 
-  if (user && normalizeRole(user.role) !== "expert") {
+  if (user && !isExpertAreaUser(user.role)) {
     return (
       <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center px-4">
         <p className="text-gray-400">Accès réservé aux experts.</p>

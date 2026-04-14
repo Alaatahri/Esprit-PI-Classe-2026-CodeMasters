@@ -83,7 +83,8 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
+  /* Fond type SaaS (légèrement bleuté, meilleure hiérarchie que gris pur) */
+  --background: oklch(0.16 0.012 260);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
@@ -120,8 +121,89 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    scroll-behavior: smooth;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    line-height: 1.6;
+    font-feature-settings: "kern" 1, "liga" 1;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    background: rgba(245, 158, 11, 0.22);
+    color: inherit;
+  }
+}
+
+/* Surfaces & rythme vertical (palette inchangée — utilise les variables du thème) */
+@layer utilities {
+  .bmp-page {
+    @apply mx-auto w-full px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-14;
+  }
+
+  /** Fond d’app discret : vignette ambre + profondeur, sans nouvelles couleurs de marque */
+  .bmp-app-vignette {
+    pointer-events: none;
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(
+        ellipse 85% 55% at 50% -18%,
+        rgba(245, 158, 11, 0.075),
+        transparent 58%
+      ),
+      radial-gradient(
+        ellipse 70% 45% at 100% 100%,
+        rgba(255, 255, 255, 0.02),
+        transparent 50%
+      );
+  }
+
+  /** Panneau type carte / liste (dashboard) */
+  .bmp-panel {
+    @apply rounded-3xl border border-border/55 bg-card/35 text-card-foreground shadow-lg shadow-black/25 backdrop-blur-xl transition-[box-shadow,border-color,background-color] duration-300 ease-out;
+  }
+
+  .bmp-panel-interactive {
+    @apply motion-safe:hover:border-border/80 motion-safe:hover:bg-card/45 motion-safe:hover:shadow-xl motion-safe:hover:shadow-black/30;
+  }
+
+  /** Tuile statistique */
+  .bmp-stat-tile {
+    @apply rounded-2xl border border-border/50 bg-card/30 p-5 shadow-sm backdrop-blur-md transition-[border-color,background-color,transform] duration-300 ease-out motion-safe:hover:border-border/75 motion-safe:hover:bg-card/40;
+  }
+
+  /** Focus visible cohérent (amber déjà utilisé dans l’app) */
+  .bmp-focus {
+    @apply outline-none focus-visible:ring-2 focus-visible:ring-amber-400/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+}
+
+@keyframes bmp-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bmp-animate-page-in {
+  animation: bmp-page-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bmp-animate-page-in {
+    animation: none;
   }
 }
 
@@ -253,4 +335,32 @@ html.access-mobilite button,
 html.access-mobilite a,
 html.access-mobilite input {
   cursor: pointer !important;
+}
+
+/* Animations UI (opacité / position — ne modifie pas la palette) */
+@keyframes bmp-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.bmp-animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.14) 50%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  background-size: 200% 100%;
+  animation: bmp-shimmer 2.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bmp-animate-shimmer {
+    animation: none;
+    background: rgba(255, 255, 255, 0.08);
+  }
 }

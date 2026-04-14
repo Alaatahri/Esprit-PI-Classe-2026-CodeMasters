@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { getApiBaseUrl } from "@/lib/api-base";
+import { bmpAuthHeaders } from "@/lib/api-user-headers";
 import { refId } from "@/lib/project-refs";
 import { readJsonSafe } from "@/lib/read-json-safe";
 
@@ -109,7 +110,9 @@ export default function ArtisanSpacePage() {
       setLoadingOpenProjects(true);
       setLoadErrors((e) => ({ ...e, open: undefined }));
       try {
-        const res = await fetch(`${API_URL}/projects`);
+        const res = await fetch(`${API_URL}/projects`, {
+          headers: bmpAuthHeaders(user),
+        });
         const parsed = await readJsonSafe<unknown>(res);
         if (!res.ok) {
           setLoadErrors((e) => ({

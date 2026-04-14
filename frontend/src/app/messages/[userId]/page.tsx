@@ -2,14 +2,13 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   Loader2,
   Send,
-  User,
 } from "lucide-react";
-import { getStoredUser } from "@/lib/auth";
+import { getStoredUser, normalizeRole } from "@/lib/auth";
 import { getApiBaseUrl } from "@/lib/api-base";
 import {
   fetchThread,
@@ -18,10 +17,28 @@ import {
 } from "@/lib/messages-api";
 import { FieldError, fieldTextareaClass } from "@/lib/form-ui";
 import { validateMessageBody } from "@/lib/validators";
+import {
+  formatDaySeparatorLabel,
+  isSameCalendarDay,
+} from "@/lib/format-message-time";
+import { LoadingState } from "@/components/layout/LoadingState";
+import { cn } from "@/lib/utils";
 
 const API_URL = getApiBaseUrl();
 
 type PartnerInfo = { nom?: string; role?: string };
+
+function roleLabel(role?: string): string {
+  if (!role) return "";
+  const r = normalizeRole(role);
+  if (r === "client") return "Client";
+  if (r === "expert") return "Expert";
+  if (r === "artisan") return "Artisan";
+  if (r === "admin") return "Administrateur";
+  if (r === "ouvrier") return "Équipe terrain";
+  if (r === "fournisseur") return "Fournisseur";
+  return role;
+}
 
 export default function MessageThreadPage() {
   const params = useParams();
@@ -107,120 +124,194 @@ export default function MessageThreadPage() {
   if (!u) return null;
 
   const me = u._id;
+  const partnerInitial = (partner?.nom || "?").trim().charAt(0).toUpperCase();
 
   return (
-    <div className="mx-auto max-w-2xl flex flex-col min-h-[calc(100vh-8rem)] px-4 py-6">
+    <div className="mx-auto flex w-full max-w-3xl flex-col px-4 py-8 sm:px-6 lg:max-w-4xl lg:py-10">
       <Link
         href="/messages"
-        className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-amber-300 mb-4"
+        className="mb-6 inline-flex min-h-[44px] max-w-fit items-center gap-2 rounded-xl text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-amber-300"
       >
-        <ArrowLeft className="w-4 h-4" />
-        Conversations
+        <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
+        Toutes les conversations
       </Link>
 
-      <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
-        <div className="rounded-xl bg-amber-500/15 border border-amber-500/25 p-2.5">
-          <User className="w-6 h-6 text-amber-200" />
-        </div>
-        <div>
-          <h1 className="text-lg font-semibold text-white">
-            {partner?.nom || "…"}
-          </h1>
-          {partner?.role && (
-            <p className="text-xs text-gray-500 capitalize">{partner.role}</p>
-          )}
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="flex flex-1 items-center justify-center py-20">
-          <Loader2 className="w-10 h-10 animate-spin text-amber-400/80" />
-        </div>
-      ) : (
-        <>
-          <div className="flex-1 space-y-3 overflow-y-auto max-h-[min(60vh,520px)] pr-1 mb-4">
-            {err && (
-              <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
-                {err}
-              </div>
-            )}
-            {messages.length === 0 ? (
-              <p className="text-center text-sm text-gray-500 py-8">
-                Aucun message encore. Écrivez le premier ci-dessous.
-              </p>
-            ) : (
-              messages.map((m) => {
-                const mine =
-                  String(m.fromUserId) === me ||
-                  (m.fromUserId as unknown as { toString(): string })?.toString?.() ===
-                    me;
-                return (
-                  <div
-                    key={m._id}
-                    className={`flex ${mine ? "justify-end" : "justify-start"}`}
-                  >
-                    <div
-                      className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
-                        mine
-                          ? "bg-gradient-to-r from-amber-500 to-yellow-400 text-gray-900"
-                          : "bg-white/10 text-gray-100 border border-white/10"
-                      }`}
-                    >
-                      <p className="whitespace-pre-wrap break-words">{m.body}</p>
-                      {m.createdAt && (
-                        <p
-                          className={`text-[10px] mt-1 ${
-                            mine ? "text-gray-800/80" : "text-gray-500"
-                          }`}
-                        >
-                          {new Date(m.createdAt).toLocaleString("fr-FR", {
-                            dateStyle: "short",
-                            timeStyle: "short",
-                          })}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-            <div ref={bottomRef} />
+      <div
+        className={cn(
+          "bmp-panel flex flex-col overflow-hidden",
+          "max-h-[calc(100dvh-10rem)] min-h-[420px] sm:min-h-[520px]",
+        )}
+      >
+        <div className="flex shrink-0 items-center gap-4 border-b border-border/50 px-4 py-4 sm:px-6">
+          <div
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/25 to-yellow-500/10 text-lg font-bold text-amber-100 shadow-inner sm:h-14 sm:w-14"
+            aria-hidden
+          >
+            {partnerInitial}
           </div>
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+              {partner?.nom || "…"}
+            </h1>
+            {partner?.role ? (
+              <p className="mt-0.5 text-xs font-medium capitalize text-muted-foreground">
+                {roleLabel(partner.role)}
+              </p>
+            ) : null}
+          </div>
+        </div>
 
-          <form noValidate onSubmit={onSend} className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-white/10">
-            <div className="flex-1 min-w-0">
-              <textarea
-                id="msg-body"
-                value={text}
-                onChange={(e) => {
-                  setText(e.target.value);
-                  setTextError(null);
-                }}
-                rows={2}
-                maxLength={8000}
-                placeholder="Votre message…"
-                disabled={sending}
-                aria-invalid={!!textError}
-                aria-describedby={textError ? "err-msg-body" : undefined}
-                className={fieldTextareaClass(!!textError, sending)}
-              />
-              <FieldError id="err-msg-body" message={textError ?? undefined} />
-            </div>
-            <button
-              type="submit"
-              disabled={sending || !text.trim()}
-              className="self-end shrink-0 inline-flex items-center justify-center rounded-xl bg-amber-500 text-gray-900 p-3 hover:bg-amber-400 disabled:opacity-40"
-              aria-label="Envoyer"
+        {loading ? (
+          <LoadingState
+            className="flex-1 py-16"
+            message="Chargement de la conversation…"
+            minHeight="md"
+          />
+        ) : (
+          <>
+            <div
+              className="scrollbar-bmp min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-6 sm:py-5"
+              role="log"
+              aria-label="Messages de la conversation"
             >
-              {sending ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <Send className="w-5 h-5" />
+              {err && (
+                <div
+                  className="mb-4 rounded-xl border border-red-500/35 bg-red-500/10 px-4 py-3 text-sm text-red-100"
+                  role="alert"
+                >
+                  {err}
+                </div>
               )}
-            </button>
-          </form>
-        </>
-      )}
+              {messages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center px-4 py-16 text-center">
+                  <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
+                    Aucun message pour l’instant. Écrivez un premier message ci-dessous
+                    pour démarrer la conversation.
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  {messages.map((m, i) => {
+                    const mine =
+                      String(m.fromUserId) === me ||
+                      (m.fromUserId as unknown as { toString(): string })
+                        ?.toString?.() === me;
+                    const prev = messages[i - 1];
+                    const showDay =
+                      m.createdAt &&
+                      (!prev?.createdAt ||
+                        !isSameCalendarDay(m.createdAt, prev.createdAt));
+
+                    return (
+                      <Fragment key={m._id}>
+                        {showDay && m.createdAt ? (
+                          <div className="flex justify-center py-3">
+                            <span className="rounded-full border border-border/40 bg-card/40 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground shadow-sm backdrop-blur-sm">
+                              {formatDaySeparatorLabel(m.createdAt)}
+                            </span>
+                          </div>
+                        ) : null}
+                        <div
+                          className={cn(
+                            "flex w-full",
+                            mine ? "justify-end" : "justify-start",
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              "max-w-[min(100%,22rem)] rounded-2xl px-4 py-2.5 text-sm shadow-sm sm:max-w-[85%] sm:px-4 sm:py-3",
+                              mine
+                                ? "rounded-br-md bg-gradient-to-r from-amber-500 to-amber-400 text-gray-950 shadow-amber-500/15"
+                                : "rounded-bl-md border border-border/50 bg-card/45 text-foreground backdrop-blur-sm",
+                            )}
+                          >
+                            <p className="whitespace-pre-wrap break-words leading-relaxed">
+                              {m.body}
+                            </p>
+                            {m.createdAt ? (
+                              <time
+                                className={cn(
+                                  "mt-2 block text-[10px] tabular-nums",
+                                  mine
+                                    ? "text-gray-900/65"
+                                    : "text-muted-foreground",
+                                )}
+                                dateTime={m.createdAt}
+                              >
+                                {new Date(m.createdAt).toLocaleString("fr-FR", {
+                                  dateStyle: "short",
+                                  timeStyle: "short",
+                                })}
+                              </time>
+                            ) : null}
+                          </div>
+                        </div>
+                      </Fragment>
+                    );
+                  })}
+                </div>
+              )}
+              <div ref={bottomRef} className="h-px shrink-0" aria-hidden />
+            </div>
+
+            <form
+              noValidate
+              onSubmit={onSend}
+              className="shrink-0 border-t border-border/50 bg-background/50 px-3 py-4 backdrop-blur-sm sm:px-6 sm:py-5"
+            >
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <div className="min-w-0 flex-1">
+                  <label htmlFor="msg-body" className="sr-only">
+                    Votre message
+                  </label>
+                  <textarea
+                    id="msg-body"
+                    value={text}
+                    onChange={(e) => {
+                      setText(e.target.value);
+                      setTextError(null);
+                    }}
+                    rows={3}
+                    maxLength={8000}
+                    placeholder="Écrivez votre message…"
+                    disabled={sending}
+                    aria-invalid={!!textError}
+                    aria-describedby={textError ? "err-msg-body" : undefined}
+                    className={cn(
+                      fieldTextareaClass(!!textError, sending),
+                      "min-h-[88px] resize-y sm:min-h-[72px]",
+                    )}
+                  />
+                  <FieldError id="err-msg-body" message={textError ?? undefined} />
+                </div>
+                <button
+                  type="submit"
+                  disabled={sending || !text.trim()}
+                  className={cn(
+                    "inline-flex h-12 min-w-[52px] shrink-0 items-center justify-center self-stretch rounded-xl sm:h-[72px] sm:w-14 sm:self-auto",
+                    "bg-gradient-to-r from-amber-500 to-amber-400 text-gray-950 shadow-lg shadow-amber-500/20",
+                    "transition-[box-shadow,transform,opacity] duration-300",
+                    "hover:shadow-amber-500/35 hover:brightness-105",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                    "disabled:pointer-events-none disabled:opacity-45",
+                    "motion-safe:active:scale-[0.98]",
+                  )}
+                  aria-label="Envoyer le message"
+                >
+                  {sending ? (
+                    <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
+                  ) : (
+                    <Send className="h-5 w-5" aria-hidden />
+                  )}
+                </button>
+              </div>
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                {text.length.toLocaleString("fr-FR")} / 8 000 caractères
+              </p>
+            </form>
+          </>
+        )}
+      </div>
     </div>
   );
 }

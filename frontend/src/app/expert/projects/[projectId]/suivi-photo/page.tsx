@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
-import { getStoredUser, normalizeRole, type BMPUser } from "@/lib/auth";
+import { getStoredUser, type BMPUser } from "@/lib/auth";
+import { isExpertAreaUser } from "@/lib/roles";
 import { getApiBaseUrl } from "@/lib/api-base";
 import { WorkerSitePhotoUpload } from "@/components/WorkerSitePhotoUpload";
 import { SuiviTimeline } from "@/components/SuiviTimeline";
@@ -45,7 +46,7 @@ export default function ExpertSuiviPhotoPage() {
   useEffect(() => {
     if (!projectId) return;
     const u = getStoredUser();
-    if (!u || normalizeRole(u.role) !== "expert") {
+    if (!u || !isExpertAreaUser(u.role)) {
       setLoadProject(false);
       setProjectError("Accès réservé aux experts connectés.");
       return;
@@ -75,7 +76,7 @@ export default function ExpertSuiviPhotoPage() {
     if (!getStoredUser()) router.replace("/login");
   }, [router]);
 
-  if (user && normalizeRole(user.role) !== "expert") {
+  if (user && !isExpertAreaUser(user.role)) {
     return (
       <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center px-4">
         <p className="text-gray-400">Accès réservé aux experts.</p>

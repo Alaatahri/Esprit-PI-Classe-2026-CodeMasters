@@ -3,47 +3,21 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import {
-  Building2,
-  Home,
-  Briefcase,
-  ShoppingCart,
-  FileText,
-  ClipboardList,
-  Mail,
-  LogOut,
-  Menu,
-  X,
-  ChevronRight,
-  Camera,
-  MessageCircle,
-  FolderKanban,
-  Layers,
-  type LucideIcon,
-} from "lucide-react";
+import { Building2, LogOut, Menu, X, ChevronRight } from "lucide-react";
 import {
   getStoredUser,
   clearStoredUser,
-  isClientRole,
-  normalizeRole,
   AUTH_CHANGE_EVENT,
   type BMPUser,
 } from "@/lib/auth";
 import { fetchUnreadCount } from "@/lib/messages-api";
-import { useLanguage, type TranslationKeys } from "@/components/LanguageProvider";
-
-const baseNavDefs: Array<{
-  key: string;
-  href: string;
-  labelKey: TranslationKeys;
-  icon: LucideIcon;
-}> = [
-  { key: "home", href: "/espace", labelKey: "mon_espace", icon: Home },
-  { key: "chantier", href: "/gestion-chantier", labelKey: "nav_chantier", icon: Briefcase },
-  { key: "devis", href: "/gestion-devis-facturation", labelKey: "nav_devis", icon: FileText },
-  { key: "marketplace", href: "/gestion-marketplace", labelKey: "marketplace", icon: ShoppingCart },
-  { key: "contact", href: "/contact", labelKey: "contact", icon: Mail },
-];
+import { useLanguage } from "@/components/LanguageProvider";
+import {
+  getDashboardNav,
+  isDashboardNavActive,
+} from "@/config/dashboard-nav";
+import { navLinkHorizontalClass } from "@/lib/nav-item-styles";
+import { cn } from "@/lib/utils";
 
 export default function GlobalNavbar() {
   const { t } = useLanguage();
@@ -101,53 +75,12 @@ export default function GlobalNavbar() {
     })();
   }, [pathname, userId]);
 
-  const navItems = useMemo(() => {
-    const role = user?.role;
-    const canSeeChantier = role === "admin" || role === "artisan" || role === "ouvrier";
+  const { navItems, extraClientItems, roleSpecificItems } = useMemo(
+    () => getDashboardNav(user),
+    [user],
+  );
 
-    const filteredBase = baseNavDefs.filter((item) => {
-      if (item.key === "chantier") return canSeeChantier;
-      return true;
-    });
-
-    const mapped = filteredBase.map((item) => {
-      if (item.key !== "home") return item;
-      if (!user) return item;
-
-      const roleHref = isClientRole(user.role)
-        ? "/espace/client"
-        : user.role === "expert"
-          ? "/espace/expert"
-          : user.role === "artisan"
-            ? "/espace/artisan"
-            : user.role === "admin"
-              ? "/espace/admin"
-              : "/espace";
-
-      return { ...item, href: roleHref };
-    });
-
-    return mapped;
-  }, [user]);
-
-  const extraClientItems: Array<{
-    href: string;
-    labelKey: TranslationKeys;
-    icon?: LucideIcon;
-    titleKey?: TranslationKeys;
-  }> = isClientRole(user?.role)
-    ? [
-        {
-          href: "/espace/client/suivi",
-          labelKey: "nav_suivi_mes_projets",
-          icon: Camera,
-          titleKey: "title_suivi_photos",
-        },
-        { href: "/espace/client", labelKey: "mes_projets" },
-        { href: "/espace/client/nouveau-projet", labelKey: "nav_plus_nouveau_projet" },
-      ]
-    : [];
-
+  /** Masque la barre horizontale quand le menu latéral (shell) est affiché. */
   const handleLogout = () => {
     clearStoredUser();
     setUser(null);
@@ -155,34 +88,10 @@ export default function GlobalNavbar() {
     router.push("/espace");
   };
 
-  const isActive = (href: string) => {
-    if (!pathname) return false;
-    if (href === "/espace") return pathname === "/espace";
-    if (href === "/espace/client") {
-      return (
-        pathname === "/espace/client" ||
-        pathname === "/espace/client/nouveau-projet"
-      );
-    }
-    if (href === "/espace/client/suivi") {
-      return pathname.startsWith("/espace/client/suivi");
-    }
-    if (href === "/messages") {
-      return pathname.startsWith("/messages");
-    }
-    if (href === "/expert/projets") {
-      return pathname.startsWith("/expert/projets");
-    }
-    if (href === "/expert/tous-les-projets") {
-      return pathname.startsWith("/expert/tous-les-projets");
-    }
-    return pathname.startsWith(href);
-  };
-
   if (!mounted) {
     return (
-      <header className="sticky top-0 z-50 border-b border-white/5 bg-gray-950/90 backdrop-blur-2xl">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-50 border-b border-border/50 bg-background/90 backdrop-blur-2xl supports-[backdrop-filter]:bg-background/80">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-300 flex items-center justify-center shadow-lg shadow-amber-500/30">
@@ -200,11 +109,14 @@ export default function GlobalNavbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/5 bg-gray-950/90 backdrop-blur-2xl">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-50 border-b border-border/50 bg-background/90 backdrop-blur-2xl supports-[backdrop-filter]:bg-background/80">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between gap-4">
-          <Link href="/espace" className="flex items-center gap-3 shrink-0">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-300 flex items-center justify-center shadow-lg shadow-amber-500/30">
+          <Link
+            href="/espace"
+            className="group flex shrink-0 items-center gap-3 rounded-xl outline-none transition duration-300 ease-out motion-safe:hover:opacity-95 motion-safe:active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-amber-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950"
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-yellow-300 shadow-lg shadow-amber-500/30 transition duration-300 ease-out motion-safe:group-hover:shadow-amber-500/40">
               <Building2 className="w-5 h-5 text-gray-900" />
             </div>
             <div className="hidden sm:block">
@@ -217,18 +129,18 @@ export default function GlobalNavbar() {
             </div>
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-1 min-w-0 overflow-x-auto scrollbar-bmp">
+          <nav className="hidden min-w-0 items-center gap-1 overflow-x-auto scrollbar-bmp lg:flex">
             {navItems.map((item) => {
               const Icon = item.icon;
+              const active = isDashboardNavActive(pathname, item.href);
               return (
                 <Link
                   key={item.key ?? item.href}
                   href={item.href}
-                  className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all shrink-0 whitespace-nowrap ${
-                    isActive(item.href)
-                      ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                      : "text-gray-300/80 hover:text-amber-100 hover:bg-amber-500/10"
-                  }`}
+                  className={cn(
+                    navLinkHorizontalClass(active),
+                    "inline-flex shrink-0 whitespace-nowrap",
+                  )}
                 >
                   <Icon className="w-4 h-4" />
                   {t(item.labelKey)}
@@ -236,24 +148,22 @@ export default function GlobalNavbar() {
               );
             })}
 
-                {extraClientItems.length > 0 && (
-              <div className="flex items-center gap-1 ml-2 pl-2 border-l border-white/5 shrink-0">
+            {extraClientItems.length > 0 && (
+              <div className="ml-2 flex shrink-0 items-center gap-1 border-l border-white/5 pl-2">
                 {extraClientItems.map((it) => {
                   const ExtraIcon = it.icon;
+                  const active = isDashboardNavActive(pathname, it.href);
                   return (
                     <Link
                       key={it.href}
                       href={it.href}
                       title={it.titleKey ? t(it.titleKey) : undefined}
-                      className={`inline-flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap shrink-0 ${
-                        isActive(it.href)
-                          ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                          : "text-gray-300/80 hover:text-amber-100 hover:bg-amber-500/10"
-                      }`}
+                      className={cn(
+                        navLinkHorizontalClass(active),
+                        "inline-flex shrink-0 whitespace-nowrap px-3 sm:px-4",
+                      )}
                     >
-                      {ExtraIcon ? (
-                        <ExtraIcon className="w-4 h-4 shrink-0 opacity-90" />
-                      ) : null}
+                      <ExtraIcon className="w-4 h-4 shrink-0 opacity-90" />
                       {t(it.labelKey)}
                     </Link>
                   );
@@ -261,64 +171,31 @@ export default function GlobalNavbar() {
               </div>
             )}
 
-            {user && (
-              <div className="flex items-center gap-1 ml-2 pl-2 border-l border-white/5 shrink-0">
-                {(normalizeRole(user.role) === "expert" ||
-                  user.role === "admin") && (
-                  <Link
-                    href="/expert/tous-les-projets"
-                    className={`inline-flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap shrink-0 ${
-                      isActive("/expert/tous-les-projets")
-                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                        : "text-gray-300/80 hover:text-amber-100 hover:bg-amber-500/10"
-                    }`}
-                  >
-                    <Layers className="w-4 h-4" />
-                    {t("nav_tous_les_projets")}
-                  </Link>
-                )}
-                {normalizeRole(user.role) === "expert" && (
-                  <Link
-                    href="/expert/projets"
-                    className={`inline-flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap shrink-0 ${
-                      isActive("/expert/projets")
-                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                        : "text-gray-300/80 hover:text-amber-100 hover:bg-amber-500/10"
-                    }`}
-                  >
-                    <FolderKanban className="w-4 h-4" />
-                    {t("nav_projets")}
-                  </Link>
-                )}
-                {normalizeRole(user.role) === "expert" && (
-                  <Link
-                    href="/expert/nouveaux-projets"
-                    className={`inline-flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap shrink-0 ${
-                      isActive("/expert/nouveaux-projets")
-                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                        : "text-gray-300/80 hover:text-amber-100 hover:bg-amber-500/10"
-                    }`}
-                  >
-                    <ClipboardList className="w-4 h-4" />
-                    {t("nav_invitations")}
-                  </Link>
-                )}
-                <Link
-                  href="/messages"
-                  className={`inline-flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap shrink-0 ${
-                    isActive("/messages")
-                      ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                      : "text-gray-300/80 hover:text-amber-100 hover:bg-amber-500/10"
-                  }`}
-                >
-                  <MessageCircle className="w-4 h-4" />
-                  {t("nav_messages")}
-                  {unreadMessages > 0 && (
-                    <span className="min-w-[1.25rem] h-5 px-1.5 rounded-full bg-amber-500 text-gray-900 text-[10px] font-bold flex items-center justify-center">
-                      {unreadMessages > 99 ? "99+" : unreadMessages}
-                    </span>
-                  )}
-                </Link>
+            {user && roleSpecificItems.length > 0 && (
+              <div className="ml-2 flex shrink-0 items-center gap-1 border-l border-white/5 pl-2">
+                {roleSpecificItems.map((it) => {
+                  const Icon = it.icon;
+                  const active = isDashboardNavActive(pathname, it.href);
+                  const isMessages = it.key === "messages";
+                  return (
+                    <Link
+                      key={it.key}
+                      href={it.href}
+                      className={cn(
+                        navLinkHorizontalClass(active),
+                        "inline-flex shrink-0 whitespace-nowrap",
+                      )}
+                    >
+                      <Icon className="w-4 h-4" />
+                      {t(it.labelKey)}
+                      {isMessages && unreadMessages > 0 && (
+                        <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-gray-900">
+                          {unreadMessages > 99 ? "99+" : unreadMessages}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </nav>
@@ -414,120 +291,85 @@ export default function GlobalNavbar() {
             </button>
           </div>
 
-          <nav className="px-3 py-3 flex flex-col gap-1 overflow-y-auto h-[calc(100vh-73px)] scrollbar-bmp">
+          <nav className="flex h-[calc(100vh-73px)] flex-col gap-1 overflow-y-auto px-3 py-3 scrollbar-bmp">
             {navItems.map((item) => {
               const Icon = item.icon;
+              const active = isDashboardNavActive(pathname, item.href);
               return (
                 <Link
                   key={item.key ?? item.href}
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition ${
-                    isActive(item.href)
-                      ? "bg-amber-500/15 text-amber-200 border border-amber-500/20"
-                      : "text-gray-200/80 hover:bg-amber-500/10 hover:text-amber-100"
-                  }`}
+                  className={cn(
+                    "flex items-center gap-3 rounded-xl px-4 py-3 transition",
+                    active
+                      ? "border border-amber-500/20 bg-amber-500/15 text-amber-200"
+                      : "text-gray-200/80 hover:bg-amber-500/10 hover:text-amber-100",
+                  )}
                 >
-                  <Icon className="w-5 h-5" />
+                  <Icon className="h-5 w-5" />
                   {t(item.labelKey)}
-                  <ChevronRight className="w-4 h-4 ml-auto opacity-60" />
+                  <ChevronRight className="ml-auto h-4 w-4 opacity-60" />
                 </Link>
               );
             })}
 
             {extraClientItems.length > 0 && (
-              <div className="mt-2 pt-2 border-t border-white/5">
+              <div className="mt-2 border-t border-white/5 pt-2">
                 {extraClientItems.map((it) => {
                   const ExtraIcon = it.icon;
+                  const active = isDashboardNavActive(pathname, it.href);
                   return (
                     <Link
                       key={it.href}
                       href={it.href}
                       title={it.titleKey ? t(it.titleKey) : undefined}
                       onClick={() => setMobileOpen(false)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition ${
-                        isActive(it.href)
-                          ? "bg-amber-500/15 text-amber-200 border border-amber-500/20"
-                          : "text-gray-200/80 hover:bg-amber-500/10 hover:text-amber-100"
-                      }`}
+                      className={cn(
+                        "flex items-center gap-3 rounded-xl px-4 py-3 transition",
+                        active
+                          ? "border border-amber-500/20 bg-amber-500/15 text-amber-200"
+                          : "text-gray-200/80 hover:bg-amber-500/10 hover:text-amber-100",
+                      )}
                     >
-                      {ExtraIcon ? (
-                        <ExtraIcon className="w-5 h-5 shrink-0 opacity-90" />
-                      ) : null}
+                      <ExtraIcon className="h-5 w-5 shrink-0 opacity-90" />
                       {t(it.labelKey)}
-                      <ChevronRight className="w-4 h-4 ml-auto opacity-60" />
+                      <ChevronRight className="ml-auto h-4 w-4 opacity-60" />
                     </Link>
                   );
                 })}
               </div>
             )}
 
-            {user && (
-              <div className="mt-2 pt-2 border-t border-white/5 space-y-1">
-                {(normalizeRole(user.role) === "expert" ||
-                  user.role === "admin") && (
-                  <Link
-                    href="/expert/tous-les-projets"
-                    onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition ${
-                      isActive("/expert/tous-les-projets")
-                        ? "bg-amber-500/15 text-amber-200 border border-amber-500/20"
-                        : "text-gray-200/80 hover:bg-amber-500/10 hover:text-amber-100"
-                    }`}
-                  >
-                    <Layers className="w-5 h-5" />
-                    {t("nav_tous_les_projets")}
-                    <ChevronRight className="w-4 h-4 ml-auto opacity-60" />
-                  </Link>
-                )}
-                {normalizeRole(user.role) === "expert" && (
-                  <Link
-                    href="/expert/projets"
-                    onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition ${
-                      isActive("/expert/projets")
-                        ? "bg-amber-500/15 text-amber-200 border border-amber-500/20"
-                        : "text-gray-200/80 hover:bg-amber-500/10 hover:text-amber-100"
-                    }`}
-                  >
-                    <FolderKanban className="w-5 h-5" />
-                    {t("nav_projets")}
-                    <ChevronRight className="w-4 h-4 ml-auto opacity-60" />
-                  </Link>
-                )}
-                {normalizeRole(user.role) === "expert" && (
-                  <Link
-                    href="/expert/nouveaux-projets"
-                    onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition ${
-                      isActive("/expert/nouveaux-projets")
-                        ? "bg-amber-500/15 text-amber-200 border border-amber-500/20"
-                        : "text-gray-200/80 hover:bg-amber-500/10 hover:text-amber-100"
-                    }`}
-                  >
-                    <ClipboardList className="w-5 h-5" />
-                    {t("nav_invitations")}
-                    <ChevronRight className="w-4 h-4 ml-auto opacity-60" />
-                  </Link>
-                )}
-                <Link
-                  href="/messages"
-                  onClick={() => setMobileOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition ${
-                    isActive("/messages")
-                      ? "bg-amber-500/15 text-amber-200 border border-amber-500/20"
-                      : "text-gray-200/80 hover:bg-amber-500/10 hover:text-amber-100"
-                  }`}
-                >
-                  <MessageCircle className="w-5 h-5" />
-                  {t("nav_messages")}
-                  {unreadMessages > 0 && (
-                    <span className="min-w-[1.25rem] h-6 px-2 rounded-full bg-amber-500 text-gray-900 text-[11px] font-bold flex items-center justify-center">
-                      {unreadMessages > 99 ? "99+" : unreadMessages}
-                    </span>
-                  )}
-                  <ChevronRight className="w-4 h-4 ml-auto opacity-60" />
-                </Link>
+            {user && roleSpecificItems.length > 0 && (
+              <div className="mt-2 space-y-1 border-t border-white/5 pt-2">
+                {roleSpecificItems.map((it) => {
+                  const Icon = it.icon;
+                  const active = isDashboardNavActive(pathname, it.href);
+                  const isMessages = it.key === "messages";
+                  return (
+                    <Link
+                      key={it.key}
+                      href={it.href}
+                      onClick={() => setMobileOpen(false)}
+                      className={cn(
+                        "flex items-center gap-3 rounded-xl px-4 py-3 transition",
+                        active
+                          ? "border border-amber-500/20 bg-amber-500/15 text-amber-200"
+                          : "text-gray-200/80 hover:bg-amber-500/10 hover:text-amber-100",
+                      )}
+                    >
+                      <Icon className="h-5 w-5" />
+                      {t(it.labelKey)}
+                      {isMessages && unreadMessages > 0 && (
+                        <span className="flex h-6 min-w-[1.25rem] items-center justify-center rounded-full bg-amber-500 px-2 text-[11px] font-bold text-gray-900">
+                          {unreadMessages > 99 ? "99+" : unreadMessages}
+                        </span>
+                      )}
+                      <ChevronRight className="ml-auto h-4 w-4 opacity-60" />
+                    </Link>
+                  );
+                })}
               </div>
             )}
 

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, ClipboardList, ChevronRight } from "lucide-react";
 import { getStoredUser, normalizeRole } from "@/lib/auth";
+import { isExpertAreaUser } from "@/lib/roles";
 import { getApiBaseUrl } from "@/lib/api-base";
 
 const API_URL = getApiBaseUrl();
@@ -51,7 +52,7 @@ export default function ExpertNouveauxProjetsPage() {
       router.replace("/login");
       return;
     }
-    if (normalizeRole(u.role) !== "expert") {
+    if (!isExpertAreaUser(u.role)) {
       router.replace("/espace");
       return;
     }

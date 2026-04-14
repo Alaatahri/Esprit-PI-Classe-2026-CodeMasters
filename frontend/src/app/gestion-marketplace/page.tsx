@@ -19,7 +19,8 @@ const PRODUCTS = [
     description: "Ciment pour béton et mortier. Sac 50 kg. NF.",
     price: 18.5,
     unit: "sac",
-    image: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=600&q=80",
     category: "Ciments & liants",
     rating: 4.8,
     stock: "En stock",
@@ -30,7 +31,8 @@ const PRODUCTS = [
     description: "Briques pleines terre cuite. Palette 500 pièces.",
     price: 420,
     unit: "palette",
-    image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1595846519844-68b4e6b7b0b0?w=600&q=80",
     category: "Gros œuvre",
     rating: 4.6,
     stock: "En stock",
@@ -41,7 +43,8 @@ const PRODUCTS = [
     description: "Tôle galvanisée 1x2 m. Épaisseur 1.5 mm.",
     price: 85,
     unit: "feuille",
-    image: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=600&q=80",
     category: "Métallerie",
     rating: 4.7,
     stock: "En stock",
@@ -52,7 +55,8 @@ const PRODUCTS = [
     description: "Sable pour béton et enduits. Big bag 1 m³.",
     price: 65,
     unit: "m³",
-    image: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&q=80",
     category: "Granulats",
     rating: 4.5,
     stock: "En stock",
@@ -63,7 +67,8 @@ const PRODUCTS = [
     description: "Carrelage imitation bois. 1.44 m²/boîte. 8 boîtes/palette.",
     price: 42,
     unit: "m²",
-    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80",
     category: "Revêtements",
     rating: 4.9,
     stock: "En stock",
@@ -74,7 +79,8 @@ const PRODUCTS = [
     description: "Peinture pour murs et plafonds. 10 L. Couvrance 12 m²/L.",
     price: 78,
     unit: "pot 10 L",
-    image: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1562259949-e8e7869aa732?w=600&q=80",
     category: "Peinture",
     rating: 4.7,
     stock: "En stock",
@@ -85,7 +91,8 @@ const PRODUCTS = [
     description: "Tuyau évacuation eaux usées. Longueur 2 m. NF.",
     price: 22,
     unit: "ml",
-    image: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600&q=80",
     category: "Plomberie",
     rating: 4.4,
     stock: "En stock",
@@ -96,7 +103,8 @@ const PRODUCTS = [
     description: "Bloc béton pour murs. 10 pièces/m². Palette 80 pièces.",
     price: 2.8,
     unit: "pièce",
-    image: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=600&q=80",
     category: "Gros œuvre",
     rating: 4.6,
     stock: "En stock",
@@ -107,7 +115,8 @@ const PRODUCTS = [
     description: "Treillis pour dalles et chapes. Maille 15x15. Ø 7 mm.",
     price: 95,
     unit: "panneau",
-    image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=600&q=80",
     category: "Métallerie",
     rating: 4.8,
     stock: "En stock",

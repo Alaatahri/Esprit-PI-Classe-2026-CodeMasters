@@ -11,6 +11,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { getStoredUser, normalizeRole, type BMPUser } from "@/lib/auth";
+import { canAccessChantierModule } from "@/lib/roles";
 import { WorkerSitePhotoUpload } from "@/components/WorkerSitePhotoUpload";
 import { SuiviTimeline } from "@/components/SuiviTimeline";
 import { getApiBaseUrl } from "@/lib/api-base";
@@ -35,11 +36,6 @@ function clampPct(value: unknown) {
   return Math.min(100, Math.max(0, n));
 }
 
-function canAccessChantier(role: string | undefined) {
-  const r = normalizeRole(role);
-  return r === "admin" || r === "artisan" || r === "ouvrier";
-}
-
 export default function GestionChantierProjectPage() {
   const params = useParams();
   const router = useRouter();
@@ -60,10 +56,12 @@ export default function GestionChantierProjectPage() {
 
     const run = async () => {
       const u = getStoredUser();
-      if (!u || !canAccessChantier(u.role)) {
+      if (!u || !canAccessChantierModule(u.role)) {
         setLoading(false);
         setAllowed(false);
-        setError("Accès réservé aux équipes chantier (admin, artisan, ouvrier).");
+        setError(
+          "Accès réservé aux équipes chantier (administrateur, artisan, fabricant).",
+        );
         return;
       }
 
@@ -129,7 +127,7 @@ export default function GestionChantierProjectPage() {
     );
   }
 
-  if (user && !canAccessChantier(user.role)) {
+  if (user && !canAccessChantierModule(user.role)) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 text-white flex items-center justify-center px-4">
         <div className="text-center space-y-3 max-w-md">

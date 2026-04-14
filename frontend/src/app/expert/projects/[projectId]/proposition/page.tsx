@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Loader2, Send, FileText, Sparkles } from "lucide-react";
-import { getStoredUser, normalizeRole } from "@/lib/auth";
+import { getStoredUser } from "@/lib/auth";
+import { isExpertAreaUser } from "@/lib/roles";
 import { getApiBaseUrl } from "@/lib/api-base";
 import { FieldError, fieldInputClass, fieldTextareaClass } from "@/lib/form-ui";
 import { validateExpertProposal } from "@/lib/validators";
@@ -170,7 +171,7 @@ export default function ExpertProposalPage() {
       router.replace("/login");
       return;
     }
-    if (normalizeRole(u.role) !== "expert") {
+    if (!isExpertAreaUser(u.role)) {
       router.replace("/espace");
       return;
     }
@@ -231,7 +232,7 @@ export default function ExpertProposalPage() {
     async (e: React.FormEvent) => {
       e.preventDefault();
       const u = getStoredUser();
-      if (!u || normalizeRole(u.role) !== "expert") return;
+      if (!u || !isExpertAreaUser(u.role)) return;
       if (!projectId) return;
 
       setSending(true);

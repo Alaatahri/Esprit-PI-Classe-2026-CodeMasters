@@ -111,14 +111,14 @@ export async function fetchShowcaseProjectById(
 export const FALLBACK_SHOWCASE_IMAGE =
   "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=1600&q=80";
 
-/** Placeholders vitrine : picsum (seed fixe) pour ne pas dépendre du catalogue Unsplash. */
+/** Images de secours vitrine (chantiers / rénovation — Unsplash). */
 export const SHOWCASE_IMAGES = [
-  "https://picsum.photos/seed/bmp-showcase-1/1600/1100",
-  "https://picsum.photos/seed/bmp-showcase-2/1600/1100",
-  "https://picsum.photos/seed/bmp-showcase-3/1600/1100",
-  "https://picsum.photos/seed/bmp-showcase-4/1600/1100",
-  "https://picsum.photos/seed/bmp-showcase-5/1600/1100",
-  "https://picsum.photos/seed/bmp-showcase-6/1600/1100",
+  "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1600&q=80",
+  "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=1600&q=80",
+  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1600&q=80",
+  "https://images.unsplash.com/photo-1556912172-45b7abe8b7e1?w=1600&q=80",
+  "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=1600&q=80",
+  "https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=1600&q=80",
 ];
 
 export function pickShowcaseImage(index: number): string {

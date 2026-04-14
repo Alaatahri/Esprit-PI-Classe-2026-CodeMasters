@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -18,7 +18,9 @@ import {
   LayoutDashboard,
   TrendingUp,
 } from "lucide-react";
+import { readApiErrorMessage } from "@/lib/api-error";
 import { getApiBaseUrl } from "@/lib/api-base";
+import { bmpAuthHeaders } from "@/lib/api-user-headers";
 
 const API_URL = getApiBaseUrl();
 
@@ -60,7 +62,7 @@ const exampleProjects: Array<{
     avis:
       "Travail très propre, délais respectés et excellente communication avec l'expert et les artisans.",
     image:
-      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=800&q=80",
     imageAlt: "Maison neuve contemporaine",
   },
   {
@@ -118,6 +120,7 @@ export default function ClientSpacePage() {
   const [loadingUser, setLoadingUser] = useState(true);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
+  const [projectsError, setProjectsError] = useState<string | null>(null);
 
   useEffect(() => {
     const stored = getStoredUser();
@@ -125,31 +128,58 @@ export default function ClientSpacePage() {
     setLoadingUser(false);
   }, []);
 
-  useEffect(() => {
-    if (!user || user.role !== "client") return;
+  const loadClientProjects = useCallback(async () => {
+    const me = getStoredUser();
+    if (!me || me.role !== "client") return;
 
-    const fetchProjects = async () => {
-      setLoadingProjects(true);
-      try {
-        const res = await fetch(`${API_URL}/projects`);
-        if (!res.ok) {
-          throw new Error("Impossible de charger vos projets.");
-        }
-        const data = (await res.json()) as Project[];
-        setProjects(
-          data.filter((p) => String(p.clientId) === String(user._id)).sort((a, b) => {
+    setLoadingProjects(true);
+    setProjectsError(null);
+    try {
+      const uid = me._id ? String(me._id) : "";
+      if (!uid) {
+        setProjectsError(
+          "Session invalide : identifiant utilisateur manquant. Reconnectez-vous.",
+        );
+        return;
+      }
+      const res = await fetch(`${API_URL}/projects`, {
+        cache: "no-store",
+        headers: {
+          ...bmpAuthHeaders(me),
+          "x-user-id": uid,
+        },
+      });
+      if (!res.ok) {
+        const msg = await readApiErrorMessage(
+          res,
+          "Impossible de charger vos projets.",
+        );
+        throw new Error(msg);
+      }
+      const data = (await res.json()) as Project[];
+      setProjects(
+        data
+          .filter((p) => String(p.clientId) === uid)
+          .sort((a, b) => {
             const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
             const db = b.createdAt ? new Date(b.createdAt).getTime() : 0;
             return db - da;
-          })
-        );
-      } finally {
-        setLoadingProjects(false);
-      }
-    };
+          }),
+      );
+    } catch (e) {
+      setProjectsError(
+        e instanceof Error ? e.message : "Impossible de charger vos projets.",
+      );
+      setProjects([]);
+    } finally {
+      setLoadingProjects(false);
+    }
+  }, []);
 
-    fetchProjects();
-  }, [user]);
+  useEffect(() => {
+    if (!user || user.role !== "client") return;
+    void loadClientProjects();
+  }, [user, loadClientProjects]);
 
   const projectStats = useMemo(() => {
     const total = projects.length;
@@ -349,6 +379,17 @@ export default function ClientSpacePage() {
             {loadingProjects ? (
               <div className="flex min-h-[12rem] items-center justify-center rounded-2xl border border-white/10 bg-white/[0.02]">
                 <div className="h-9 w-9 animate-spin rounded-full border-2 border-amber-500/30 border-t-amber-400" />
+              </div>
+            ) : projectsError ? (
+              <div className="space-y-3 rounded-2xl border border-amber-500/25 bg-amber-950/20 px-5 py-4 text-sm text-amber-100/95">
+                <p>{projectsError}</p>
+                <button
+                  type="button"
+                  onClick={() => void loadClientProjects()}
+                  className="rounded-xl border border-amber-500/40 bg-amber-500/15 px-4 py-2 text-xs font-medium text-amber-50 transition hover:bg-amber-500/25"
+                >
+                  Réessayer
+                </button>
               </div>
             ) : projects.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-6 py-10 text-center">

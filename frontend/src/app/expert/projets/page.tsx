@@ -10,7 +10,8 @@ import {
   ClipboardList,
   Send,
 } from "lucide-react";
-import { getStoredUser, normalizeRole } from "@/lib/auth";
+import { getStoredUser } from "@/lib/auth";
+import { isExpertAreaUser } from "@/lib/roles";
 import { getApiBaseUrl } from "@/lib/api-base";
 
 const API_URL = getApiBaseUrl();
@@ -54,7 +55,7 @@ export default function ExpertProjetsPage() {
 
   const load = useCallback(async () => {
     const u = getStoredUser();
-    if (!u || normalizeRole(u.role) !== "expert") return;
+    if (!u || !isExpertAreaUser(u.role)) return;
     setLoading(true);
     setErr(null);
     try {
@@ -85,7 +86,7 @@ export default function ExpertProjetsPage() {
       router.replace("/login");
       return;
     }
-    if (normalizeRole(u.role) !== "expert") {
+    if (!isExpertAreaUser(u.role)) {
       router.replace("/espace");
       return;
     }
@@ -126,10 +127,10 @@ export default function ExpertProjetsPage() {
     }
   };
 
-  if (!user || normalizeRole(user.role) !== "expert") {
+  if (!user || !isExpertAreaUser(user.role)) {
     return (
       <div className="max-w-lg mx-auto text-center py-16 text-gray-400">
-        Accès réservé aux experts.
+        Accès réservé aux experts et administrateurs.
       </div>
     );
   }

@@ -5,10 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Building2, Mail, Lock, Loader2, AlertCircle } from "lucide-react";
 import { getStoredUser, normalizeRole, setStoredUser } from "@/lib/auth";
+import { getHomePathForRole } from "@/lib/roles";
 import { formatApiError } from "@/lib/api-error";
 import { getApiBaseUrl } from "@/lib/api-base";
 import { FieldError, fieldInputClass } from "@/lib/form-ui";
 import { validateEmail, validateLoginPassword } from "@/lib/validators";
+import { PageContainer } from "@/components/layout/PageContainer";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 const API_URL = getApiBaseUrl();
 
@@ -34,18 +38,7 @@ export default function LoginPage() {
   useEffect(() => {
     const existing = getStoredUser();
     if (existing) {
-      const r = normalizeRole(existing.role);
-      const target =
-        r === "client"
-          ? "/espace/client"
-          : r === "expert"
-            ? "/espace/expert"
-            : r === "artisan"
-              ? "/espace/artisan"
-              : r === "admin"
-                ? "/espace/admin"
-                : "/espace";
-      router.replace(target);
+      router.replace(getHomePathForRole(existing.role));
     }
   }, [router]);
 
@@ -108,18 +101,7 @@ export default function LoginPage() {
         localStorage.setItem("bmp_token", token);
       }
 
-      const r = normalizeRole(data.user.role);
-      const target =
-        r === "client"
-          ? "/espace/client"
-          : r === "expert"
-            ? "/espace/expert"
-            : r === "artisan"
-              ? "/espace/artisan"
-              : r === "admin"
-                ? "/espace/admin"
-                : "/espace";
-      router.push(target);
+      router.push(getHomePathForRole(data.user.role));
     } catch (err: unknown) {
       setError(
         err instanceof Error ? err.message : "Erreur de connexion au serveur",
@@ -129,33 +111,33 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 text-white flex items-center justify-center px-4 py-10">
-      <div className="w-full max-w-md sm:max-w-lg">
+    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-gradient-to-b from-background via-gray-950 to-gray-950 px-4 py-12">
+      <PageContainer size="narrow" className="w-full">
         <Link
           href="/"
-          className="flex items-center justify-center gap-3 mb-8 sm:mb-10 group"
+          className="group mb-8 flex items-center justify-center gap-3 sm:mb-10"
         >
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-yellow-300 flex items-center justify-center shadow-lg shadow-amber-500/30 group-hover:shadow-amber-500/50 transition-shadow shrink-0">
-            <Building2 className="w-7 h-7 text-gray-900" />
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-yellow-300 shadow-lg shadow-amber-500/30 transition-shadow group-hover:shadow-amber-500/50">
+            <Building2 className="h-7 w-7 text-gray-900" />
           </div>
-          <div className="text-left min-w-0">
-            <span className="text-2xl font-bold bg-gradient-to-r from-amber-300 via-white to-amber-100 bg-clip-text text-transparent">
+          <div className="min-w-0 text-left">
+            <span className="bg-gradient-to-r from-amber-300 via-white to-amber-100 bg-clip-text text-2xl font-bold text-transparent">
               BMP.tn
             </span>
-            <div className="text-xs text-blue-300/70 font-light tracking-widest mt-0.5">
+            <div className="mt-0.5 text-xs font-light tracking-widest text-muted-foreground">
               CONNEXION
             </div>
           </div>
         </Link>
 
-        <div className="backdrop-blur-2xl bg-white/10 rounded-3xl p-6 sm:p-8 border border-white/20 shadow-2xl">
-          <h1 className="text-xl sm:text-2xl font-bold text-white mb-2 text-center">
-            Connexion
-          </h1>
-          <p className="text-gray-400 text-center mb-6 sm:mb-8 text-sm">
-            Accédez à votre tableau de bord
-          </p>
-
+        <Card className="overflow-hidden border-white/10 shadow-2xl shadow-black/40">
+          <CardHeader className="space-y-1 pb-2 text-center sm:text-left">
+            <CardTitle className="text-xl sm:text-2xl">Connexion</CardTitle>
+            <CardDescription>
+              Accédez à votre tableau de bord sécurisé.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
           <form noValidate onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
             {error && (
               <div
@@ -242,41 +224,44 @@ export default function LoginPage() {
                 />
               </div>
               <FieldError id="err-login-password" message={fieldErrors.password} />
-              <div style={{ textAlign: 'right', marginTop: '6px' }}>
-                <a href="/forgot-password"
-                  style={{ color: '#F5A623', fontSize: '13px', textDecoration: 'none' }}>
+              <div className="mt-2 text-right">
+                <Link
+                  href="/forgot-password"
+                  className="text-[13px] font-medium text-amber-400/95 transition-colors duration-200 hover:text-amber-300 hover:underline underline-offset-4"
+                >
                   Mot de passe oublié ?
-                </a>
+                </Link>
               </div>
             </div>
 
-            <button
+            <Button
               type="submit"
               disabled={loading}
-              className="w-full min-h-[52px] py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-gray-900 font-bold text-base shadow-xl shadow-amber-500/30 hover:shadow-amber-500/50 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 touch-manipulation"
+              size="lg"
+              className="w-full touch-manipulation text-base"
             >
               {loading ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="h-5 w-5 animate-spin" />
                   Connexion…
                 </>
               ) : (
                 "Se connecter"
               )}
-            </button>
+            </Button>
           </form>
 
-          <p className="mt-8 text-center text-gray-400 text-sm">
+          <p className="mt-8 text-center text-sm text-muted-foreground">
             Pas encore de compte ?{" "}
             <Link
               href="/inscription"
-              className="text-amber-400 hover:text-amber-300 font-medium transition-colors"
+              className="font-medium text-amber-400 transition-colors hover:text-amber-300"
             >
               S&apos;inscrire
             </Link>
           </p>
 
-          <div className="mt-6 pt-6 border-t border-white/10">
+          <div className="mt-6 border-t border-white/10 pt-6">
             <p className="text-xs text-gray-500 text-center mb-3">
               Comptes de test (dev)
             </p>
@@ -302,14 +287,15 @@ export default function LoginPage() {
               ))}
             </div>
           </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        <p className="text-center text-gray-500 text-sm mt-6">
-          <Link href="/" className="hover:text-amber-400 transition-colors">
+        <p className="mt-6 text-center text-sm text-muted-foreground">
+          <Link href="/" className="transition-colors hover:text-amber-400">
             ← Retour à l&apos;accueil
           </Link>
         </p>
-      </div>
+      </PageContainer>
     </div>
   );
 }

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { getStoredUser, type BMPUser } from "@/lib/auth";
 import { getApiBaseUrl } from "@/lib/api-base";
+import { bmpAuthHeaders } from "@/lib/api-user-headers";
 import { refId } from "@/lib/project-refs";
 
 const API_URL = getApiBaseUrl();
@@ -64,7 +65,10 @@ export default function ClientSuiviListPage() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API_URL}/projects`, { cache: "no-store" });
+        const res = await fetch(`${API_URL}/projects`, {
+          cache: "no-store",
+          headers: bmpAuthHeaders(u),
+        });
         if (!res.ok) throw new Error("Impossible de charger les projets.");
         const data = (await res.json()) as Project[];
         const mine = (Array.isArray(data) ? data : []).filter(

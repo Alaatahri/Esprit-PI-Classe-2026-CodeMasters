@@ -14,6 +14,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { SafeImageFill } from "@/components/SafeImageFill";
 import {
@@ -141,9 +142,38 @@ export function GuestLandingShowcase() {
 
   if (dataState === "loading") {
     return (
-      <div className="flex flex-col items-center justify-center gap-3 py-20 text-gray-400">
-        <Loader2 className="h-10 w-10 animate-spin text-amber-400/80" />
-        <p className="text-sm">Chargement des profils et projets…</p>
+      <div
+        className="w-full space-y-10 py-6 sm:space-y-14 sm:py-8"
+        aria-busy
+        aria-label="Chargement des profils et projets"
+      >
+        <div className="space-y-4 text-center">
+          <Skeleton className="mx-auto h-3 w-28" />
+          <Skeleton className="mx-auto h-8 w-full max-w-md" />
+          <Skeleton className="mx-auto h-4 w-full max-w-sm" />
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]"
+            >
+              <Skeleton className="aspect-[16/11] w-full rounded-none" />
+              <div className="space-y-3 p-4">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-2/3" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-col items-center gap-2 text-gray-500">
+          <Loader2
+            className="h-6 w-6 animate-spin text-amber-400/70"
+            aria-hidden
+          />
+          <p className="text-xs">Chargement des profils et projets…</p>
+        </div>
       </div>
     );
   }

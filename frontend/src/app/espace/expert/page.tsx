@@ -174,7 +174,7 @@ export default function ExpertSpacePage() {
       setLoadingArtisans(true);
       setError(null);
       try {
-        const res = await fetch(`${API_URL}/users`);
+        const res = await fetch(`${API_URL}/users/public/workers`);
         if (!res.ok) {
           throw new Error("Impossible de charger les artisans.");
         }

@@ -12,7 +12,10 @@ import {
 } from "lucide-react";
 import { getStoredUser, type BMPUser } from "@/lib/auth";
 import { SuiviTimeline } from "@/components/SuiviTimeline";
+import { LoadingState } from "@/components/layout/LoadingState";
 import { getApiBaseUrl } from "@/lib/api-base";
+import { bmpAuthHeaders } from "@/lib/api-user-headers";
+import { canAccessChantierModule } from "@/lib/roles";
 
 const API_URL = getApiBaseUrl();
 
@@ -80,7 +83,10 @@ export default function GestionChantierPage() {
             ? `${API_URL}/projects`
             : `${API_URL}/projects/artisan/${user?._id}`;
 
-        const res = await fetch(endpoint, { cache: "no-store" });
+        const res = await fetch(endpoint, {
+          cache: "no-store",
+          headers: bmpAuthHeaders(user),
+        });
         if (!res.ok) {
           throw new Error("Impossible de charger les projets en cours.");
         }
@@ -163,132 +169,130 @@ export default function GestionChantierPage() {
   }, [filteredProjects, inProgress, query, statusFilter]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 text-white">
-      <div className="fixed inset-0 z-0 bg-gradient-to-br from-gray-950/95 via-blue-950/30 to-gray-950/95" />
-      <div className="relative z-10 container mx-auto px-4 py-12 sm:py-14">
+    <div className="relative min-h-screen bg-background text-foreground">
+      <div className="bmp-app-vignette" aria-hidden />
+      <div className="relative z-10 mx-auto w-full max-w-4xl bmp-page">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-gray-400 hover:text-amber-300 mb-10 transition-colors"
+          className="mb-10 inline-flex min-h-[44px] items-center gap-2 text-muted-foreground transition-colors duration-200 hover:text-amber-300"
         >
           <ArrowLeft className="w-4 h-4" />
           Accueil
         </Link>
-        <div className="max-w-4xl mx-auto">
-          <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-gradient-to-br from-amber-500 to-yellow-300 flex items-center justify-center mx-auto mb-5">
-            <Briefcase className="w-10 h-10 text-gray-900" />
+        <div>
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-yellow-300 sm:h-[4.5rem] sm:w-[4.5rem]">
+            <Briefcase className="h-10 w-10 text-gray-900" />
           </div>
           <div className="text-center">
-            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+            <h1 className="mb-4 text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
               Gestion de Chantier
             </h1>
-            <p className="text-gray-300/80 text-sm sm:text-base max-w-2xl mx-auto">
+            <p className="mx-auto max-w-2xl text-sm text-muted-foreground sm:text-base">
               Vue d’ensemble de vos projets et de leur avancement.
             </p>
           </div>
 
-          <div className="mt-8 sm:mt-10 space-y-6">
+          <div className="mt-10 space-y-8 sm:mt-12">
             {!mounted ? (
-              <div className="flex items-center justify-center py-14">
-                <div className="w-10 h-10 rounded-xl border-2 border-amber-500/40 border-t-amber-400 animate-spin" />
-              </div>
+              <LoadingState message="Préparation de l’interface…" minHeight="md" />
             ) : !user ? (
-              <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-6 text-center">
-                <p className="text-white font-semibold mb-2">
+              <div className="bmp-panel p-8 text-center">
+                <p className="mb-2 font-semibold text-foreground">
                   Connectez-vous pour accéder à la gestion de chantier.
                 </p>
-                <p className="text-sm text-gray-300/70">
-                  Cette page est réservée aux administrateurs et ouvriers.
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  Réservé aux équipes terrain : administrateurs, artisans et
+                  fabricants.
                 </p>
               </div>
-            ) : user.role !== "admin" &&
-              user.role !== "artisan" &&
-              user.role !== "ouvrier" ? (
-              <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-6 text-center">
-                <p className="text-white font-semibold mb-2">
+            ) : !canAccessChantierModule(user.role) ? (
+              <div className="bmp-panel p-8 text-center">
+                <p className="mb-2 font-semibold text-foreground">
                   Accès non autorisé.
                 </p>
-                <p className="text-sm text-gray-300/70">
-                  Seuls les administrateurs peuvent voir tous les projets. Les ouvriers voient uniquement leurs projets affectés.
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  Les administrateurs voient tous les projets ; artisans et
+                  fabricants voient les dossiers qui leur sont associés.
                 </p>
               </div>
             ) : (
               <>
             {/* Stats */}
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
-                <p className="text-[11px] text-gray-400 uppercase tracking-[0.18em]">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="bmp-stat-tile">
+                <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   Total projets
                 </p>
-                <p className="mt-2 text-2xl font-bold text-white">{stats.total}</p>
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-2 text-2xl font-bold text-foreground">{stats.total}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
                   Progression moyenne:{" "}
-                  <span className="text-amber-300 font-semibold">
+                  <span className="font-semibold text-amber-300">
                     {stats.avgProgress}%
                   </span>
                 </p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
-                <p className="text-[11px] text-gray-400 uppercase tracking-[0.18em]">
+              <div className="bmp-stat-tile">
+                <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   En cours
                 </p>
                 <p className="mt-2 text-2xl font-bold text-blue-200">
                   {stats.enCours}
                 </p>
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs text-muted-foreground">
                   Chantiers actifs
                 </p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
-                <p className="text-[11px] text-gray-400 uppercase tracking-[0.18em]">
+              <div className="bmp-stat-tile">
+                <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   En attente
                 </p>
-                <p className="mt-2 text-2xl font-bold text-gray-100">
+                <p className="mt-2 text-2xl font-bold text-foreground">
                   {stats.enAttente}
                 </p>
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs text-muted-foreground">
                   À démarrer / valider
                 </p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
-                <p className="text-[11px] text-gray-400 uppercase tracking-[0.18em]">
+              <div className="bmp-stat-tile">
+                <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   Terminés
                 </p>
                 <p className="mt-2 text-2xl font-bold text-emerald-200">
                   {stats.termine}
                 </p>
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs text-muted-foreground">
                   Projets clôturés
                 </p>
               </div>
             </div>
 
             {/* Liste */}
-            <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 sm:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
+            <div className="bmp-panel p-6 sm:p-7">
+              <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-white">
+                  <h2 className="text-lg font-semibold tracking-tight text-foreground">
                     {inProgress.length > 0 && statusFilter === "all" && query.trim() === ""
                       ? "Projets en cours"
                       : "Projets existants"}
                   </h2>
-                  <p className="text-xs text-gray-300/70 mt-1">
+                  <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
                     Recherchez, filtrez et triez pour retrouver rapidement un projet.
                   </p>
                 </div>
-                <span className="text-[10px] text-gray-400 uppercase tracking-[0.18em]">
+                <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                   Live
                 </span>
               </div>
 
               {/* Controls */}
-              <div className="flex flex-col lg:flex-row lg:items-center gap-3 mb-5">
+              <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="Rechercher un projet (titre, description, statut)..."
-                    className="w-full rounded-2xl border border-white/10 bg-black/35 pl-10 pr-4 py-3 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500/40"
+                    className="w-full min-h-[48px] rounded-2xl border border-border/60 bg-card/30 py-3 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground transition-[border-color,box-shadow] duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500/35"
                   />
                 </div>
 
@@ -296,11 +300,12 @@ export default function GestionChantierPage() {
                   {(["all", "En cours", "En attente", "Terminé"] as StatusFilter[]).map((s) => (
                     <button
                       key={s}
+                      type="button"
                       onClick={() => setStatusFilter(s)}
-                      className={`px-3 py-2 rounded-2xl text-xs border transition ${
+                      className={`min-h-[40px] rounded-2xl border px-3 py-2 text-xs font-medium transition-[background-color,border-color,color] duration-200 ${
                         statusFilter === s
                           ? "border-amber-500/40 bg-amber-500/10 text-amber-200"
-                          : "border-white/10 bg-black/20 text-gray-300 hover:bg-white/5"
+                          : "border-border/50 bg-card/20 text-muted-foreground hover:bg-card/35 hover:text-foreground"
                       }`}
                     >
                       {s === "all" ? "Tous" : s}
@@ -309,12 +314,12 @@ export default function GestionChantierPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 py-2">
-                    <ArrowUpDown className="w-4 h-4 text-gray-300" />
+                  <div className="inline-flex min-h-[40px] items-center gap-2 rounded-2xl border border-border/50 bg-card/25 px-3 py-2">
+                    <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
                     <select
                       value={sortMode}
                       onChange={(e) => setSortMode(e.target.value as SortMode)}
-                      className="bg-transparent text-xs text-gray-200 focus:outline-none"
+                      className="bg-transparent text-xs text-foreground focus:outline-none"
                     >
                       <option value="newest">Plus récents</option>
                       <option value="budget_desc">Budget ↓</option>
@@ -325,38 +330,36 @@ export default function GestionChantierPage() {
               </div>
 
               {loading ? (
-              <div className="flex items-center justify-center py-10">
-                <div className="w-10 h-10 rounded-full border-2 border-amber-500/40 border-t-amber-400 animate-spin" />
-              </div>
+              <LoadingState message="Chargement des projets…" minHeight="sm" />
             ) : error ? (
               <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
                 {error}
               </div>
             ) : existingProjects.length === 0 ? (
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 Aucun projet trouvé pour le moment.
               </p>
             ) : highlighted.length === 0 ? (
-              <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-6 text-sm text-gray-300">
+              <div className="rounded-2xl border border-border/50 bg-card/20 px-5 py-8 text-sm text-muted-foreground">
                 Aucun résultat pour{" "}
-                <span className="text-amber-200 font-semibold">
+                <span className="font-semibold text-amber-200">
                   {query.trim() || (statusFilter === "all" ? "vos filtres" : statusFilter)}
                 </span>
                 .
               </div>
             ) : (
-              <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 {highlighted.map((p) => (
                   <div
                     key={p._id}
-                    className="group rounded-2xl border border-white/10 bg-black/30 p-4 space-y-3 transition hover:border-white/20 hover:bg-black/25 hover:-translate-y-0.5"
+                    className="group space-y-3 rounded-2xl border border-border/55 bg-card/25 p-4 shadow-sm transition-[border-color,background-color,transform,box-shadow] duration-300 motion-safe:hover:-translate-y-0.5 motion-safe:hover:border-border/80 motion-safe:hover:bg-card/35 motion-safe:hover:shadow-md"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="font-semibold text-white line-clamp-1">
+                        <p className="line-clamp-1 font-semibold text-foreground">
                           {p.titre}
                         </p>
-                        <p className="text-xs text-gray-400 line-clamp-2 mt-1">
+                        <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
                           {p.description}
                         </p>
                       </div>
@@ -367,8 +370,8 @@ export default function GestionChantierPage() {
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between text-[11px] text-gray-300">
-                      <span className="inline-flex items-center gap-1 text-gray-400">
+                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                      <span className="inline-flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         {p.date_debut
                           ? new Date(p.date_debut).toLocaleDateString("fr-FR")
@@ -386,7 +389,7 @@ export default function GestionChantierPage() {
                       </span>
                     </div>
 
-                    <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                    <div className="h-2 overflow-hidden rounded-full bg-border/40">
                       <div
                         className="h-full bg-gradient-to-r from-amber-500 to-yellow-400"
                         style={{ width: `${clampPct(p.avancement_global)}%` }}
@@ -394,8 +397,8 @@ export default function GestionChantierPage() {
                     </div>
 
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-400">Budget estimé</span>
-                      <span className="text-white font-semibold">
+                      <span className="text-muted-foreground">Budget estimé</span>
+                      <span className="font-semibold text-foreground">
                         {(p.budget_estime ?? 0).toLocaleString("fr-FR")} TND
                       </span>
                     </div>

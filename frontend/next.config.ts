@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
       "http://127.0.0.1:3001";
     const origin = backend.replace(/\/$/, "");
     return [
+      /** Évite le 404 navigateur sur `/favicon.ico` (fichier réel = SVG). */
+      { source: "/favicon.ico", destination: "/favicon.svg" },
       {
         source: "/api/:path*",
         destination: `${origin}/api/:path*`,

@@ -17,7 +17,8 @@ import {
   FileText,
   UserCircle,
 } from "lucide-react";
-import { getStoredUser, normalizeRole, type BMPUser } from "@/lib/auth";
+import { getStoredUser, type BMPUser } from "@/lib/auth";
+import { isExpertAreaUser } from "@/lib/roles";
 import { getApiBaseUrl } from "@/lib/api-base";
 import {
   ExpertProjectDossier,
@@ -182,7 +183,7 @@ export default function ExpertProjectHubPage() {
 
   const load = useCallback(async () => {
     const u = getStoredUser();
-    if (!u || normalizeRole(u.role) !== "expert" || !projectId) return;
+    if (!u || !isExpertAreaUser(u.role) || !projectId) return;
     setLoading(true);
     setErr(null);
     setProgressMsg(null);
@@ -287,7 +288,7 @@ export default function ExpertProjectHubPage() {
       router.replace("/login");
       return;
     }
-    if (normalizeRole(u.role) !== "expert") {
+    if (!isExpertAreaUser(u.role)) {
       router.replace("/espace");
       return;
     }

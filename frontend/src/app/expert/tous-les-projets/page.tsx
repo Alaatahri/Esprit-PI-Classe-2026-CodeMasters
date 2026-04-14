@@ -13,7 +13,8 @@ import {
   Clock,
   AlertCircle,
 } from "lucide-react";
-import { getStoredUser, normalizeRole } from "@/lib/auth";
+import { getStoredUser } from "@/lib/auth";
+import { isExpertAreaUser } from "@/lib/roles";
 import { getApiBaseUrl } from "@/lib/api-base";
 import { readApiErrorMessage } from "@/lib/api-error";
 
@@ -78,8 +79,7 @@ export default function ExpertTousLesProjetsPage() {
       router.replace("/login");
       return;
     }
-    const role = normalizeRole(u.role);
-    if (role !== "expert" && u.role !== "admin") {
+    if (!isExpertAreaUser(u.role)) {
       router.replace("/espace");
       return;
     }
