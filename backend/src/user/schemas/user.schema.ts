@@ -3,29 +3,22 @@ import { Document } from 'mongoose';
 
 export type UserDocument = User & Document;
 
-<<<<<<< Updated upstream
-=======
-export type WorkZoneScope = 'tn_all' | 'tn_city' | 'country' | 'world';
+export type WorkZoneScope =
+  | 'tn_all'
+  | 'tn_city'
+  | 'tn_region'
+  | 'country'
+  | 'world';
 export type WorkZone = {
   scope: WorkZoneScope;
   value?: string;
 };
 
-/** Rôles connexion + profils terrain (matching sur les mêmes libellés que l’IA) */
-export const USER_ROLES = [
-  'client',
-  'expert',
-  'artisan',
-  'manufacturer',
-  'admin',
-  'ouvrier',
-  'electricien',
-  'architecte',
-] as const;
-
->>>>>>> Stashed changes
 @Schema({ timestamps: true })
 export class User {
+  @Prop()
+  prenom?: string;
+
   @Prop({ required: true })
   nom: string;
 
@@ -37,17 +30,17 @@ export class User {
 
   @Prop({
     required: true,
-    enum: USER_ROLES,
+    enum: ['client', 'expert', 'artisan', 'manufacturer', 'admin', 'livreur'],
   })
   role: string;
 
-<<<<<<< Updated upstream
-  @Prop({ required: true })
-  telephone: string;
-=======
+  @Prop({ type: [String], default: [] })
+  competences?: string[];
+
   @Prop()
   telephone?: string;
 
+  // Champs spécifiques aux artisans (facultatifs pour les autres rôles)
   @Prop()
   specialite?: string;
 
@@ -59,7 +52,7 @@ export class User {
       {
         scope: {
           type: String,
-          enum: ['tn_all', 'tn_city', 'country', 'world'],
+          enum: ['tn_all', 'tn_city', 'tn_region', 'country', 'world'],
           required: true,
         },
         value: { type: String },
@@ -69,52 +62,85 @@ export class User {
   })
   zones_travail?: WorkZone[];
 
-  /** Profil matching (ex-workers) — optionnel pour clients / admins */
-  @Prop({ type: [String], default: [] })
-  skills?: string[];
-
-  @Prop({ default: '' })
-  bio?: string;
-
-  @Prop({ min: 0, max: 5, default: 0 })
-  rating?: number;
-
-  @Prop({ min: 0, default: 0 })
-  reviewsCount?: number;
-
-  @Prop({ min: 0, default: 0 })
-  activeProjects?: number;
-
-  @Prop({ type: [String], default: [] })
-  certifications?: string[];
-
-  @Prop({ min: 0 })
-  dailyRate?: number;
+  /** Livreur — vélo, moto, voiture, camionnette */
+  @Prop()
+  livreur_transport?: string;
 
   @Prop({
-    type: [{ type: String, enum: ['simple', 'moyen', 'complexe'] }],
+    type: [
+      {
+        scope: {
+          type: String,
+          enum: ['tn_all', 'tn_city', 'tn_region', 'country', 'world'],
+          required: true,
+        },
+        value: { type: String },
+      },
+    ],
     default: [],
   })
-  projectTypes?: string[];
+  zones_livraison?: WorkZone[];
 
-  @Prop({ default: true })
+  /** Livreur — CIN / permis (JPG, PNG, PDF) */
+  @Prop()
+  cin_permis_document_path?: string;
+
+  /** Livreur — ex. temps_plein, temps_partiel, weekend */
+  @Prop({ type: [String], default: [] })
+  livreur_disponibilite?: string[];
+
+  @Prop({ type: Boolean, default: true })
   isAvailable?: boolean;
 
-  @Prop({
-    type: {
-      lat: { type: Number },
-      lng: { type: Number },
-      city: { type: String },
-      gouvernorat: { type: String },
-    },
-  })
-  location?: {
-    lat?: number;
-    lng?: number;
-    city?: string;
-    gouvernorat?: string;
-  };
->>>>>>> Stashed changes
+  @Prop({ type: Number, default: 0 })
+  rating?: number;
+
+  @Prop({ type: Number, default: 0 })
+  experienceYears?: number;
+
+  /** Photo de profil (URL HTTPS, ex. Unsplash) — affichage vitrine / profil public */
+  @Prop()
+  avatarUrl?: string;
+
+  /** Présentation courte pour la vitrine */
+  @Prop()
+  bio?: string;
+
+  /** Expert — domaines couverts (ex. Finance, Droit) */
+  @Prop()
+  domaine_expertise?: string;
+
+  /** Expert — Bac+3, Bac+5, Doctorat, Autre (clé stockée : bac_plus_3, …) */
+  @Prop()
+  niveau_etudes?: string;
+
+  /** Expert — chemin relatif servi sous /uploads/... (PDF ou DOCX) */
+  @Prop()
+  cv_document_path?: string;
+
+  /** Expert — URL profil LinkedIn */
+  @Prop()
+  linkedin_url?: string;
+
+  /** Anciens comptes : true par défaut (schéma) ; nouvelles inscriptions mises à false jusqu’à vérification. */
+  @Prop({ type: Boolean, default: true })
+  isEmailVerified?: boolean;
+
+  @Prop({ type: String, default: null, select: false })
+  emailVerificationToken?: string | null;
+
+  @Prop({ type: Date, default: null, select: false })
+  emailVerificationExpires?: Date | null;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+
+/** Unicité seulement quand le jeton est une chaîne (plusieurs comptes peuvent avoir le champ absent / null). */
+UserSchema.index(
+  { emailVerificationToken: 1 },
+  {
+    unique: true,
+    name: 'email_verification_token_unique_string',
+    partialFilterExpression: { emailVerificationToken: { $type: 'string' } },
+  },
+);

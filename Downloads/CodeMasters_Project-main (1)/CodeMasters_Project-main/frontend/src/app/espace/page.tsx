@@ -10,7 +10,12 @@ import {
   HardHat,
   Calculator,
   Package,
+  Loader2,
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { getStoredUser, type BMPUser } from "@/lib/auth";
+import { GuestLandingShowcase } from "@/components/GuestLandingShowcase";
 
 const modules = [
   {
@@ -43,6 +48,50 @@ const modules = [
 ];
 
 export default function EspacePage() {
+  const router = useRouter();
+  const [user, setUser] = useState<BMPUser | null>(null);
+  const [bootstrapped, setBootstrapped] = useState(false);
+
+  useEffect(() => {
+    const stored = getStoredUser();
+    setUser(stored);
+
+    if (stored?.role === "client") {
+      router.replace("/espace/client");
+    } else if (stored?.role === "expert") {
+      router.replace("/espace/expert");
+    } else if (stored?.role === "artisan") {
+      router.replace("/espace/artisan");
+    } else if (stored?.role === "livreur") {
+      router.replace("/espace/livreur");
+    } else if (stored?.role === "admin") {
+      router.replace("/espace/admin");
+    }
+    setBootstrapped(true);
+  }, [router]);
+
+  const redirecting =
+    bootstrapped &&
+    user &&
+    (user.role === "client" ||
+      user.role === "expert" ||
+      user.role === "artisan" ||
+      user.role === "livreur" ||
+      user.role === "admin");
+
+  if (!bootstrapped || redirecting) {
+    return (
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 text-gray-400">
+        <Loader2 className="h-10 w-10 animate-spin text-amber-400/80" aria-hidden />
+        <p className="text-sm">
+          {redirecting ? "Redirection vers votre espace…" : "Chargement…"}
+        </p>
+      </div>
+    );
+  }
+
+  const isGuest = !user;
+
   return (
     <div className="space-y-16 lg:space-y-24">
       {/* Welcome hero */}
@@ -53,6 +102,7 @@ export default function EspacePage() {
         className="relative rounded-3xl overflow-hidden border border-white/10 bg-white/5 backdrop-blur-xl"
       >
         <div className="absolute inset-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=1200&q=80"
             alt=""
@@ -67,11 +117,31 @@ export default function EspacePage() {
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
             Bienvenue sur <span className="bg-gradient-to-r from-amber-300 to-yellow-400 bg-clip-text text-transparent">BMP.tn</span>
           </h1>
-          <p className="text-gray-300 max-w-2xl mx-auto text-lg">
-            Accédez à vos outils de gestion de chantier, devis et marketplace depuis un seul espace.
+          <p className="text-gray-300 max-w-2xl mx-auto text-lg mb-4">
+            {isGuest
+              ? "La plateforme qui connecte clients, experts et artisans pour des chantiers suivis de bout en bout."
+              : "Accédez à vos outils de gestion de chantier, devis et marketplace depuis un seul espace."}
           </p>
+          {isGuest && (
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6">
+              <Link
+                href="/inscription"
+                className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-400 text-gray-900 font-semibold px-7 py-3 text-sm shadow-lg shadow-amber-500/25 w-full sm:w-auto"
+              >
+                Commencer gratuitement
+              </Link>
+              <Link
+                href="/login"
+                className="inline-flex items-center justify-center rounded-2xl border border-white/25 bg-white/5 text-white font-medium px-7 py-3 text-sm hover:bg-white/10 w-full sm:w-auto"
+              >
+                Connexion
+              </Link>
+            </div>
+          )}
         </div>
       </motion.section>
+
+      {isGuest && <GuestLandingShowcase />}
 
       {/* Module cards */}
       <section>
@@ -81,7 +151,7 @@ export default function EspacePage() {
           transition={{ delay: 0.15 }}
           className="text-xl font-semibold text-gray-300 mb-8 text-center sm:text-left"
         >
-          Nos modules
+          {isGuest ? "Découvrez les outils BMP.tn" : "Nos modules"}
         </motion.h2>
         <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
           {modules.map((mod, i) => {
@@ -98,6 +168,7 @@ export default function EspacePage() {
                   className="group block h-full rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden hover:border-amber-500/30 hover:bg-white/10 transition-all duration-300"
                 >
                   <div className="aspect-[4/3] relative overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={mod.image}
                       alt={mod.title}
