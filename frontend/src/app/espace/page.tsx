@@ -62,6 +62,8 @@ export default function EspacePage() {
       router.replace("/espace/expert");
     } else if (stored?.role === "artisan") {
       router.replace("/espace/artisan");
+    } else if (stored?.role === "livreur") {
+      router.replace("/espace/livreur");
     } else if (stored?.role === "admin") {
       router.replace("/espace/admin");
     }
@@ -74,6 +76,7 @@ export default function EspacePage() {
     (user.role === "client" ||
       user.role === "expert" ||
       user.role === "artisan" ||
+      user.role === "livreur" ||
       user.role === "admin");
 
   if (!bootstrapped || redirecting) {

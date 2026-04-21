@@ -18,7 +18,9 @@ async function bootstrap() {
   app.use(json({ limit: BODY_LIMIT }));
   app.use(urlencoded({ extended: true, limit: BODY_LIMIT }));
 
-  // Static files (uploaded images): served at http://localhost:3001/uploads/<file>
+  const port = Number(process.env.PORT) || 3001;
+
+  // Static files (uploaded images): servis sous /uploads/<fichier>
   app.useStaticAssets(join(process.cwd(), 'public', 'uploads'), {
     prefix: '/uploads',
     index: false,
@@ -47,12 +49,14 @@ async function bootstrap() {
     }),
   );
 
-  await app.listen(3001);
-  console.log('🚀 Backend server running on http://localhost:3001');
-  console.log('📋 API Base URL: http://localhost:3001/api');
+  await app.listen(port);
+  console.log(`🚀 Backend server running on http://localhost:${port}`);
+  console.log(`📋 API Base URL: http://localhost:${port}/api`);
   console.log('📝 Available endpoints:');
   console.log('   - GET  /api/users');
   console.log('   - GET  /api/auth/verify-email?token=');
+  console.log('   - POST /api/users/expert (multipart, inscription expert + CV)');
+  console.log('   - POST /api/users/livreur (multipart, inscription livreur + CIN)');
   console.log('   - GET  /api/projects');
   console.log('   - GET  /api/suivi-projects');
   console.log('   - GET  /api/devis');

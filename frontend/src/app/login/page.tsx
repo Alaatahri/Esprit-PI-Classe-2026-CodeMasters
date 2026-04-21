@@ -42,6 +42,8 @@ export default function LoginPage() {
             ? "/espace/expert"
             : r === "artisan"
               ? "/espace/artisan"
+              : r === "livreur"
+                ? "/espace/livreur"
               : r === "admin"
                 ? "/espace/admin"
                 : "/espace";
@@ -116,6 +118,8 @@ export default function LoginPage() {
             ? "/espace/expert"
             : r === "artisan"
               ? "/espace/artisan"
+              : r === "livreur"
+                ? "/espace/livreur"
               : r === "admin"
                 ? "/espace/admin"
                 : "/espace";

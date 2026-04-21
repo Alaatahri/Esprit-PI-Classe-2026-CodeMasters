@@ -37,7 +37,7 @@ export class CreateUserDto {
   @MinLength(6)
   mot_de_passe: string;
 
-  @IsIn(['client', 'expert', 'artisan', 'manufacturer', 'admin'])
+  @IsIn(['client', 'expert', 'artisan', 'manufacturer', 'admin', 'livreur'])
   role: string;
 
   @IsOptional()

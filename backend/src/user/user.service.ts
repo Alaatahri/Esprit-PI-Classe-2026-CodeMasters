@@ -8,6 +8,8 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { randomBytes } from 'crypto';
+import { existsSync, unlinkSync } from 'fs';
+import { join } from 'path';
 import { Model, Types } from 'mongoose';
 import {
   User,
@@ -23,6 +25,20 @@ import {
 } from '../auth/password-reset-token';
 
 type SafeUser = Omit<User, 'mot_de_passe'>;
+
+/** Évite TypeError si la date en base n’est pas typée `Date` (chaîne / nombre / legacy). */
+function getVerificationExpiryMs(value: unknown): number | null {
+  if (value == null) return null;
+  if (value instanceof Date) {
+    const t = value.getTime();
+    return Number.isNaN(t) ? null : t;
+  }
+  if (typeof value === 'string' || typeof value === 'number') {
+    const t = new Date(value).getTime();
+    return Number.isNaN(t) ? null : t;
+  }
+  return null;
+}
 
 function hintForSmtpFailure(message: string): string {
   if (/535|BadCredentials|Username and Password not accepted/i.test(message)) {
@@ -44,7 +60,7 @@ export class UserService {
   ) {}
 
   /**
-   * Inscription : envoi vers l’e-mail du formulaire (Resend API ou SMTP si configuré).
+   * Inscription : envoi vers l’e-mail du formulaire (Gmail SMTP / Nodemailer si configuré).
    * Sinon : erreur sauf USE_ETHEREAL_IN_DEV=true (faux SMTP) ou ALLOW_REGISTRATION_WITHOUT_SMTP.
    */
   async register(
@@ -77,6 +93,12 @@ export class UserService {
         await doc.save();
       } catch (e: unknown) {
         const err = e as { code?: number };
+        if (payload.role === 'expert' && payload.cv_document_path) {
+          this.unlinkExpertCvFile(String(payload.cv_document_path));
+        }
+        if (payload.role === 'livreur' && payload.cin_permis_document_path) {
+          this.unlinkLivreurCinFile(String(payload.cin_permis_document_path));
+        }
         if (err?.code === 11000) {
           throw new ConflictException('Cette adresse e-mail est déjà utilisée');
         }
@@ -93,12 +115,12 @@ export class UserService {
     if (!smtpOk && !explicitNoEmailBypass) {
       if (isProd) {
         throw new BadRequestException(
-          'Inscription indisponible en production : configurez RESEND_API_KEY (recommandé, sans mot de passe Gmail) ou MAIL_HOST + MAIL_USER + MAIL_PASS dans backend/.env.',
+          'Inscription indisponible en production : configurez MAIL_HOST, MAIL_PORT, MAIL_USER, MAIL_PASS et MAIL_FROM dans backend/.env.',
         );
       }
       if (!etherealDev) {
         throw new BadRequestException(
-          'Pour envoyer la confirmation : RESEND_API_KEY dans backend/.env (recommandé), ou MAIL_* pour Gmail, ou USE_ETHEREAL_IN_DEV=true pour un test sans vraie boîte.',
+          'Pour envoyer la confirmation : MAIL_HOST, MAIL_USER, MAIL_PASS, MAIL_FROM dans backend/.env, ou USE_ETHEREAL_IN_DEV=true pour un test sans vraie boîte.',
         );
       }
     }
@@ -117,6 +139,12 @@ export class UserService {
       await doc.save();
     } catch (e: unknown) {
       const err = e as { code?: number };
+      if (payload.role === 'expert' && payload.cv_document_path) {
+        this.unlinkExpertCvFile(String(payload.cv_document_path));
+      }
+      if (payload.role === 'livreur' && payload.cin_permis_document_path) {
+        this.unlinkLivreurCinFile(String(payload.cin_permis_document_path));
+      }
       if (err?.code === 11000) {
         throw new ConflictException('Cette adresse e-mail est déjà utilisée');
       }
@@ -139,12 +167,18 @@ export class UserService {
         err,
       );
       await this.userModel.deleteOne({ _id: doc._id });
+      if (payload.role === 'expert' && payload.cv_document_path) {
+        this.unlinkExpertCvFile(String(payload.cv_document_path));
+      }
+      if (payload.role === 'livreur' && payload.cin_permis_document_path) {
+        this.unlinkLivreurCinFile(String(payload.cin_permis_document_path));
+      }
       const raw = err instanceof Error ? err.message : '';
       const hint = raw ? hintForSmtpFailure(raw) : '';
       throw new BadRequestException(
         hint
           ? `Envoi impossible : ${hint}`
-          : "L'envoi de l'e-mail de vérification a échoué. Vérifiez RESEND_API_KEY ou MAIL_* (Gmail : mot de passe d'application).",
+          : "L'envoi de l'e-mail de vérification a échoué. Vérifiez MAIL_* (Gmail : mot de passe d'application).",
       );
     }
 
@@ -171,15 +205,35 @@ export class UserService {
       throw new BadRequestException('Lien invalide ou expiré.');
     }
 
-    const exp = user.emailVerificationExpires;
-    if (!exp || exp.getTime() < Date.now()) {
+    const expMs = getVerificationExpiryMs(user.emailVerificationExpires);
+    if (expMs == null || expMs < Date.now()) {
       throw new BadRequestException('Lien invalide ou expiré.');
     }
 
-    user.isEmailVerified = true;
-    user.emailVerificationToken = null;
-    user.emailVerificationExpires = null;
-    await user.save();
+    try {
+      const r = await this.userModel.updateOne(
+        { _id: user._id, emailVerificationToken: token },
+        {
+          $set: { isEmailVerified: true },
+          $unset: { emailVerificationToken: '', emailVerificationExpires: '' },
+        },
+      );
+      if (r.matchedCount === 0) {
+        throw new BadRequestException('Lien invalide ou expiré.');
+      }
+    } catch (e: unknown) {
+      const err = e as { code?: number };
+      if (e instanceof BadRequestException) throw e;
+      this.logger.error(
+        `verifyEmailByToken update failed: ${e instanceof Error ? e.message : String(e)}`,
+      );
+      if (err?.code === 11000) {
+        throw new BadRequestException(
+          'Configuration base de données : exécutez dans /backend : node scripts/fix-email-verification-token-index.js puis réessayez.',
+        );
+      }
+      throw e;
+    }
 
     return { message: 'Email vérifié avec succès !' };
   }
@@ -241,6 +295,35 @@ export class UserService {
     return { message: 'Mot de passe modifié avec succès.' };
   }
 
+  /** Supprime un fichier CV expert uploadé (chemin public `/uploads/expert-cv/...`). */
+  unlinkExpertCvFile(publicPath: string | undefined): void {
+    if (!publicPath || typeof publicPath !== 'string') return;
+    const rel = publicPath.replace(/^\/+/, '');
+    if (!rel.startsWith('uploads/expert-cv/')) return;
+    const abs = join(process.cwd(), 'public', rel);
+    const root = join(process.cwd(), 'public', 'uploads', 'expert-cv');
+    try {
+      if (!abs.startsWith(root)) return;
+      if (existsSync(abs)) unlinkSync(abs);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  unlinkLivreurCinFile(publicPath: string | undefined): void {
+    if (!publicPath || typeof publicPath !== 'string') return;
+    const rel = publicPath.replace(/^\/+/, '');
+    if (!rel.startsWith('uploads/livreur-cin/')) return;
+    const abs = join(process.cwd(), 'public', rel);
+    const root = join(process.cwd(), 'public', 'uploads', 'livreur-cin');
+    try {
+      if (!abs.startsWith(root)) return;
+      if (existsSync(abs)) unlinkSync(abs);
+    } catch {
+      /* ignore */
+    }
+  }
+
   private async prepareUserPayload(
     createUserDto: Partial<User>,
   ): Promise<Record<string, unknown>> {
@@ -276,10 +359,142 @@ export class UserService {
       if (!dto.zones_travail || dto.zones_travail.length === 0) {
         throw new BadRequestException('Zones de travail requises pour un artisan');
       }
+    } else if (dto.role === 'expert') {
+      const cvPath =
+        typeof dto.cv_document_path === 'string'
+          ? dto.cv_document_path.trim()
+          : '';
+      if (
+        !cvPath ||
+        !cvPath.startsWith('/uploads/expert-cv/') ||
+        cvPath.includes('..')
+      ) {
+        throw new BadRequestException(
+          'Inscription expert : utilisez POST /api/users/expert (multipart) avec un CV PDF ou DOCX (max 5 Mo).',
+        );
+      }
+      const domaine =
+        typeof dto.domaine_expertise === 'string'
+          ? dto.domaine_expertise.trim()
+          : '';
+      if (domaine.length < 2) {
+        throw new BadRequestException('Domaine d’expertise requis.');
+      }
+      dto.domaine_expertise = domaine;
+
+      if (dto.experience_annees !== undefined) {
+        const n = Number(dto.experience_annees);
+        if (!Number.isFinite(n) || n < 0 || n > 50) {
+          throw new BadRequestException(
+            'Années d’expérience : entier entre 0 et 50.',
+          );
+        }
+        dto.experience_annees = Math.floor(n);
+      } else {
+        throw new BadRequestException('Années d’expérience requises.');
+      }
+
+      const allowedNiveaux = [
+        'bac_plus_3',
+        'bac_plus_5',
+        'doctorat',
+        'autre',
+      ] as const;
+      const nv = String(dto.niveau_etudes || '').trim();
+      if (!allowedNiveaux.includes(nv as (typeof allowedNiveaux)[number])) {
+        throw new BadRequestException('Niveau d’études invalide.');
+      }
+      dto.niveau_etudes = nv;
+      dto.cv_document_path = cvPath;
+
+      if (dto.linkedin_url !== undefined && dto.linkedin_url !== null) {
+        const li = String(dto.linkedin_url).trim();
+        if (li === '') {
+          delete dto.linkedin_url;
+        } else {
+          let u: URL;
+          try {
+            u = new URL(li);
+          } catch {
+            throw new BadRequestException('URL LinkedIn invalide.');
+          }
+          if (!/^https?:$/i.test(u.protocol)) {
+            throw new BadRequestException('URL LinkedIn invalide.');
+          }
+          const hn = u.hostname.toLowerCase();
+          if (hn !== 'linkedin.com' && !hn.endsWith('.linkedin.com')) {
+            throw new BadRequestException(
+              'LinkedIn : utilisez une URL du domaine linkedin.com.',
+            );
+          }
+          dto.linkedin_url = li;
+        }
+      }
+    } else if (dto.role === 'livreur') {
+      const cinPath =
+        typeof dto.cin_permis_document_path === 'string'
+          ? dto.cin_permis_document_path.trim()
+          : '';
+      if (
+        !cinPath ||
+        !cinPath.startsWith('/uploads/livreur-cin/') ||
+        cinPath.includes('..')
+      ) {
+        throw new BadRequestException(
+          'Inscription livreur : utilisez POST /api/users/livreur (multipart) avec CIN / permis (JPG, PNG ou PDF, max 3 Mo).',
+        );
+      }
+      dto.cin_permis_document_path = cinPath;
+
+      const transports = ['velo', 'moto', 'voiture', 'camionnette'] as const;
+      const mt = String(dto.livreur_transport || '').trim();
+      if (!transports.includes(mt as (typeof transports)[number])) {
+        throw new BadRequestException('Moyen de transport invalide.');
+      }
+      dto.livreur_transport = mt;
+
+      const zRaw = this.normalizeWorkZones(dto.zones_livraison);
+      const livreurScopes: WorkZoneScope[] = ['tn_all', 'tn_city', 'tn_region'];
+      dto.zones_livraison = zRaw.filter((z) => livreurScopes.includes(z.scope));
+      if (!dto.zones_livraison.length) {
+        throw new BadRequestException('Zones de livraison requises.');
+      }
+
+      const okDisp = ['temps_plein', 'temps_partiel', 'weekend'] as const;
+      const dispArr = Array.isArray(dto.livreur_disponibilite)
+        ? dto.livreur_disponibilite
+        : [];
+      const disp = [...new Set(dispArr.map((x) => String(x).trim()))].filter(
+        (d) => okDisp.includes(d as (typeof okDisp)[number]),
+      );
+      if (!disp.length) {
+        throw new BadRequestException('Disponibilité requise.');
+      }
+      dto.livreur_disponibilite = disp;
     } else {
       if (dto.zones_travail !== undefined) {
         dto.zones_travail = this.normalizeWorkZones(dto.zones_travail);
       }
+    }
+
+    if (dto.role !== 'artisan') {
+      delete dto.specialite;
+      delete dto.zones_travail;
+    }
+    if (dto.role !== 'expert') {
+      delete dto.domaine_expertise;
+      delete dto.niveau_etudes;
+      delete dto.cv_document_path;
+      delete dto.linkedin_url;
+    }
+    if (dto.role !== 'livreur') {
+      delete dto.livreur_transport;
+      delete dto.zones_livraison;
+      delete dto.cin_permis_document_path;
+      delete dto.livreur_disponibilite;
+    }
+    if (dto.role !== 'artisan' && dto.role !== 'expert') {
+      delete dto.experience_annees;
     }
 
     delete dto.isEmailVerified;
@@ -306,6 +521,7 @@ export class UserService {
     const allowedScopes: WorkZoneScope[] = [
       'tn_all',
       'tn_city',
+      'tn_region',
       'country',
       'world',
     ];
@@ -320,7 +536,13 @@ export class UserService {
       const value =
         typeof item.value === 'string' ? item.value.trim() : undefined;
 
-      if ((scope === 'tn_city' || scope === 'country') && !value) continue;
+      if (
+        (scope === 'tn_city' ||
+          scope === 'country' ||
+          scope === 'tn_region') &&
+        !value
+      )
+        continue;
 
       out.push(value ? { scope, value } : { scope });
     }
