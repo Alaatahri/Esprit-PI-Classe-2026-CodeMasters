@@ -22,6 +22,7 @@ import {
   type FieldKey,
 } from "@/lib/inscription-validation";
 import { FieldError, fieldInputClass } from "@/lib/form-ui";
+import { CvRejectedModal } from "@/components/CvRejectedModal";
 
 const API_URL = getApiBaseUrl();
 
@@ -86,6 +87,14 @@ export default function InscriptionPage() {
     null,
   );
   const [loading, setLoading] = useState(false);
+  const [isAnalyzingCV, setIsAnalyzingCV] = useState(false);
+  const [cvAnalysisResult, setCvAnalysisResult] = useState<{
+    score: number;
+    missingSkills: string[];
+    presentSkills: string[];
+    feedback: string;
+  } | null>(null);
+  const [showRejectedModal, setShowRejectedModal] = useState(false);
 
   const isArtisan = role === "artisan";
   const isExpert = role === "expert";
@@ -146,6 +155,56 @@ export default function InscriptionPage() {
     e.preventDefault();
     setError("");
     setFieldErrors({});
+
+    // Vérification IA CV (expert) — BLOQUANTE
+    // (ne modifie pas la logique d'inscription : stoppe simplement avant l'appel existant)
+    if (isExpert && expertCv) {
+      setIsAnalyzingCV(true);
+      try {
+        const fd = new FormData();
+        fd.append("cv", expertCv);
+
+        const res = await fetch(`${API_URL}/auth/analyze-cv`, {
+          method: "POST",
+          body: fd,
+        });
+        const raw = await res.json();
+        const analysis = {
+          isCompetent: !!raw?.isCompetent,
+          score: Number(raw?.score ?? 0),
+          missingSkills: Array.isArray(raw?.missingSkills) ? raw.missingSkills : [],
+          presentSkills: Array.isArray(raw?.presentSkills) ? raw.presentSkills : [],
+          feedback:
+            typeof raw?.feedback === "string"
+              ? raw.feedback
+              : typeof raw?.message === "string"
+                ? raw.message
+                : !res.ok
+                  ? "L’analyse du CV n’a pas pu être effectuée. Vérifiez que le serveur est à jour et que la clé Anthropic est configurée."
+                  : "",
+        };
+        setCvAnalysisResult(analysis);
+
+        if (!res.ok || !analysis.isCompetent) {
+          setShowRejectedModal(true);
+          setIsAnalyzingCV(false);
+          return;
+        }
+      } catch (err) {
+        console.error("Erreur analyse CV:", err);
+        setCvAnalysisResult({
+          score: 0,
+          missingSkills: [],
+          presentSkills: [],
+          feedback:
+            "Impossible d’analyser votre CV pour le moment. Veuillez réessayer après avoir vérifié votre fichier CV.",
+        });
+        setShowRejectedModal(true);
+        setIsAnalyzingCV(false);
+        return;
+      }
+      setIsAnalyzingCV(false);
+    }
 
     const errs = validateInscriptionForm(
       {
@@ -1357,10 +1416,15 @@ export default function InscriptionPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || isAnalyzingCV}
               className="w-full min-h-[52px] py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-gray-900 font-bold text-base shadow-xl shadow-amber-500/30 hover:shadow-amber-500/50 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 touch-manipulation"
             >
-              {loading ? (
+              {isAnalyzingCV ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Analyse du CV en cours...
+                </>
+              ) : loading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
                   Inscription…
@@ -1388,6 +1452,25 @@ export default function InscriptionPage() {
           </Link>
         </p>
       </div>
+
+      <CvRejectedModal
+        isOpen={showRejectedModal}
+        result={
+          cvAnalysisResult || {
+            score: 0,
+            missingSkills: [],
+            presentSkills: [],
+            feedback: "",
+          }
+        }
+        onModify={() => {
+          setShowRejectedModal(false);
+          setCvAnalysisResult(null);
+          setExpertCv(null);
+          const cvInput = document.getElementById("expert-cv");
+          if (cvInput) (cvInput as HTMLInputElement).value = "";
+        }}
+      />
     </div>
   );
 }

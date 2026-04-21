@@ -108,8 +108,11 @@ const ProjectsList = () => {
                   <td>{new Date(project.date_fin_prevue).toLocaleDateString('fr-FR')}</td>
                   <td>{project.budget_estime.toLocaleString('fr-FR')} TND</td>
                   <td>
-                    <span 
-                      className="status-badge"
+                    {/* DESIGN FIX : classes de statut pour thème dark (surcharge du style inline) */}
+                    <span
+                      className={`status-badge bmp-statut-${project.statut
+                        .toLowerCase()
+                        .replace(/\s+/g, '-')}`}
                       style={{ backgroundColor: getStatusColor(project.statut) }}
                     >
                       {project.statut}

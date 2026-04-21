@@ -56,6 +56,7 @@ async function bootstrap() {
   console.log('   - GET  /api/users');
   console.log('   - GET  /api/auth/verify-email?token=');
   console.log('   - POST /api/users/expert (multipart, inscription expert + CV)');
+  console.log('   - POST /api/auth/analyze-cv (multipart, analyse CV — Gemini si GEMINI_API_KEY, sinon Anthropic)');
   console.log('   - POST /api/users/livreur (multipart, inscription livreur + CIN)');
   console.log('   - GET  /api/projects');
   console.log('   - GET  /api/suivi-projects');

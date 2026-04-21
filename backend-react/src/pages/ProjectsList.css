@@ -1,18 +1,22 @@
+/* [DESIGN FIX] Liste projets — thème dark cohérent avec le dashboard */
+
+/* DESIGN FIX : conteneur page */
 .projects-list {
   width: 100%;
-  padding: 2rem;
-  background: #f8fafc;
-  min-height: 100%;
+  min-height: 100vh;
+  padding: 28px 32px;
+  background: var(--bg-surface);
   max-width: 1920px;
   margin: 0 auto;
 }
 
+/* DESIGN FIX : en-tête + titre */
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .page-header .btn-primary {
@@ -21,108 +25,203 @@
 }
 
 .page-header h1 {
-  color: #2c3e50;
   margin: 0;
+  color: var(--text-primary);
+  font-size: 22px;
+  font-weight: 600;
 }
 
 .page-subtitle-client {
   margin: 0.4rem 0 0 0;
-  font-size: 0.9rem;
-  color: #64748b;
+  font-size: 13px;
+  color: var(--text-secondary);
   max-width: 560px;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
+/* DESIGN FIX : bouton primaire (Link) */
+.projects-list a.btn.btn-primary,
+.projects-list .btn.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 9px 18px;
+  border: none;
+  border-radius: 10px;
+  background: var(--gold);
+  color: var(--text-inverse, #080810);
+  font-weight: 600;
+  font-size: 13px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 150ms ease, box-shadow 200ms ease;
+}
+
+.projects-list a.btn.btn-primary:hover,
+.projects-list .btn.btn-primary:hover {
+  background: #ffb84d;
+  box-shadow: 0 4px 20px rgba(245, 166, 35, 0.2);
+}
+
+/* DESIGN FIX : état vide */
 .empty-state {
   text-align: center;
-  padding: 3rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 2.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  color: var(--text-secondary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
+.empty-state p {
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+}
+
+/* DESIGN FIX : conteneur tableau */
 .projects-table {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  overflow-x: auto;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
-table {
+.projects-table table {
   width: 100%;
   border-collapse: collapse;
 }
 
-thead {
-  background-color: #f8f9fa;
+/* DESIGN FIX : en-tête tableau */
+.projects-table thead {
+  background: var(--bg-elevated);
 }
 
-th {
-  padding: 1rem;
+.projects-table th {
+  padding: 0 16px;
+  height: 44px;
   text-align: left;
   font-weight: 600;
-  color: #2c3e50;
-  border-bottom: 2px solid #e0e0e0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
 }
 
-td {
-  padding: 1rem;
-  border-bottom: 1px solid #e0e0e0;
+/* DESIGN FIX : lignes */
+.projects-table td {
+  padding: 0 16px;
+  height: 52px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+  font-size: 14px;
+  background: var(--bg-card);
+  vertical-align: middle;
+}
+
+.projects-table tbody tr:hover td {
+  background: var(--bg-hover);
+  transition: background 150ms ease;
+}
+
+.projects-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 .description-cell {
-  max-width: 200px;
+  max-width: 220px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--text-secondary);
 }
 
+/* DESIGN FIX : badges statut (surcharge style inline getStatusColor) */
 .status-badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  color: white;
-  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
   font-weight: 500;
+  border: 1px solid transparent;
 }
 
+.projects-list .status-badge.bmp-statut-en-cours {
+  color: var(--success) !important;
+  background: var(--success-bg) !important;
+  border-color: rgba(16, 185, 129, 0.22) !important;
+}
+
+.projects-list .status-badge.bmp-statut-en-attente {
+  color: var(--warning) !important;
+  background: var(--warning-bg) !important;
+  border-color: rgba(245, 166, 35, 0.22) !important;
+}
+
+.projects-list .status-badge.bmp-statut-terminé {
+  color: var(--neutral) !important;
+  background: var(--neutral-bg) !important;
+  border-color: rgba(107, 114, 128, 0.22) !important;
+}
+
+.projects-list .status-badge.bmp-statut-annulé {
+  color: var(--danger) !important;
+  background: var(--danger-bg) !important;
+  border-color: rgba(239, 68, 68, 0.22) !important;
+}
+
+/* DESIGN FIX : barre d'avancement */
 .progress-bar {
   position: relative;
-  width: 100px;
-  height: 20px;
-  background-color: #e0e0e0;
-  border-radius: 10px;
-  overflow: hidden;
+  width: 120px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  overflow: visible;
 }
 
 .progress-fill {
   height: 100%;
-  background-color: #3498db;
-  transition: width 0.3s;
+  background: var(--gold);
+  border-radius: 9999px;
+  transition: width 0.3s ease;
 }
 
 .progress-text {
   position: absolute;
+  left: calc(100% + 10px);
   top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 0.75rem;
+  transform: translateY(-50%);
+  font-size: 12px;
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--text-secondary);
+  white-space: nowrap;
 }
 
+/* DESIGN FIX : lien voir */
 .btn-link {
-  color: #f39c12;
+  color: var(--gold);
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 13px;
 }
 
 .btn-link:hover {
   text-decoration: underline;
 }
 
+/* DESIGN FIX : chargement */
 .loading {
   text-align: center;
   padding: 2rem;
-  color: #7f8c8d;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  min-height: 40vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

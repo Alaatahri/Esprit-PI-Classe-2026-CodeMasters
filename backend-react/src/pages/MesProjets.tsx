@@ -202,9 +202,12 @@ const MesProjets = () => {
             <article key={p._id} className="mes-projets-card">
               <div className="mes-projets-card-head">
                 <h2>{p.titre}</h2>
+                {/* DESIGN FIX : data-status pour styles badges (thème dark) */}
                 <span
                   className="mes-projets-status"
-                  data-status={p.statut === 'En cours' ? 'progress' : 'other'}
+                  data-status={String(p.statut ?? '')
+                    .toLowerCase()
+                    .replace(/\s+/g, '-')}
                 >
                   {p.statut}
                 </span>

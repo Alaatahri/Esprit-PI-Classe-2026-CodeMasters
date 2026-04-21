@@ -1,66 +1,151 @@
+/* [DESIGN FIX] Liste utilisateurs — thème dark cohérent */
+
+/* DESIGN FIX : conteneur page */
 .users-list {
   width: 100%;
-  padding: 2rem;
-  background: #f8fafc;
-  min-height: 100%;
+  min-height: 100vh;
+  padding: 28px 32px;
+  background: var(--bg-surface);
   max-width: 1920px;
   margin: 0 auto;
 }
 
+/* DESIGN FIX : titre */
 .users-list h1 {
-  color: #2c3e50;
-  margin-bottom: 2rem;
+  color: var(--text-primary);
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0 0 1.5rem 0;
 }
 
+/* DESIGN FIX : état vide */
 .empty-state {
   text-align: center;
-  padding: 3rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 2.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  color: var(--text-secondary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
+/* DESIGN FIX : conteneur tableau */
 .users-table {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  overflow-x: auto;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
-table {
+.users-table table {
   width: 100%;
   border-collapse: collapse;
 }
 
-thead {
-  background-color: #f8f9fa;
+.users-table thead {
+  background: var(--bg-elevated);
 }
 
-th {
-  padding: 1rem;
+.users-table th {
+  padding: 0 16px;
+  height: 44px;
   text-align: left;
   font-weight: 600;
-  color: #2c3e50;
-  border-bottom: 2px solid #e0e0e0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
 }
 
-td {
-  padding: 1rem;
-  border-bottom: 1px solid #e0e0e0;
+.users-table td {
+  padding: 0 16px;
+  height: 52px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+  font-size: 14px;
+  background: var(--bg-card);
+  vertical-align: middle;
 }
 
+.users-table tbody tr:hover td {
+  background: var(--bg-hover);
+  transition: background 150ms ease;
+}
+
+.users-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* DESIGN FIX : badge rôle (surcharge style inline getRoleColor) */
 .role-badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  color: white;
-  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
   font-weight: 500;
   text-transform: capitalize;
+  border: 1px solid transparent;
+}
+
+.users-list .role-badge.bmp-role-client {
+  color: var(--info) !important;
+  background: rgba(99, 102, 241, 0.12) !important;
+  border-color: rgba(99, 102, 241, 0.22) !important;
+}
+
+.users-list .role-badge.bmp-role-expert {
+  color: #3b82f6 !important;
+  background: rgba(59, 130, 246, 0.12) !important;
+  border-color: rgba(59, 130, 246, 0.22) !important;
+}
+
+.users-list .role-badge.bmp-role-artisan {
+  color: #8b5cf6 !important;
+  background: rgba(139, 92, 246, 0.12) !important;
+  border-color: rgba(139, 92, 246, 0.22) !important;
+}
+
+.users-list .role-badge.bmp-role-manufacturer {
+  color: var(--warning) !important;
+  background: rgba(245, 166, 35, 0.12) !important;
+  border-color: rgba(245, 166, 35, 0.22) !important;
+}
+
+.users-list .role-badge.bmp-role-admin {
+  color: var(--danger) !important;
+  background: rgba(239, 68, 68, 0.12) !important;
+  border-color: rgba(239, 68, 68, 0.22) !important;
+}
+
+.users-list .role-badge.bmp-role-livreur {
+  color: var(--success) !important;
+  background: rgba(16, 185, 129, 0.12) !important;
+  border-color: rgba(16, 185, 129, 0.22) !important;
+}
+
+/* DESIGN FIX : email vérifié */
+.users-list .role-badge.bmp-email-yes {
+  color: var(--success) !important;
+  background: rgba(16, 185, 129, 0.1) !important;
+  border-color: rgba(16, 185, 129, 0.22) !important;
+}
+
+.users-list .role-badge.bmp-email-no {
+  color: var(--danger) !important;
+  background: var(--danger-bg) !important;
+  border-color: rgba(239, 68, 68, 0.22) !important;
 }
 
 .loading {
   text-align: center;
   padding: 2rem;
-  color: #7f8c8d;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  min-height: 40vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

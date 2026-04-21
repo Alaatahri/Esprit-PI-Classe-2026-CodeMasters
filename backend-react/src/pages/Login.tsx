@@ -1,3 +1,4 @@
+// [DESIGN ONLY - BMP.tn Backoffice Redesign]
 import { useState, FormEvent, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -37,6 +38,7 @@ const Login = () => {
 
   return (
     <div className="login-container">
+      {/* → DESIGN : carte login */}
       <div className="login-card">
         <div className="login-header">
           <div className="login-logo">
@@ -83,9 +85,9 @@ const Login = () => {
               disabled={loading}
             />
           </div>
-          <div style={{ textAlign: 'right', marginTop: '6px' }}>
-            <a href="/forgot-password"
-              style={{ color: '#F5A623', fontSize: '13px', textDecoration: 'none' }}>
+          {/* → DESIGN : lien secondaire */}
+          <div className="login-forgot-row">
+            <a className="login-forgot-link" href="/forgot-password">
               Mot de passe oublié ?
             </a>
           </div>

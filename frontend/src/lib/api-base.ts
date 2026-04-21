@@ -10,7 +10,13 @@
 export function getApiBaseUrl(): string {
   const env = process.env.NEXT_PUBLIC_API_URL;
   if (typeof env === "string" && env.trim() !== "") {
-    return env.replace(/\/$/, "");
+    let base = env.trim().replace(/\/$/, "");
+    // Erreur fréquente : `NEXT_PUBLIC_API_URL=http://127.0.0.1:3001` sans `/api`
+    // alors que Nest utilise `app.setGlobalPrefix('api')` → 404 sur `/auth/...`.
+    if (/^https?:\/\//i.test(base) && !/\/api(\/|$)/i.test(base)) {
+      base = `${base}/api`;
+    }
+    return base;
   }
   return "/api";
 }

@@ -1,3 +1,4 @@
+// [DESIGN ONLY - BMP.tn Backoffice Redesign]
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ReactNode, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -138,6 +139,8 @@ const Layout = ({ children }: LayoutProps) => {
         </div>
 
         <nav className="sidebar-nav">
+          {/* → DESIGN : libellé de section (navigation) */}
+          {sidebarOpen && <div className="nav-section-label">Navigation</div>}
           <ul className="nav-list">
             {menuItems.map((item) => {
               const Icon = item.icon;
@@ -163,11 +166,14 @@ const Layout = ({ children }: LayoutProps) => {
 
         {sidebarOpen && (
           <div className="sidebar-footer">
+            {/* → DESIGN : bloc utilisateur (pied de sidebar) */}
             <div className="sidebar-footer-content">
-              <div className="footer-icon">B</div>
+              <div className="footer-icon">
+                {user?.nom?.charAt(0).toUpperCase() || 'U'}
+              </div>
               <div className="footer-text">
-                <p className="footer-title">BMP.tn Platform</p>
-                <p className="footer-subtitle">Version 1.0.0</p>
+                <p className="footer-title">{user?.nom || 'Utilisateur'}</p>
+                <p className="footer-subtitle">{user?.role || 'Utilisateur'}</p>
               </div>
             </div>
             <button 

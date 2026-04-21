@@ -69,8 +69,11 @@ const UsersList = () => {
                   <td>{user.nom}</td>
                   <td>{user.email}</td>
                   <td>
+                    {/* DESIGN FIX : classes email vérifié pour thème dark */}
                     <span
-                      className="role-badge"
+                      className={`role-badge ${
+                        user.isEmailVerified === false ? 'bmp-email-no' : 'bmp-email-yes'
+                      }`}
                       style={{
                         backgroundColor:
                           user.isEmailVerified === false ? '#e74c3c' : '#27ae60',
@@ -86,8 +89,9 @@ const UsersList = () => {
                   </td>
                   <td>{user.telephone}</td>
                   <td>
-                    <span 
-                      className="role-badge"
+                    {/* DESIGN FIX : classe rôle pour thème dark */}
+                    <span
+                      className={`role-badge bmp-role-${user.role}`}
                       style={{ backgroundColor: getRoleColor(user.role) }}
                     >
                       {user.role}

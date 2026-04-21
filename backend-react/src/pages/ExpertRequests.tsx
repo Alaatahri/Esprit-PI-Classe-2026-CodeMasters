@@ -85,7 +85,10 @@ const ExpertRequests = () => {
   }
 
   if (loading) {
-    return <div className="loading">Chargement des demandes...</div>;
+    // DESIGN FIX : conteneur chargement cohérent thème dark
+    return (
+      <div className="loading expert-requests-loading">Chargement des demandes...</div>
+    );
   }
 
   return (

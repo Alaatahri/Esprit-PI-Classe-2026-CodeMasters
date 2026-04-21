@@ -1,3 +1,4 @@
+// [DESIGN ONLY - BMP.tn Backoffice Redesign]
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './layouts/Layout';
@@ -18,7 +19,7 @@ const PrivateRoute = ({ children }: { children: React.ReactElement }) => {
   const { isAuthenticated, isLoading } = useAuth();
   
   if (isLoading) {
-    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Chargement...</div>;
+    return <div className="bmp-route-loading">Chargement...</div>;
   }
   
   return isAuthenticated ? children : <Navigate to="/login" />;

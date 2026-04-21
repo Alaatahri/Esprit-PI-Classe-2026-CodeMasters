@@ -1,3 +1,4 @@
+// [DESIGN ONLY - BMP.tn Backoffice Redesign]
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { dashboardService } from '../services/dashboardService';

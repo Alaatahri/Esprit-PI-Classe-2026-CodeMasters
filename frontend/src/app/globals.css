@@ -210,3 +210,9 @@ body::-webkit-scrollbar-thumb:hover {
 .animate-float {
   animation: float linear infinite;
 }
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
