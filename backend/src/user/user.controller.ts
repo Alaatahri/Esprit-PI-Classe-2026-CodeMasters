@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Put, Param, Delete } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Header,
+  Param,
+  Post,
+  Put,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from './schemas/user.schema';
 
@@ -18,8 +27,22 @@ export class UserController {
 
   /** Vitrine — doit être déclaré avant @Get(':id') sinon « public » est pris pour un id. */
   @Get('public/workers')
+  @Header(
+    'Cache-Control',
+    'public, max-age=30, s-maxage=45, stale-while-revalidate=180',
+  )
   publicWorkers() {
     return this.userService.findPublicWorkers();
+  }
+
+  /** Fiche profil publique (front `/profil/[id]`). */
+  @Get('public/:id/profile')
+  @Header(
+    'Cache-Control',
+    'public, max-age=20, s-maxage=30, stale-while-revalidate=120',
+  )
+  publicProfile(@Param('id') id: string) {
+    return this.userService.getPublicProfile(id);
   }
 
   @Post('login')

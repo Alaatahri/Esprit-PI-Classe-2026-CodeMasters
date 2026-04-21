@@ -8,3 +8,11 @@ export {
   CardContent,
 } from "./card";
 export { Skeleton } from "./skeleton";
+export {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from "./table";

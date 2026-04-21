@@ -24,6 +24,7 @@ import {
   type ShowcaseProjectDetailApi,
   type ShowcaseReviewEntry,
 } from "@/lib/public-workers";
+import { isBackendLocalMediaUrl } from "@/lib/backend-public-url";
 
 function reviewRoleLabel(role: string): string {
   switch (role) {
@@ -205,6 +206,7 @@ export default function RealisationDetailPage() {
                 className="object-cover"
                 sizes="(max-width: 1024px) 100vw, 1024px"
                 priority
+                unoptimized={isBackendLocalMediaUrl(hero)}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/50 to-gray-950/20" />
               <div className="absolute inset-0 bg-gradient-to-r from-gray-950/60 via-transparent to-transparent" />
@@ -368,6 +370,7 @@ export default function RealisationDetailPage() {
                     fill
                     className="object-cover transition duration-300 group-hover:scale-[1.03]"
                     sizes="320px"
+                    unoptimized={isBackendLocalMediaUrl(url)}
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 to-transparent opacity-90" />
                   <span className="pointer-events-none absolute bottom-2 left-2 rounded-md bg-black/50 px-2 py-0.5 text-[10px] font-medium text-white/90">
@@ -417,6 +420,7 @@ export default function RealisationDetailPage() {
                       fill
                       className="object-cover transition duration-500 group-hover:scale-[1.02]"
                       sizes="(max-width: 768px) 100vw, 50vw"
+                      unoptimized={isBackendLocalMediaUrl(avant[i]!)}
                     />
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-80" />
                     <figcaption className="pointer-events-none absolute bottom-0 left-0 right-0 flex items-center justify-between p-3 sm:p-4">
@@ -439,6 +443,7 @@ export default function RealisationDetailPage() {
                       fill
                       className="object-cover transition duration-500 group-hover:scale-[1.02]"
                       sizes="(max-width: 768px) 100vw, 50vw"
+                      unoptimized={isBackendLocalMediaUrl(apres[i]!)}
                     />
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-emerald-950/40 to-transparent opacity-90" />
                     <figcaption className="pointer-events-none absolute bottom-0 left-0 right-0 flex items-center justify-between p-3 sm:p-4">
@@ -475,6 +480,7 @@ export default function RealisationDetailPage() {
                         fill
                         className="object-cover transition group-hover:scale-105"
                         sizes="25vw"
+                        unoptimized={isBackendLocalMediaUrl(url)}
                       />
                     </button>
                   ))}
@@ -500,6 +506,7 @@ export default function RealisationDetailPage() {
                         fill
                         className="object-cover transition group-hover:scale-105"
                         sizes="25vw"
+                        unoptimized={isBackendLocalMediaUrl(url)}
                       />
                     </button>
                   ))}
@@ -536,6 +543,7 @@ export default function RealisationDetailPage() {
                         fill
                         className="object-cover"
                         sizes="(max-width: 768px) 100vw, 33vw"
+                        unoptimized={isBackendLocalMediaUrl(url)}
                       />
                     </button>
                   ))}
@@ -561,6 +569,7 @@ export default function RealisationDetailPage() {
                         fill
                         className="object-cover"
                         sizes="(max-width: 768px) 100vw, 33vw"
+                        unoptimized={isBackendLocalMediaUrl(url)}
                       />
                     </button>
                   ))}
@@ -614,6 +623,7 @@ export default function RealisationDetailPage() {
                   className="object-contain"
                   sizes="100vw"
                   priority
+                  unoptimized={isBackendLocalMediaUrl(lightbox)}
                 />
               </div>
               <p className="mt-3 text-center text-xs text-gray-500">

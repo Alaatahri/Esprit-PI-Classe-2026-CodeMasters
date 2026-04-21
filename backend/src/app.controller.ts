@@ -46,6 +46,12 @@ export class AppController {
             create: 'POST /api/marketplace/commandes',
           },
         },
+        messages: {
+          conversations: 'GET /api/messages/conversations (header x-user-id)',
+          unreadCount: 'GET /api/messages/unread-count (header x-user-id)',
+          thread: 'GET /api/messages/with/:otherUserId (header x-user-id)',
+          send: 'POST /api/messages (header x-user-id, body { toUserId, body })',
+        },
       },
     };
   }

@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   Headers,
   Param,
   Post,
@@ -29,13 +30,27 @@ export class ProjectController {
 
   /** Vitrine — avant @Get(':id') sinon « public » est capturé comme id. */
   @Get('public/showcase')
+  @Header(
+    'Cache-Control',
+    'public, max-age=20, s-maxage=30, stale-while-revalidate=120',
+  )
   publicShowcase() {
     return this.projectService.findPublicShowcase();
   }
 
   @Get('public/showcase/:id')
+  @Header(
+    'Cache-Control',
+    'public, max-age=15, s-maxage=20, stale-while-revalidate=60',
+  )
   publicShowcaseById(@Param('id') id: string) {
     return this.projectService.findPublicShowcaseById(id);
+  }
+
+  /** Projets assignés à un expert — avant @Get(':id') pour ne pas capturer « expert » comme id. */
+  @Get('expert/:expertId')
+  findByExpert(@Param('expertId') expertId: string) {
+    return this.projectService.findByExpertId(expertId);
   }
 
   @Get(':id')
@@ -68,5 +83,26 @@ export class ProjectController {
     }
 
     return this.projectService.applyToProject(id, artisanId);
+  }
+
+  @Post(':id/expert/manual-progress')
+  expertManualProgress(
+    @Param('id') id: string,
+    @Body() body: { avancement?: number; note?: string },
+    @Headers('x-user-id') expertId?: string,
+  ) {
+    const uid = expertId?.trim();
+    if (!uid) {
+      throw new BadRequestException('En-tête x-user-id requis.');
+    }
+    const av = Number(body?.avancement);
+    if (!Number.isFinite(av) || av < 0 || av > 100) {
+      throw new BadRequestException('Avancement entre 0 et 100.');
+    }
+    return this.projectService.assertExpertAndUpdateProgress(
+      id,
+      uid,
+      Math.round(av),
+    );
   }
 }

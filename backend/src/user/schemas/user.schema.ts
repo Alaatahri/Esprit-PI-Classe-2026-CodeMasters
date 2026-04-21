@@ -22,6 +22,42 @@ export class User {
 
   @Prop({ required: true })
   telephone: string;
+
+  /** Champs vitrine / profil public (optionnels — enrichis par le seed). */
+  @Prop()
+  prenom?: string;
+
+  @Prop()
+  specialite?: string;
+
+  @Prop({ type: [String], default: [] })
+  competences?: string[];
+
+  @Prop({ min: 0, max: 5 })
+  rating?: number;
+
+  @Prop({ min: 0 })
+  experience_annees?: number;
+
+  @Prop({
+    type: [
+      {
+        scope: { type: String, required: true },
+        value: { type: String, required: false },
+      },
+    ],
+    default: [],
+  })
+  zones_travail?: Array<{ scope: string; value?: string }>;
+
+  @Prop()
+  avatarUrl?: string;
+
+  @Prop()
+  bio?: string;
+
+  @Prop({ default: true })
+  isAvailable?: boolean;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

@@ -33,9 +33,14 @@ function roleLabel(role?: string): string {
 
 export default function MessagesInboxPage() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [rows, setRows] = useState<ConversationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const load = useCallback(async () => {
     const u = getStoredUser();
@@ -57,13 +62,45 @@ export default function MessagesInboxPage() {
   }, [router]);
 
   useEffect(() => {
+    if (!mounted) return;
+    const u = getStoredUser();
+    if (!u) return;
     void load();
-  }, [load]);
+  }, [mounted, load]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    if (!getStoredUser()) {
+      router.replace("/login");
+    }
+  }, [mounted, router]);
+
+  /** Même squelette SSR + 1er rendu client (évite mismatch localStorage). */
+  if (!mounted) {
+    return (
+      <div className="relative mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 lg:max-w-4xl lg:py-12">
+        <PageHeader
+          eyebrow="Messagerie"
+          title="Messages"
+          description="Vos échanges avec clients, experts et artisans — tout au même endroit."
+        />
+        <LoadingState message="Chargement…" minHeight="md" />
+      </div>
+    );
+  }
 
   const u = getStoredUser();
-
   if (!u) {
-    return null;
+    return (
+      <div className="relative mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 lg:max-w-4xl lg:py-12">
+        <PageHeader
+          eyebrow="Messagerie"
+          title="Messages"
+          description="Vos échanges avec clients, experts et artisans — tout au même endroit."
+        />
+        <LoadingState message="Redirection vers la connexion…" minHeight="md" />
+      </div>
+    );
   }
 
   return (

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Devis, DevisDocument } from './schemas/devis.schema';
 import { DevisItem, DevisItemDocument } from './schemas/devis-item.schema';
 
@@ -21,7 +21,12 @@ export class DevisService {
   }
 
   async findByProject(projectId: string): Promise<Devis[]> {
-    return this.devisModel.find({ projectId }).exec();
+    if (!Types.ObjectId.isValid(projectId)) {
+      return [];
+    }
+    return this.devisModel
+      .find({ projectId: new Types.ObjectId(projectId) })
+      .exec();
   }
 
   async findOne(id: string): Promise<Devis> {

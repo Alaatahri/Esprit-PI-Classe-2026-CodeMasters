@@ -3,6 +3,9 @@ import path from "path";
 
 const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname),
+  experimental: {
+    optimizePackageImports: ["lucide-react"],
+  },
   /** Proxy API NestJS (port 3001) quand le front utilise une URL relative `/api`. */
   async rewrites() {
     const backend =

@@ -121,11 +121,12 @@
   * {
     @apply border-border outline-ring/50;
   }
-  html {
+  /** Aligné avec `data-scroll-behavior` sur `<html>` (App Router / transitions). */
+  html[data-scroll-behavior="smooth"] {
     scroll-behavior: smooth;
   }
   @media (prefers-reduced-motion: reduce) {
-    html {
+    html[data-scroll-behavior="smooth"] {
       scroll-behavior: auto;
     }
   }
@@ -144,7 +145,17 @@
 /* Surfaces & rythme vertical (palette inchangée — utilise les variables du thème) */
 @layer utilities {
   .bmp-page {
-    @apply mx-auto w-full px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-14;
+    @apply mx-auto w-full px-4 py-12 sm:px-6 sm:py-14 lg:px-8 lg:py-16;
+  }
+
+  /** Rythme vertical entre sections de contenu (dashboards, pages longues). */
+  .bmp-stack {
+    @apply flex flex-col gap-10 lg:gap-12;
+  }
+
+  /** Carte / liste dense : ligne avec hover discret */
+  .bmp-table-surface {
+    @apply overflow-hidden rounded-2xl border border-border/55 bg-card/30 shadow-md shadow-black/20 backdrop-blur-md;
   }
 
   /** Fond d’app discret : vignette ambre + profondeur, sans nouvelles couleurs de marque */
@@ -363,4 +374,186 @@ html.access-mobilite input {
     animation: none;
     background: rgba(255, 255, 255, 0.08);
   }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CONSTRUCTION OS — ENTERPRISE DESIGN SYSTEM
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Semantic Status Badges ───────────────────────────────── */
+@layer utilities {
+  .bmp-badge {
+    @apply inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide;
+  }
+  .bmp-badge-success {
+    color: #34d399;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+  }
+  .bmp-badge-warning {
+    color: #fbbf24;
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+  }
+  .bmp-badge-danger {
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+  }
+  .bmp-badge-info {
+    color: #60a5fa;
+    background: rgba(59, 130, 246, 0.12);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+  }
+  .bmp-badge-neutral {
+    color: #9ca3af;
+    background: rgba(156, 163, 175, 0.1);
+    border: 1px solid rgba(156, 163, 175, 0.18);
+  }
+  .bmp-badge-amber {
+    color: #fbbf24;
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+  }
+
+  /* ── Enterprise Panel ─────────────────────────────────────── */
+  .bmp-enterprise-panel {
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    overflow: hidden;
+  }
+
+  .bmp-enterprise-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  /* ── Data List Row ────────────────────────────────────────── */
+  .bmp-data-row {
+    @apply flex items-center gap-3 px-5 py-3.5 text-sm transition-all duration-150;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    cursor: pointer;
+  }
+  .bmp-data-row:hover {
+    background: rgba(255, 255, 255, 0.03);
+  }
+  .bmp-data-row:last-child {
+    border-bottom: none;
+  }
+
+  /* ── Progress Bar ─────────────────────────────────────────── */
+  .bmp-progress-track {
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.07);
+    overflow: hidden;
+  }
+  .bmp-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+    transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .bmp-progress-fill-success {
+    background: linear-gradient(90deg, #10b981, #34d399);
+  }
+  .bmp-progress-fill-info {
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  }
+
+  /* ── Section title ────────────────────────────────────────── */
+  .bmp-section-title {
+    @apply text-[11px] font-bold uppercase tracking-[0.18em];
+    color: #6b7280;
+  }
+
+  /* ── Enterprise action button ─────────────────────────────── */
+  .bmp-btn-primary {
+    @apply inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-150;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #0d1117;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+  }
+  .bmp-btn-primary:hover {
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
+    transform: translateY(-1px);
+  }
+
+  .bmp-btn-secondary {
+    @apply inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-150;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #d1d5db;
+  }
+  .bmp-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #fff;
+  }
+
+  .bmp-btn-ghost {
+    @apply inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150;
+    color: #9ca3af;
+  }
+  .bmp-btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #e5e7eb;
+  }
+
+  /* ── Empty State ──────────────────────────────────────────── */
+  .bmp-empty-state {
+    @apply flex flex-col items-center justify-center gap-3 rounded-xl py-12 px-6 text-center;
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+  }
+
+  /* ── KPI Grid ─────────────────────────────────────────────── */
+  .bmp-kpi-grid {
+    @apply grid gap-4;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+
+  /* ── Dashboard Section Layout ─────────────────────────────── */
+  .bmp-os-page {
+    @apply flex flex-col gap-6;
+  }
+
+  /* ── Skeleton pulse ───────────────────────────────────────── */
+  .bmp-skeleton {
+    @apply rounded-lg animate-pulse;
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
+
+/* ── Page entrance animation (enhanced) ──────────────────────── */
+@keyframes bmp-os-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bmp-os-animate {
+  animation: bmp-os-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.bmp-os-animate-delay-1 {
+  animation-delay: 0.05s;
+}
+.bmp-os-animate-delay-2 {
+  animation-delay: 0.1s;
+}
+.bmp-os-animate-delay-3 {
+  animation-delay: 0.15s;
+}
+.bmp-os-animate-delay-4 {
+  animation-delay: 0.2s;
 }

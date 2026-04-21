@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode } from 'react';
 import authService, { LoginCredentials } from '../services/authService';
 import { User } from '../services/userService';
 
@@ -7,7 +7,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => void;
-  updateUser: (data: Partial<User>) => Promise<void>;
+  updateUser: (data: Partial<User>) => Promise<User>;
   isLoading: boolean;
 }
 
@@ -18,8 +18,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const login = async (credentials: LoginCredentials) => {
-    const response = await authService.login(credentials);
-    setUser(response.user);
+    setIsLoading(true);
+    try {
+      const response = await authService.login(credentials);
+      setUser(response.user);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const logout = () => {
@@ -27,10 +32,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
   };
 
-  const updateUser = async (data: Partial<User>) => {
-    if (!user?._id) return;
-    const updatedUser = await authService.updateProfile(user._id, data);
-    setUser(updatedUser);
+  const updateUser = async (data: Partial<User>): Promise<User> => {
+    if (!user?._id) {
+      throw new Error('Utilisateur non connecté');
+    }
+    setIsLoading(true);
+    try {
+      const updatedUser = await authService.updateProfile(user._id, data);
+      setUser(updatedUser);
+      return updatedUser;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

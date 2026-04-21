@@ -45,6 +45,7 @@ export default function MessageThreadPage() {
   const router = useRouter();
   const otherId = typeof params?.userId === "string" ? params.userId : "";
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
 
   const [partner, setPartner] = useState<PartnerInfo | null>(null);
   const [messages, setMessages] = useState<MessageRow[]>([]);
@@ -57,6 +58,10 @@ export default function MessageThreadPage() {
   const scrollBottom = () => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const load = useCallback(async () => {
     const u = getStoredUser();
@@ -84,6 +89,7 @@ export default function MessageThreadPage() {
   }, [otherId]);
 
   useEffect(() => {
+    if (!mounted) return;
     const u = getStoredUser();
     if (!u) {
       router.replace("/login");
@@ -91,7 +97,7 @@ export default function MessageThreadPage() {
     }
     if (!otherId) return;
     void load();
-  }, [otherId, load, router]);
+  }, [mounted, otherId, load, router]);
 
   useEffect(() => {
     scrollBottom();
@@ -120,8 +126,33 @@ export default function MessageThreadPage() {
     }
   };
 
+  if (!mounted) {
+    return (
+      <div className="mx-auto flex w-full max-w-3xl flex-col px-4 py-8 sm:px-6 lg:max-w-4xl lg:py-10">
+        <div
+          className={cn(
+            "bmp-panel flex flex-col overflow-hidden",
+            "max-h-[calc(100dvh-10rem)] min-h-[420px] sm:min-h-[520px]",
+          )}
+        >
+          <LoadingState
+            className="flex-1 py-16"
+            message="Chargement…"
+            minHeight="md"
+          />
+        </div>
+      </div>
+    );
+  }
+
   const u = getStoredUser();
-  if (!u) return null;
+  if (!u) {
+    return (
+      <div className="mx-auto flex w-full max-w-3xl flex-col px-4 py-8 sm:px-6 lg:max-w-4xl lg:py-10">
+        <LoadingState message="Redirection…" minHeight="md" />
+      </div>
+    );
+  }
 
   const me = u._id;
   const partnerInitial = (partner?.nom || "?").trim().charAt(0).toUpperCase();

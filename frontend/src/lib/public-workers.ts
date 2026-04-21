@@ -62,10 +62,28 @@ export function avatarUrlForWorker(w: PublicWorker): string {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=292524&color=fbbf24&size=256`;
 }
 
+/**
+ * Anciens liens Unsplash encore en base mais retirés du catalogue (404).
+ * À enrichir si d’autres IDs cassent — évite les requêtes mortes vers `/_next/image`.
+ */
+const DEAD_IMAGE_URL_MARKERS = [
+  "photo-1600573472592-701b2c0100c7",
+  "photo-1600607687644-c7171b42498b",
+  "photo-1504257434649-3a7fd3f84f4b",
+] as const;
+
+export function isDeadImageUrl(url: string): boolean {
+  const u = url.trim();
+  return DEAD_IMAGE_URL_MARKERS.some((m) => u.includes(m));
+}
+
 /** Photo affichée : image du compte si définie, sinon initiales. */
 export function profileImageUrl(w: PublicWorker): string {
   const u = w.avatarUrl?.trim();
-  if (u && /^https?:\/\//i.test(u)) return u;
+  if (u && /^https?:\/\//i.test(u)) {
+    if (isDeadImageUrl(u)) return avatarUrlForWorker(w);
+    return u;
+  }
   return avatarUrlForWorker(w);
 }
 
@@ -81,18 +99,15 @@ async function parseError(res: Response): Promise<string> {
   return text || res.statusText || `Erreur ${res.status}`;
 }
 
+/** Politique cache HTTP (Cache-Control) renvoyée par le backend — pas de `no-store` pour accélérer les visites répétées. */
 export async function fetchPublicWorkers(): Promise<PublicWorker[]> {
-  const res = await fetch(`${API_URL}/users/public/workers`, {
-    cache: "no-store",
-  });
+  const res = await fetch(`${API_URL}/users/public/workers`);
   if (!res.ok) throw new Error(await parseError(res));
   return res.json();
 }
 
 export async function fetchShowcaseProjects(): Promise<ShowcaseProjectApi[]> {
-  const res = await fetch(`${API_URL}/projects/public/showcase`, {
-    cache: "no-store",
-  });
+  const res = await fetch(`${API_URL}/projects/public/showcase`);
   if (!res.ok) throw new Error(await parseError(res));
   return res.json();
 }
@@ -100,9 +115,7 @@ export async function fetchShowcaseProjects(): Promise<ShowcaseProjectApi[]> {
 export async function fetchShowcaseProjectById(
   id: string,
 ): Promise<ShowcaseProjectDetailApi> {
-  const res = await fetch(`${API_URL}/projects/public/showcase/${id}`, {
-    cache: "no-store",
-  });
+  const res = await fetch(`${API_URL}/projects/public/showcase/${id}`);
   if (!res.ok) throw new Error(await parseError(res));
   return res.json();
 }
@@ -123,20 +136,6 @@ export const SHOWCASE_IMAGES = [
 
 export function pickShowcaseImage(index: number): string {
   return SHOWCASE_IMAGES[index % SHOWCASE_IMAGES.length];
-}
-
-/**
- * Anciens liens Unsplash encore en base mais retirés du catalogue (404).
- * À enrichir si d’autres IDs cassent — évite les requêtes mortes vers `/_next/image`.
- */
-const DEAD_IMAGE_URL_MARKERS = [
-  "photo-1600573472592-701b2c0100c7",
-  "photo-1600607687644-c7171b42498b",
-] as const;
-
-export function isDeadImageUrl(url: string): boolean {
-  const u = url.trim();
-  return DEAD_IMAGE_URL_MARKERS.some((m) => u.includes(m));
 }
 
 /** Garde uniquement les URLs encore valides (hors liste morte). */

@@ -31,3 +31,13 @@ export function resolveMediaUrl(url: string | undefined | null): string {
   if (/^https?:\/\//i.test(t)) return t;
   return publicFileUrl(t) ?? t;
 }
+
+/**
+ * URLs servies par le backend sur loopback — `next/image` renvoie souvent 400 en dev
+ * (l’optimiseur refetch l’URL depuis le serveur Next). Utiliser `unoptimized` pour ces `src`.
+ */
+export function isBackendLocalMediaUrl(src: string): boolean {
+  const t = src.trim();
+  if (!t) return false;
+  return /^(https?:\/\/)?(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/i.test(t);
+}

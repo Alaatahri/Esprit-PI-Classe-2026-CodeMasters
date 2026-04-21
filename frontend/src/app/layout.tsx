@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { ChatbotLayout } from "@/components/ChatbotLayout";
+import { ChatbotLayoutLazy } from "@/components/ChatbotLayoutLazy";
 import { KeyboardTTS } from "@/components/KeyboardTTS";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import { AccessibilityProvider } from "@/components/AccessibilityProvider";
-import GlobalNavbar from "@/components/GlobalNavbar";
-import SiteFooter from "@/components/SiteFooter";
+import { RootFrame } from "./RootFrame";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,7 +19,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "BMP.tn – Construction Digitale",
-  description: "La plateforme intelligente qui connecte, automatise et optimise la chaîne de valeur du secteur de la construction.",
+  description:
+    "La plateforme intelligente qui connecte, automatise et optimise la chaîne de valeur du secteur de la construction.",
   icons: {
     icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
     shortcut: "/favicon.svg",
@@ -38,17 +38,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className="dark">
+    <html lang="fr" className="dark" data-scroll-behavior="smooth">
       <body
         className={`${geistSans.variable} ${geistMono.variable} scrollbar-bmp flex min-h-screen flex-col bg-background text-foreground antialiased`}
       >
         <AccessibilityProvider>
           <LanguageProvider>
-            <GlobalNavbar />
-            <div className="flex min-h-0 flex-1 flex-col">{children}</div>
-            <SiteFooter />
+            <RootFrame>{children}</RootFrame>
             <KeyboardTTS />
-            <ChatbotLayout />
+            <ChatbotLayoutLazy />
           </LanguageProvider>
         </AccessibilityProvider>
       </body>

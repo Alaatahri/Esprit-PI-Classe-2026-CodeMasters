@@ -129,7 +129,7 @@ export default function GlobalNavbar() {
             </div>
           </Link>
 
-          <nav className="hidden min-w-0 items-center gap-1 overflow-x-auto scrollbar-bmp lg:flex">
+          <nav className="hidden min-w-0 items-center gap-1.5 overflow-x-auto scrollbar-bmp lg:flex">
             {navItems.map((item) => {
               const Icon = item.icon;
               const active = isDashboardNavActive(pathname, item.href);

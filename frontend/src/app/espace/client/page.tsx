@@ -1,26 +1,27 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { getStoredUser, type BMPUser } from "@/lib/auth";
-import { SuiviTimeline } from "@/components/SuiviTimeline";
 import {
   PlusCircle,
-  ClipboardList,
+  FolderOpen,
   Clock,
   CheckCircle2,
-  Star,
-  ShoppingCart,
-  Camera,
-  ChevronRight,
-  LayoutDashboard,
   TrendingUp,
+  ShoppingBag,
+  ChevronRight,
+  AlertCircle,
+  BarChart2,
+  RefreshCw,
+  ArrowRight,
+  Wallet,
 } from "lucide-react";
-import { readApiErrorMessage } from "@/lib/api-error";
+import { getStoredUser, type BMPUser } from "@/lib/auth";
 import { getApiBaseUrl } from "@/lib/api-base";
 import { bmpAuthHeaders } from "@/lib/api-user-headers";
+import { readApiErrorMessage } from "@/lib/api-error";
+import { KpiCard } from "@/components/layout/KpiCard";
 
 const API_URL = getApiBaseUrl();
 
@@ -35,81 +36,30 @@ type Project = {
   avancement_global: number;
   clientId: string;
   createdAt?: string;
-  updatedAt?: string;
 };
 
-const exampleProjects: Array<{
-  id: string;
-  titre: string;
-  type: string;
-  description: string;
-  budget: string;
-  duree: string;
-  note: number;
-  avis: string;
-  image: string;
-  imageAlt: string;
-}> = [
-  {
-    id: "ex1",
-    titre: "Construction maison familiale 2 étages",
-    type: "Construction neuve",
-    description:
-      "Maison 220 m² avec salon ouvert, 3 chambres, suite parentale et garage.",
-    budget: "~ 380 000 TND",
-    duree: "10 mois",
-    note: 5,
-    avis:
-      "Travail très propre, délais respectés et excellente communication avec l'expert et les artisans.",
-    image:
-      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=800&q=80",
-    imageAlt: "Maison neuve contemporaine",
-  },
-  {
-    id: "ex2",
-    titre: "Extension d'une chambre + dressing",
-    type: "Extension",
-    description:
-      "Ajout de 18 m² sur une maison existante avec isolation renforcée.",
-    budget: "~ 60 000 TND",
-    duree: "3 mois",
-    note: 4,
-    avis:
-      "Résultat conforme au plan 3D, petit retard de 2 semaines mais bien géré.",
-    image:
-      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
-    imageAlt: "Extension maison avec terrasse",
-  },
-  {
-    id: "ex3",
-    titre: "Rénovation complète d'une cuisine",
-    type: "Rénovation",
-    description:
-      "Remplacement des revêtements, nouveaux meubles, électricité et plomberie refaites.",
-    budget: "~ 35 000 TND",
-    duree: "6 semaines",
-    note: 5,
-    avis:
-      "Artisans très soigneux, finitions au top. L'expert a bien suivi le chantier.",
-    image:
-      "https://images.unsplash.com/photo-1556912172-45b7abe8b7e1?w=800&q=80",
-    imageAlt: "Cuisine rénovée moderne",
-  },
-];
+function StatusBadge({ statut }: { statut: string }) {
+  if (statut === "Terminé")
+    return <span className="bmp-badge bmp-badge-success">{statut}</span>;
+  if (statut === "En cours")
+    return <span className="bmp-badge bmp-badge-info">{statut}</span>;
+  return <span className="bmp-badge bmp-badge-neutral">{statut}</span>;
+}
 
-function Stars({ value }: { value: number }) {
+function ProgressBar({ value }: { value: number }) {
+  const pct = Math.min(100, Math.max(0, value));
+  const cls =
+    pct >= 100
+      ? "bmp-progress-fill-success"
+      : pct >= 50
+        ? "bmp-progress-fill"
+        : "bmp-progress-fill";
   return (
-    <div className="flex items-center gap-0.5">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <Star
-          key={i}
-          className={
-            i < value
-              ? "w-3.5 h-3.5 text-amber-400 fill-amber-400"
-              : "w-3.5 h-3.5 text-gray-700 fill-gray-800"
-          }
-        />
-      ))}
+    <div className="bmp-progress-track mt-2">
+      <div
+        className={`bmp-progress-fill ${cls}`}
+        style={{ width: `${pct}%` }}
+      />
     </div>
   );
 }
@@ -131,45 +81,23 @@ export default function ClientSpacePage() {
   const loadClientProjects = useCallback(async () => {
     const me = getStoredUser();
     if (!me || me.role !== "client") return;
-
     setLoadingProjects(true);
     setProjectsError(null);
     try {
-      const uid = me._id ? String(me._id) : "";
-      if (!uid) {
-        setProjectsError(
-          "Session invalide : identifiant utilisateur manquant. Reconnectez-vous.",
-        );
-        return;
-      }
+      const uid = String(me._id ?? "");
       const res = await fetch(`${API_URL}/projects`, {
         cache: "no-store",
-        headers: {
-          ...bmpAuthHeaders(me),
-          "x-user-id": uid,
-        },
+        headers: { ...bmpAuthHeaders(me), "x-user-id": uid },
       });
-      if (!res.ok) {
-        const msg = await readApiErrorMessage(
-          res,
-          "Impossible de charger vos projets.",
-        );
-        throw new Error(msg);
-      }
+      if (!res.ok) throw new Error(await readApiErrorMessage(res, "Impossible de charger vos projets."));
       const data = (await res.json()) as Project[];
       setProjects(
         data
           .filter((p) => String(p.clientId) === uid)
-          .sort((a, b) => {
-            const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-            const db = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-            return db - da;
-          }),
+          .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()),
       );
     } catch (e) {
-      setProjectsError(
-        e instanceof Error ? e.message : "Impossible de charger vos projets.",
-      );
+      setProjectsError(e instanceof Error ? e.message : "Erreur de chargement.");
       setProjects([]);
     } finally {
       setLoadingProjects(false);
@@ -177,364 +105,347 @@ export default function ClientSpacePage() {
   }, []);
 
   useEffect(() => {
-    if (!user || user.role !== "client") return;
-    void loadClientProjects();
+    if (user?.role === "client") void loadClientProjects();
   }, [user, loadClientProjects]);
 
-  const projectStats = useMemo(() => {
-    const total = projects.length;
-    const enCours = projects.filter((p) => p.statut === "En cours").length;
-    const termines = projects.filter((p) => p.statut === "Terminé").length;
-    return { total, enCours, termines };
-  }, [projects]);
+  const stats = useMemo(() => ({
+    total: projects.length,
+    enCours: projects.filter((p) => p.statut === "En cours").length,
+    termines: projects.filter((p) => p.statut === "Terminé").length,
+    budgetTotal: projects.reduce((s, p) => s + (p.budget_estime ?? 0), 0),
+  }), [projects]);
 
   if (!loadingUser && !user) {
     return (
-      <div className="max-w-2xl mx-auto text-center space-y-6">
-        <h1 className="text-2xl font-bold text-white">
-          Espace client
-        </h1>
-        <p className="text-gray-400">
-          Connectez-vous pour créer et suivre vos projets.
-        </p>
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl"
+          style={{ background: "rgba(245,158,11,0.12)" }}>
+          <FolderOpen className="h-7 w-7 text-amber-400" />
+        </div>
+        <div>
+          <h2 className="text-xl font-bold text-white">Espace Client</h2>
+          <p className="mt-1 text-sm text-gray-400">Connectez-vous pour accéder à vos projets.</p>
+        </div>
         <button
+          type="button"
+          className="bmp-btn-primary mt-2"
           onClick={() => router.push("/login")}
-          className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-gray-900 font-semibold shadow-lg shadow-amber-500/30"
         >
-          Aller à la connexion
+          Se connecter <ArrowRight className="h-4 w-4" />
         </button>
       </div>
     );
   }
 
-  if (!loadingUser && user && user.role !== "client") {
+  if (!loadingUser && user?.role !== "client") {
     return (
-      <div className="max-w-2xl mx-auto text-center space-y-4">
-        <h1 className="text-2xl font-bold text-white">
-          Espace réservé aux clients
-        </h1>
-        <p className="text-gray-400 text-sm">
-          Vous êtes connecté en tant que{" "}
-          <span className="font-semibold text-amber-300">
-            {user.role}
-          </span>
-          . Cet écran est dédié aux clients qui créent des projets.
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center">
+        <AlertCircle className="h-10 w-10 text-amber-400" />
+        <h2 className="text-lg font-semibold text-white">Accès réservé aux clients</h2>
+        <p className="text-sm text-gray-400">
+          Votre rôle actuel est{" "}
+          <span className="font-semibold text-amber-400">{user?.role}</span>.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-10">
-      {/* Bandeau d'accueil */}
-      <header className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-amber-500/[0.08] via-white/[0.04] to-transparent p-6 sm:p-8 lg:p-10">
-        <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-amber-500/15 blur-3xl" />
-        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-start gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-amber-500/35 bg-amber-500/15">
-              <LayoutDashboard className="h-7 w-7 text-amber-300" />
-            </div>
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-400/90">
-                Espace client
-              </p>
-              <h1 className="mt-1 text-2xl font-bold tracking-tight text-white sm:text-3xl">
-                Bonjour, {user?.nom || "client"}
-              </h1>
-              <p className="mt-2 max-w-xl text-sm text-gray-400">
-                Pilotez vos chantiers, suivez l&apos;avancement et trouvez
-                l&apos;inspiration dans des projets déjà réalisés sur BMP.tn.
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:items-end">
-            <button
-              type="button"
-              onClick={() => router.push("/espace/client/nouveau-projet")}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-400 px-6 py-3 text-sm font-semibold text-gray-900 shadow-lg shadow-amber-500/25 transition hover:shadow-amber-500/40"
-            >
-              <PlusCircle className="h-4 w-4" />
-              Nouveau projet
-            </button>
-            <Link
-              href="/espace/client/suivi"
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-5 py-2.5 text-sm font-medium text-white/90 hover:bg-white/10"
-            >
-              <Camera className="h-4 w-4 text-amber-300" />
-              Suivi &amp; photos
-            </Link>
-          </div>
+    <div className="bmp-os-page">
+      {/* ── Page Header ── */}
+      <div className="bmp-os-animate flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="bmp-section-title mb-1">Client OS</p>
+          <h1 className="text-2xl font-bold tracking-tight text-white">
+            Bonjour, {user?.nom?.split(" ")[0] ?? "client"} 👋
+          </h1>
+          <p className="mt-1 text-sm text-gray-400">
+            Pilotez vos chantiers, suivez l&apos;avancement et gérez vos budgets.
+          </p>
         </div>
-
-        <div className="relative mt-8 grid grid-cols-3 gap-3 sm:gap-4">
-          <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-4 text-center sm:px-4">
-            <p className="text-[10px] font-medium uppercase tracking-wider text-gray-500">
-              Projets
-            </p>
-            <p className="mt-1 text-2xl font-bold text-white tabular-nums">
-              {projectStats.total}
-            </p>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-4 text-center sm:px-4">
-            <p className="text-[10px] font-medium uppercase tracking-wider text-gray-500">
-              En cours
-            </p>
-            <p className="mt-1 inline-flex items-center justify-center gap-1.5 text-2xl font-bold text-sky-300 tabular-nums">
-              <TrendingUp className="h-5 w-5 opacity-80" />
-              {projectStats.enCours}
-            </p>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-4 text-center sm:px-4">
-            <p className="text-[10px] font-medium uppercase tracking-wider text-gray-500">
-              Terminés
-            </p>
-            <p className="mt-1 text-2xl font-bold text-emerald-300 tabular-nums">
-              {projectStats.termines}
-            </p>
-          </div>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/espace/client/suivi" className="bmp-btn-secondary text-sm">
+            <FolderOpen className="h-4 w-4" />
+            Mes Projets
+          </Link>
+          <button
+            type="button"
+            className="bmp-btn-primary text-sm"
+            onClick={() => router.push("/espace/client/nouveau-projet")}
+          >
+            <PlusCircle className="h-4 w-4" />
+            Nouveau Projet
+          </button>
         </div>
-      </header>
+      </div>
 
-      <div className="grid gap-8 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] xl:gap-10">
-        {/* Inspiration */}
-        <section className="space-y-5">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-semibold text-white">
-                Inspiration — projets réalisés
-              </h2>
-              <p className="text-xs text-gray-500">
-                Budgets, durées et retours clients (exemples).
-              </p>
+      {/* ── KPI Row ── */}
+      <div className="bmp-kpi-grid bmp-os-animate bmp-os-animate-delay-1">
+        <KpiCard
+          label="Total Projets"
+          value={loadingProjects ? "—" : stats.total}
+          icon={FolderOpen}
+          variant="default"
+          description="Tous statuts confondus"
+        />
+        <KpiCard
+          label="En cours"
+          value={loadingProjects ? "—" : stats.enCours}
+          icon={TrendingUp}
+          variant="info"
+          description="Chantiers actifs"
+        />
+        <KpiCard
+          label="Terminés"
+          value={loadingProjects ? "—" : stats.termines}
+          icon={CheckCircle2}
+          variant="success"
+          description="Projets livrés"
+        />
+        <KpiCard
+          label="Budget Total"
+          value={
+            loadingProjects
+              ? "—"
+              : stats.budgetTotal >= 1000
+                ? `${(stats.budgetTotal / 1000).toFixed(0)}K`
+                : stats.budgetTotal.toString()
+          }
+          icon={Wallet}
+          variant="amber"
+          description="Estimé en TND"
+        />
+      </div>
+
+      {/* ── Main Grid ── */}
+      <div className="bmp-os-animate bmp-os-animate-delay-2 grid gap-6 xl:grid-cols-[1fr_380px]">
+        {/* Projects Panel */}
+        <div className="bmp-enterprise-panel">
+          <div className="bmp-enterprise-panel-header">
+            <div className="flex items-center gap-2">
+              <FolderOpen className="h-4 w-4 text-amber-400" />
+              <h2 className="text-sm font-semibold text-white">Mes Projets</h2>
+              {!loadingProjects && (
+                <span
+                  className="rounded-md px-1.5 py-0.5 text-[11px] font-semibold text-amber-400"
+                  style={{ background: "rgba(245,158,11,0.12)" }}
+                >
+                  {stats.total}
+                </span>
+              )}
             </div>
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.15em] text-gray-400">
-              BMP.tn
-            </span>
-          </div>
-
-          <div className="space-y-4">
-            {exampleProjects.map((ex) => (
-              <article
-                key={ex.id}
-                className="group overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] transition hover:border-amber-500/25"
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => void loadClientProjects()}
+                className="bmp-btn-ghost text-xs"
+                title="Actualiser"
               >
-                <div className="relative aspect-[21/9] sm:aspect-[2.4/1]">
-                  <Image
-                    src={ex.image}
-                    alt={ex.imageAlt}
-                    fill
-                    className="object-cover transition duration-500 group-hover:scale-[1.02]"
-                    sizes="(max-width: 1280px) 100vw, 55vw"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/40 to-transparent" />
-                  <span className="absolute left-3 top-3 rounded-full bg-black/50 px-2.5 py-0.5 text-[10px] font-medium text-amber-200 backdrop-blur-sm">
-                    {ex.type}
-                  </span>
-                </div>
-                <div className="space-y-2 p-4 text-sm">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="font-semibold leading-snug text-white">
-                      {ex.titre}
-                    </p>
-                    <Stars value={ex.note} />
-                  </div>
-                  <p className="text-xs text-gray-400 line-clamp-2">
-                    {ex.description}
-                  </p>
-                  <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-500">
-                    <span>{ex.budget}</span>
-                    <span className="inline-flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {ex.duree}
-                    </span>
-                  </div>
-                  <p className="border-t border-white/5 pt-2 text-xs italic text-gray-300">
-                    &ldquo;{ex.avis}&rdquo;
-                  </p>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        {/* Projets + marketplace */}
-        <div className="space-y-8">
-          <section className="space-y-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-2">
-                <ClipboardList className="h-5 w-5 text-amber-300" />
-                <h2 className="text-lg font-semibold text-white">
-                  Mes projets
-                </h2>
-              </div>
+                <RefreshCw className="h-3.5 w-3.5" />
+              </button>
               <Link
                 href="/espace/client/suivi"
-                className="inline-flex items-center gap-2 self-start rounded-2xl border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-100 transition hover:bg-amber-500/20"
+                className="bmp-btn-ghost text-xs"
               >
-                Vue suivi complète
-                <ChevronRight className="h-3.5 w-3.5 opacity-80" />
+                Voir tout <ChevronRight className="h-3.5 w-3.5" />
               </Link>
             </div>
+          </div>
 
+          {/* Content */}
+          <div className="overflow-y-auto" style={{ maxHeight: "460px" }}>
             {loadingProjects ? (
-              <div className="flex min-h-[12rem] items-center justify-center rounded-2xl border border-white/10 bg-white/[0.02]">
-                <div className="h-9 w-9 animate-spin rounded-full border-2 border-amber-500/30 border-t-amber-400" />
+              <div className="space-y-3 p-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="bmp-skeleton h-24 rounded-xl" />
+                ))}
               </div>
             ) : projectsError ? (
-              <div className="space-y-3 rounded-2xl border border-amber-500/25 bg-amber-950/20 px-5 py-4 text-sm text-amber-100/95">
-                <p>{projectsError}</p>
-                <button
-                  type="button"
-                  onClick={() => void loadClientProjects()}
-                  className="rounded-xl border border-amber-500/40 bg-amber-500/15 px-4 py-2 text-xs font-medium text-amber-50 transition hover:bg-amber-500/25"
+              <div className="p-5">
+                <div
+                  className="flex items-start gap-3 rounded-xl p-4 text-sm"
+                  style={{
+                    background: "rgba(239,68,68,0.08)",
+                    border: "1px solid rgba(239,68,68,0.18)",
+                  }}
                 >
-                  Réessayer
-                </button>
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
+                  <div className="flex-1 text-red-300">
+                    <p>{projectsError}</p>
+                    <button
+                      type="button"
+                      onClick={() => void loadClientProjects()}
+                      className="mt-2 text-[11px] font-medium underline underline-offset-2"
+                    >
+                      Réessayer
+                    </button>
+                  </div>
+                </div>
               </div>
             ) : projects.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-6 py-10 text-center">
-                <p className="text-sm text-gray-400">
-                  Vous n&apos;avez pas encore de projet. Cliquez sur{" "}
-                  <span className="font-medium text-amber-200">
-                    Nouveau projet
-                  </span>{" "}
-                  pour décrire votre besoin et lancer un dossier.
-                </p>
+              <div className="p-5">
+                <div className="bmp-empty-state">
+                  <FolderOpen className="h-8 w-8 text-gray-600" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-300">Aucun projet</p>
+                    <p className="text-xs text-gray-500">
+                      Créez votre premier dossier de chantier
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="bmp-btn-primary text-xs"
+                    onClick={() => router.push("/espace/client/nouveau-projet")}
+                  >
+                    <PlusCircle className="h-3.5 w-3.5" />
+                    Nouveau Projet
+                  </button>
+                </div>
               </div>
             ) : (
-              <div className="max-h-[min(28rem,70vh)] space-y-3 overflow-auto pr-1">
+              <div className="divide-y" style={{ borderColor: "rgba(255,255,255,0.04)" }}>
                 {projects.map((project) => (
                   <div
                     key={project._id}
-                    role="link"
-                    tabIndex={0}
-                    aria-label={`Ouvrir le suivi détaillé : ${project.titre}`}
-                    className="cursor-pointer rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-transparent px-4 py-3 text-sm shadow-sm transition hover:border-amber-500/35 hover:from-white/[0.08]"
-                    onClick={() =>
-                      router.push(`/espace/client/suivi/${project._id}`)
-                    }
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        router.push(`/espace/client/suivi/${project._id}`);
-                      }
-                    }}
+                    className="bmp-data-row flex-col items-start gap-2"
+                    onClick={() => router.push(`/espace/client/suivi/${project._id}`)}
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="line-clamp-1 font-medium text-white">
-                        {project.titre}
-                      </p>
-                      <span
-                        className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-[11px] font-medium ${
-                          project.statut === "Terminé"
-                            ? "bg-emerald-500/15 text-emerald-300"
-                            : project.statut === "En cours"
-                              ? "bg-sky-500/15 text-sky-300"
-                              : "bg-gray-500/15 text-gray-300"
-                        }`}
-                      >
-                        {project.statut}
-                      </span>
+                    <div className="flex w-full items-center gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[13px] font-semibold text-white">
+                          {project.titre}
+                        </p>
+                        <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-gray-500">
+                          <Clock className="h-3 w-3" />
+                          {project.date_debut
+                            ? new Date(project.date_debut).toLocaleDateString("fr-FR")
+                            : "—"}
+                          {" → "}
+                          {project.date_fin_prevue
+                            ? new Date(project.date_fin_prevue).toLocaleDateString("fr-FR")
+                            : "—"}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        <StatusBadge statut={project.statut} />
+                        <span className="text-[11px] text-gray-500">
+                          {(project.budget_estime ?? 0).toLocaleString("fr-FR")} TND
+                        </span>
+                      </div>
                     </div>
-                    <p className="mt-1 line-clamp-2 text-xs text-gray-400">
-                      {project.description}
-                    </p>
-                    <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-500">
-                      <span className="inline-flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {project.date_debut
-                          ? new Date(project.date_debut).toLocaleDateString()
-                          : "-"}{" "}
-                        →{" "}
-                        {project.date_fin_prevue
-                          ? new Date(project.date_fin_prevue).toLocaleDateString()
-                          : "-"}
-                      </span>
-                      <span className="inline-flex items-center gap-1 text-emerald-300/90">
-                        <CheckCircle2 className="h-3 w-3" />
-                        {project.avancement_global ?? 0}%
-                      </span>
+                    <div className="w-full">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="text-gray-500">Avancement</span>
+                        <span className="font-semibold text-amber-400">
+                          {project.avancement_global ?? 0}%
+                        </span>
+                      </div>
+                      <ProgressBar value={project.avancement_global ?? 0} />
                     </div>
-                    <div
-                      className="pt-2"
-                      onClick={(e) => e.stopPropagation()}
-                      onKeyDown={(e) => e.stopPropagation()}
-                    >
-                      <SuiviTimeline
-                        projectId={project._id}
-                        apiBaseUrl={API_URL}
-                      />
-                    </div>
-                    <p className="pt-1 text-center text-[10px] text-amber-400/70">
-                      Cliquez pour le détail, l&apos;avancement et les photos
-                    </p>
                   </div>
                 ))}
               </div>
             )}
-          </section>
+          </div>
+        </div>
 
-          <section className="rounded-3xl border border-emerald-500/25 bg-gradient-to-br from-emerald-950/30 to-transparent p-5 backdrop-blur-sm">
-            <div className="mb-4 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <ShoppingCart className="h-5 w-5 text-emerald-300" />
-                <h2 className="text-base font-semibold text-white">
-                  Marketplace — tendances
-                </h2>
-              </div>
-              <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-emerald-400/80">
-                B2B
-              </span>
+        {/* Right column */}
+        <div className="flex flex-col gap-5">
+          {/* Quick Actions */}
+          <div className="bmp-enterprise-panel">
+            <div className="bmp-enterprise-panel-header">
+              <span className="text-sm font-semibold text-white">Actions rapides</span>
             </div>
-            <p className="mb-4 text-xs text-gray-400">
-              Matériaux souvent commandés pour vos chantiers (aperçu).
-            </p>
-            <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3 p-4">
               {[
                 {
-                  id: "p1",
-                  nom: "Ciment haute performance 50kg",
-                  prix: "32,000 TND",
-                  categorie: "Matériaux",
+                  label: "Nouveau projet",
+                  icon: PlusCircle,
+                  href: "/espace/client/nouveau-projet",
+                  color: "#fbbf24",
+                  bg: "rgba(245,158,11,0.1)",
                 },
                 {
-                  id: "p2",
-                  nom: "Carrelage sol 60x60 effet pierre",
-                  prix: "65,000 TND / m²",
-                  categorie: "Revêtements",
+                  label: "Suivi & photos",
+                  icon: BarChart2,
+                  href: "/espace/client/suivi",
+                  color: "#60a5fa",
+                  bg: "rgba(59,130,246,0.1)",
                 },
                 {
-                  id: "p3",
-                  nom: "Fenêtre PVC double vitrage",
-                  prix: "450,000 TND",
-                  categorie: "Menuiserie",
+                  label: "Marketplace",
+                  icon: ShoppingBag,
+                  href: "/gestion-marketplace",
+                  color: "#34d399",
+                  bg: "rgba(16,185,129,0.1)",
                 },
-              ].map((product) => (
-                <div
-                  key={product.id}
-                  className="flex items-center gap-3 rounded-2xl border border-emerald-500/20 bg-black/25 px-3 py-3 text-xs"
+                {
+                  label: "Messages",
+                  icon: ChevronRight,
+                  href: "/messages",
+                  color: "#a78bfa",
+                  bg: "rgba(139,92,246,0.1)",
+                },
+              ].map((action) => (
+                <Link
+                  key={action.label}
+                  href={action.href}
+                  className="flex flex-col items-center gap-2 rounded-xl p-4 text-center text-xs font-medium transition-all duration-150 hover:scale-[1.02]"
+                  style={{ background: action.bg, color: action.color }}
                 >
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/15">
-                    <ShoppingCart className="h-5 w-5 text-emerald-300" />
+                  <action.icon className="h-5 w-5" style={{ color: action.color }} />
+                  <span style={{ color: "#d1d5db" }}>{action.label}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Marketplace Spotlight */}
+          <div className="bmp-enterprise-panel">
+            <div className="bmp-enterprise-panel-header">
+              <div className="flex items-center gap-2">
+                <ShoppingBag className="h-4 w-4 text-emerald-400" />
+                <span className="text-sm font-semibold text-white">Marketplace B2B</span>
+              </div>
+              <span className="bmp-badge bmp-badge-success text-[9px]">LIVE</span>
+            </div>
+            <div className="divide-y p-1" style={{ borderColor: "rgba(255,255,255,0.04)" }}>
+              {[
+                { nom: "Ciment HP 50kg", prix: "32 TND", cat: "Matériaux" },
+                { nom: "Carrelage 60×60 effet pierre", prix: "65 TND/m²", cat: "Revêtements" },
+                { nom: "Fenêtre PVC double vitrage", prix: "450 TND", cat: "Menuiserie" },
+              ].map((p) => (
+                <div
+                  key={p.nom}
+                  className="flex items-center gap-3 px-4 py-3"
+                  style={{ borderColor: "rgba(255,255,255,0.04)" }}
+                >
+                  <div
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                    style={{ background: "rgba(16,185,129,0.12)" }}
+                  >
+                    <ShoppingBag className="h-3.5 w-3.5 text-emerald-400" />
                   </div>
-                  <div className="min-w-0 flex-1 space-y-0.5">
-                    <p className="font-semibold text-white line-clamp-1">
-                      {product.nom}
-                    </p>
-                    <div className="flex items-center justify-between gap-2 text-[11px] text-gray-400">
-                      <span>{product.prix}</span>
-                      <span className="text-emerald-300/90">
-                        {product.categorie}
-                      </span>
-                    </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[12px] font-semibold text-white">{p.nom}</p>
+                    <p className="text-[11px] text-gray-500">{p.cat}</p>
                   </div>
+                  <span className="shrink-0 text-[12px] font-bold text-emerald-400">{p.prix}</span>
                 </div>
               ))}
             </div>
-          </section>
+            <div className="p-3">
+              <Link
+                href="/gestion-marketplace"
+                className="bmp-btn-secondary w-full justify-center text-xs"
+              >
+                Explorer la Marketplace
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
-

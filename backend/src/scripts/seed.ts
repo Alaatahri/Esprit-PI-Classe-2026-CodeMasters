@@ -5,6 +5,7 @@ import { ProjectService } from '../project/project.service';
 import { SuiviProjectService } from '../suivi-project/suivi-project.service';
 import { DevisService } from '../devis/devis.service';
 import { MarketplaceService } from '../marketplace/marketplace.service';
+import { MatchingService } from '../matching/matching.service';
 import { Types } from 'mongoose';
 
 async function seed() {
@@ -219,6 +220,26 @@ async function seed() {
       }
     }
 
+    // Invitations matching (projets « En attente » sans expert → expert démo)
+    try {
+      const matchingService = app.get(MatchingService);
+      const expertOid = expert?._id ? String((expert as { _id: unknown })._id) : '';
+      if (expertOid) {
+        const projs = await projectService.findAll(500);
+        const ids = (projs as unknown as { expertId?: unknown; statut?: string; _id: unknown }[])
+          .filter((p) => !p.expertId && p.statut === 'En attente')
+          .map((p) => String(p._id));
+        if (ids.length) {
+          await matchingService.ensureInvitesForExpert(expertOid, ids);
+          console.log(
+            `\n✅ Matching: ${ids.length} invitation(s) pending pour l'expert démo`,
+          );
+        }
+      }
+    } catch (e) {
+      console.warn('Matching seed (ignoré):', e);
+    }
+
     // Créer des suivis de projets
     console.log('\n📝 Creating project follow-ups...');
     const existingSuivis = await suiviProjectService.findAll();
@@ -346,6 +367,262 @@ async function seed() {
 
         console.log('✅ Order created: 1 with 2 items');
       }
+    }
+
+    // Roster vitrine : beaucoup de profils publics (tous les rôles « métier » + clients démo)
+    console.log('\n📝 Ensuring vitrine users roster...');
+    const tnAll = { scope: 'tn_all' as const };
+    const tunis = { scope: 'tn_city' as const, value: 'Tunis' };
+    const sfax = { scope: 'tn_city' as const, value: 'Sfax' };
+    const vitrineDefs: Array<{
+      email: string;
+      nom: string;
+      prenom: string;
+      role: 'artisan' | 'expert' | 'manufacturer' | 'client';
+      telephone: string;
+      specialite?: string;
+      competences?: string[];
+      rating?: number;
+      experience_annees?: number;
+      bio?: string;
+      isAvailable?: boolean;
+      zones_travail?: Array<{ scope: string; value?: string }>;
+    }> = [
+      {
+        email: 'vitrine-artisan-1@demo.bmp.tn',
+        prenom: 'Karim',
+        nom: 'Zouari',
+        role: 'artisan',
+        telephone: '+216 22 111 001',
+        specialite: 'Plâtrerie & isolation',
+        rating: 4.6,
+        experience_annees: 12,
+        bio: 'Cloisons, doublages et faux plafonds — chantiers résidentiels et bureaux.',
+        zones_travail: [tnAll],
+      },
+      {
+        email: 'vitrine-artisan-2@demo.bmp.tn',
+        prenom: 'Nadia',
+        nom: 'Mezzi',
+        role: 'artisan',
+        telephone: '+216 22 111 002',
+        specialite: 'Carrelage & faïence',
+        rating: 4.8,
+        experience_annees: 9,
+        bio: 'Pose grand format, salles de bain et cuisines.',
+        zones_travail: [tunis],
+      },
+      {
+        email: 'vitrine-artisan-3@demo.bmp.tn',
+        prenom: 'Hedi',
+        nom: 'Boussetta',
+        role: 'artisan',
+        telephone: '+216 22 111 003',
+        specialite: 'Électricité bâtiment',
+        rating: 4.5,
+        experience_annees: 15,
+        bio: 'Mise aux normes, tableaux, éclairage LED et domotique basique.',
+        zones_travail: [tnAll],
+      },
+      {
+        email: 'vitrine-artisan-4@demo.bmp.tn',
+        prenom: 'Salma',
+        nom: 'Jlassi',
+        role: 'artisan',
+        telephone: '+216 22 111 004',
+        specialite: 'Peinture intérieure / façade',
+        rating: 4.4,
+        experience_annees: 7,
+        bio: 'Finitions soignées, supports neufs ou rénovation.',
+        zones_travail: [sfax],
+      },
+      {
+        email: 'vitrine-artisan-5@demo.bmp.tn',
+        prenom: 'Anis',
+        nom: 'Guesmi',
+        role: 'artisan',
+        telephone: '+216 22 111 005',
+        specialite: 'Menuiserie aluminium & PVC',
+        rating: 4.7,
+        experience_annees: 11,
+        bio: 'Fenêtres, portes et vérandas — mesure et pose.',
+        zones_travail: [tunis],
+      },
+      {
+        email: 'vitrine-artisan-6@demo.bmp.tn',
+        prenom: 'Rim',
+        nom: 'Chaabane',
+        role: 'artisan',
+        telephone: '+216 22 111 006',
+        specialite: 'Plomberie & chauffage',
+        rating: 4.9,
+        experience_annees: 14,
+        bio: 'Rénovation sanitaire, dépannage et installation chauffe-eau.',
+        zones_travail: [tnAll],
+      },
+      {
+        email: 'vitrine-artisan-7@demo.bmp.tn',
+        prenom: 'Youssef',
+        nom: 'Dkhili',
+        role: 'artisan',
+        telephone: '+216 22 111 007',
+        specialite: 'Maçonnerie générale',
+        rating: 4.3,
+        experience_annees: 18,
+        bio: 'Extensions, dalle, murs et enduits.',
+        zones_travail: [sfax],
+      },
+      {
+        email: 'vitrine-artisan-8@demo.bmp.tn',
+        prenom: 'Imen',
+        nom: 'Hamdi',
+        role: 'artisan',
+        telephone: '+216 22 111 008',
+        specialite: 'Revêtements sols souples',
+        rating: 4.5,
+        experience_annees: 6,
+        bio: 'Parquet flottant, PVC et moquette.',
+        zones_travail: [tunis],
+      },
+      {
+        email: 'vitrine-expert-2@demo.bmp.tn',
+        prenom: 'Amine',
+        nom: 'Ben Salah',
+        role: 'expert',
+        telephone: '+216 33 222 001',
+        rating: 4.8,
+        experience_annees: 10,
+        competences: ['Structure', 'Pathologie bâtiment', 'Réception travaux'],
+        bio: 'Ingénieur structure — diagnostics et suivi de grands dossiers.',
+        zones_travail: [tnAll],
+      },
+      {
+        email: 'vitrine-expert-3@demo.bmp.tn',
+        prenom: 'Lina',
+        nom: 'Karray',
+        role: 'expert',
+        telephone: '+216 33 222 002',
+        rating: 4.9,
+        experience_annees: 8,
+        competences: ['HQE', 'Thermique', 'Acoustique'],
+        bio: 'Conseil performance énergétique et confort.',
+        zones_travail: [tunis],
+      },
+      {
+        email: 'vitrine-expert-4@demo.bmp.tn',
+        prenom: 'Walid',
+        nom: 'Saidi',
+        role: 'expert',
+        telephone: '+216 33 222 003',
+        rating: 4.6,
+        experience_annees: 12,
+        competences: ['Gros œuvre', 'Planning', 'Budget'],
+        bio: 'Pilotage de chantier et arbitrage technique.',
+        zones_travail: [tnAll],
+      },
+      {
+        email: 'vitrine-fab-2@demo.bmp.tn',
+        prenom: 'Sonia',
+        nom: 'Matériaux Pro',
+        role: 'manufacturer',
+        telephone: '+216 44 333 001',
+        rating: 4.5,
+        experience_annees: 20,
+        bio: 'Distribution matériaux gros œuvre et second œuvre.',
+      },
+      {
+        email: 'vitrine-fab-3@demo.bmp.tn',
+        prenom: 'Bilel',
+        nom: 'Cimenterie Sud',
+        role: 'manufacturer',
+        telephone: '+216 44 333 002',
+        rating: 4.4,
+        experience_annees: 16,
+        bio: 'Ciment, granulats et adjuvants — livraison chantier.',
+      },
+      {
+        email: 'vitrine-fab-4@demo.bmp.tn',
+        prenom: 'Mariem',
+        nom: 'Bois & Déco',
+        role: 'manufacturer',
+        telephone: '+216 44 333 003',
+        rating: 4.7,
+        experience_annees: 11,
+        bio: 'Bois lamellé, panneaux et quincaillerie pro.',
+      },
+      {
+        email: 'vitrine-client-1@demo.bmp.tn',
+        prenom: 'Samir',
+        nom: 'Touati',
+        role: 'client',
+        telephone: '+216 55 444 001',
+        bio: 'Compte client démo vitrine.',
+      },
+      {
+        email: 'vitrine-client-2@demo.bmp.tn',
+        prenom: 'Houda',
+        nom: 'Mansour',
+        role: 'client',
+        telephone: '+216 55 444 002',
+      },
+      {
+        email: 'vitrine-client-3@demo.bmp.tn',
+        prenom: 'Fares',
+        nom: 'Ayadi',
+        role: 'client',
+        telephone: '+216 55 444 003',
+      },
+    ];
+
+    let vitrineCreated = 0;
+    for (const d of vitrineDefs) {
+      const exists = await userService.findByEmail(d.email);
+      if (exists) continue;
+      await userService.create({
+        email: d.email,
+        nom: d.nom,
+        prenom: d.prenom,
+        mot_de_passe: 'password123',
+        role: d.role,
+        telephone: d.telephone,
+        specialite: d.specialite,
+        competences: d.competences,
+        rating: d.rating,
+        experience_annees: d.experience_annees,
+        bio: d.bio,
+        isAvailable: d.isAvailable ?? true,
+        zones_travail: d.zones_travail,
+      } as any);
+      vitrineCreated++;
+    }
+    if (vitrineCreated > 0) {
+      console.log(`✅ Vitrine users created: ${vitrineCreated}`);
+    } else {
+      console.log('📋 Vitrine users already present (skipped duplicates).');
+    }
+
+    // Candidatures artisans sur projets « En attente » (profils remplis côté fiche)
+    const rosterUsers = await userService.findAll(250);
+    const artisansRoster = rosterUsers.filter((u: any) => u.role === 'artisan');
+    const pendingForApps = (await projectService.findAll(200)).filter(
+      (p: any) => p.statut === 'En attente',
+    );
+    let appAttempts = 0;
+    for (let i = 0; i < artisansRoster.length && pendingForApps.length > 0; i++) {
+      const art = artisansRoster[i];
+      const proj = pendingForApps[i % pendingForApps.length];
+      try {
+        await projectService.applyToProject(
+          String((proj as any)._id),
+          String((art as any)._id),
+        );
+        appAttempts++;
+      } catch {
+        /* déjà postulé ou règle métier */
+      }
+    }
+    if (appAttempts > 0) {
+      console.log(`✅ Artisan candidatures (tentatives réussies): ${appAttempts}`);
     }
 
     console.log('\n🎉 Seeding completed successfully!');

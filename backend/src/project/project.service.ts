@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -24,6 +25,60 @@ export class ProjectService {
     return this.projectModel.find().sort({ createdAt: -1 }).limit(limit).lean().exec();
   }
 
+  /** Projets en attente sans expert assigné (pour matching auto). */
+  async findPendingWithoutExpert(limit = 200): Promise<Array<{ _id: string }>> {
+    const list: any[] = await this.projectModel
+      .find({ statut: 'En attente', expertId: { $exists: false } })
+      .select('_id')
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean()
+      .exec();
+    return list.map((p) => ({ _id: String(p._id) }));
+  }
+
+  /** Dossiers dont l’utilisateur est l’expert référent. */
+  async findByExpertId(expertId: string): Promise<Project[]> {
+    if (!this.isValidObjectId(expertId)) {
+      throw new BadRequestException('ID expert invalide.');
+    }
+    const oid = new Types.ObjectId(expertId);
+    return this.projectModel
+      .find({ expertId: oid })
+      .sort({ updatedAt: -1, createdAt: -1 })
+      .limit(200)
+      .lean()
+      .exec();
+  }
+
+  /** Projets liés à un membre pour la fiche profil publique (expert référent ou artisan candidat). */
+  async findProjectsForPublicProfile(
+    userId: string,
+    role: string,
+  ): Promise<Record<string, unknown>[]> {
+    if (!this.isValidObjectId(userId)) {
+      return [];
+    }
+    const oid = new Types.ObjectId(userId);
+    if (role === 'expert') {
+      return this.projectModel
+        .find({ expertId: oid })
+        .sort({ updatedAt: -1, createdAt: -1 })
+        .limit(100)
+        .lean()
+        .exec();
+    }
+    if (role === 'artisan') {
+      return this.projectModel
+        .find({ 'applications.artisanId': oid })
+        .sort({ updatedAt: -1, createdAt: -1 })
+        .limit(100)
+        .lean()
+        .exec();
+    }
+    return [];
+  }
+
   async findOne(id: string): Promise<Project> {
     return this.projectModel.findById(id).lean().exec();
   }
@@ -32,6 +87,9 @@ export class ProjectService {
   async findPublicShowcase(): Promise<Record<string, unknown>[]> {
     const projects = await this.projectModel
       .find({ statut: { $in: ['Terminé', 'En cours'] } })
+      .select(
+        'titre description statut avancement_global clientRating clientComment expertRating artisanRating photosAvant photosApres updatedAt createdAt',
+      )
       .sort({ updatedAt: -1, createdAt: -1 })
       .limit(24)
       .lean()
@@ -58,7 +116,13 @@ export class ProjectService {
     if (!this.isValidObjectId(id)) {
       throw new NotFoundException('Projet introuvable.');
     }
-    const p: any = await this.projectModel.findById(id).lean().exec();
+    const p: any = await this.projectModel
+      .findById(id)
+      .select(
+        'titre description statut avancement_global clientRating clientComment expertRating artisanRating expertComment artisanComment photosAvant photosApres reviews chantierPhotos updatedAt createdAt',
+      )
+      .lean()
+      .exec();
     if (!p) {
       throw new NotFoundException('Projet introuvable.');
     }
@@ -106,6 +170,35 @@ export class ProjectService {
       { avancement_global: avancement, statut },
       { new: true }
     ).exec();
+  }
+
+  async assignExpert(projectId: string, expertUserId: string): Promise<void> {
+    if (!this.isValidObjectId(projectId) || !this.isValidObjectId(expertUserId)) {
+      throw new BadRequestException('Identifiant invalide.');
+    }
+    await this.projectModel
+      .findByIdAndUpdate(projectId, {
+        expertId: new Types.ObjectId(expertUserId),
+      })
+      .exec();
+  }
+
+  async assertExpertAndUpdateProgress(
+    projectId: string,
+    expertUserId: string,
+    avancement: number,
+  ): Promise<Project> {
+    const project: any = await this.projectModel.findById(projectId).exec();
+    if (!project) {
+      throw new NotFoundException('Projet introuvable.');
+    }
+    const eid = project.expertId?.toString?.();
+    if (!eid || eid !== expertUserId) {
+      throw new ForbiddenException(
+        "Seul l'expert assigné peut mettre à jour l'avancement.",
+      );
+    }
+    return this.updateStatusAndProgress(projectId, avancement);
   }
 
   async applyToProject(projectId: string, artisanId: string) {

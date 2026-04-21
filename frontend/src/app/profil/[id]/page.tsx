@@ -15,6 +15,7 @@ import {
   Shield,
   Hammer,
   MapPin,
+  Package,
   Phone,
   UserCircle,
 } from "lucide-react";
@@ -23,6 +24,7 @@ import {
   workerDisplayName,
   type PublicWorker,
 } from "@/lib/public-workers";
+import { isBackendLocalMediaUrl } from "@/lib/backend-public-url";
 import { getApiBaseUrl } from "@/lib/api-base";
 
 const API_URL = getApiBaseUrl();
@@ -86,21 +88,33 @@ export default function ProfilPublicPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id) {
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     (async () => {
       setLoading(true);
       setErr(null);
       try {
-        const res = await fetch(`${API_URL}/users/public/${id}/profile`, {
+        const res = await fetch(`${API_URL}/users/public/${encodeURIComponent(id)}/profile`, {
           cache: "no-store",
         });
+        const text = await res.text();
         if (!res.ok) {
-          setErr("Profil introuvable.");
+          let msg = "Profil introuvable.";
+          try {
+            const j = JSON.parse(text) as { message?: string | string[] };
+            const m = Array.isArray(j?.message) ? j.message[0] : j?.message;
+            if (typeof m === "string" && m.trim()) msg = m.trim();
+          } catch {
+            /* corps non-JSON */
+          }
+          setErr(msg);
           setData(null);
           return;
         }
-        const json = (await res.json()) as ProfilePayload;
+        const json = JSON.parse(text) as ProfilePayload;
         if (!cancelled) setData(json);
       } catch {
         if (!cancelled) setErr("Impossible de charger le profil.");
@@ -133,6 +147,21 @@ export default function ProfilPublicPage() {
     );
   }
 
+  if (!id) {
+    return (
+      <div className="max-w-lg mx-auto text-center space-y-4 py-16">
+        <p className="text-white font-medium">Lien de profil invalide.</p>
+        <Link
+          href="/espace"
+          className="inline-flex items-center gap-2 text-amber-400 hover:text-amber-300 text-sm"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Retour à l&apos;accueil
+        </Link>
+      </div>
+    );
+  }
+
   if (err || !data?.user) {
     return (
       <div className="max-w-lg mx-auto text-center space-y-4 py-16">
@@ -150,7 +179,12 @@ export default function ProfilPublicPage() {
 
   const u = data.user;
   const name = workerDisplayName(u);
-  const roleLabel = u.role === "expert" ? "Expert technique" : "Artisan";
+  const roleLabel =
+    u.role === "expert"
+      ? "Expert technique"
+      : u.role === "manufacturer"
+        ? "Fabricant / fournisseur"
+        : "Artisan";
   const rating =
     typeof u.rating === "number" && u.rating > 0 ? u.rating : null;
   const years = u.experienceYears ?? u.experience_annees ?? null;
@@ -178,6 +212,7 @@ export default function ProfilPublicPage() {
               className="object-cover"
               sizes="208px"
               priority
+              unoptimized={isBackendLocalMediaUrl(photo)}
             />
           </div>
           <div className="min-w-0 flex-1 space-y-4 text-center sm:text-left">
@@ -186,11 +221,15 @@ export default function ProfilPublicPage() {
                 className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
                   u.role === "expert"
                     ? "bg-sky-500/20 text-sky-200"
-                    : "bg-amber-500/20 text-amber-200"
+                    : u.role === "manufacturer"
+                      ? "bg-violet-500/20 text-violet-200"
+                      : "bg-amber-500/20 text-amber-200"
                 }`}
               >
                 {u.role === "expert" ? (
                   <Shield className="h-3.5 w-3.5" />
+                ) : u.role === "manufacturer" ? (
+                  <Package className="h-3.5 w-3.5" />
                 ) : (
                   <Hammer className="h-3.5 w-3.5" />
                 )}
@@ -205,7 +244,7 @@ export default function ProfilPublicPage() {
             <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
               {name}
             </h1>
-            {u.role === "artisan" && u.specialite && (
+            {(u.role === "artisan" || u.role === "manufacturer") && u.specialite && (
               <p className="text-lg text-amber-200/95">{u.specialite}</p>
             )}
             {u.role === "expert" &&

@@ -1,8 +1,15 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import compression from 'compression';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.use(
+    compression({
+      threshold: 1024,
+      level: 6,
+    }),
+  );
   
   // Enable CORS for frontend (vitrine) and admin (backend-react)
   app.enableCors({
@@ -30,5 +37,10 @@ async function bootstrap() {
   console.log('   - GET  /api/marketplace/commandes');
   console.log('   - GET  /api/users/public/workers');
   console.log('   - GET  /api/projects/public/showcase');
+  console.log('   - GET  /api/messages/conversations');
+  console.log('   - GET  /api/matching/my-requests');
+  console.log('   - GET  /api/matching/expert/catalog');
+  console.log('   - GET  /api/proposals/by-project/:projectId');
+  console.log('   - GET  /api/contracts/by-project/:projectId');
 }
 bootstrap();

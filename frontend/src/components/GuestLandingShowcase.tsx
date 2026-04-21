@@ -65,8 +65,8 @@ function showcasePhotoCount(p: ShowcaseProjectApi): number {
   return av.length + ap.length;
 }
 
-/** Intervalle de rafraîchissement automatique (ms) */
-const AUTO_REFRESH_MS = 45_000;
+/** Intervalle de rafraîchissement en arrière-plan (ms) — allégé quand l’onglet est masqué. */
+const AUTO_REFRESH_MS = 90_000;
 
 export function GuestLandingShowcase() {
   const [workers, setWorkers] = useState<PublicWorker[]>([]);
@@ -107,6 +107,7 @@ export function GuestLandingShowcase() {
   useEffect(() => {
     if (dataState !== "ready") return;
     const id = window.setInterval(async () => {
+      if (document.visibilityState !== "visible") return;
       try {
         const [w, p] = await Promise.all([
           fetchPublicWorkers(),
