@@ -3,8 +3,26 @@ import axios from 'axios';
 // Utiliser le proxy Vite (/api → backend) = même origine, plus rapide
 const api = axios.create({
   baseURL: '/api',
-  timeout: 5000,
+  timeout: 20000,
   headers: { 'Content-Type': 'application/json' },
+});
+
+// Ajouter automatiquement x-user-id si un user est en session
+api.interceptors.request.use((config) => {
+  try {
+    const raw = localStorage.getItem('bmp_user');
+    if (raw) {
+      const user = JSON.parse(raw);
+      const userId = user?._id;
+      if (userId) {
+        config.headers = config.headers || {};
+        (config.headers as any)['x-user-id'] = userId;
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return config;
 });
 
 // Intercepteur pour les erreurs

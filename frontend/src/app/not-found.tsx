@@ -151,7 +151,7 @@ export default function NotFound() {
             </p>
             <div className="flex items-center justify-center gap-2 text-sm text-gray-400">
               <Globe className="w-4 h-4" />
-              <span>Code d'erreur : 404 - Resource Not Found</span>
+              <span>Code d&apos;erreur : 404 - Resource Not Found</span>
             </div>
           </motion.div>
 
@@ -169,7 +169,7 @@ export default function NotFound() {
                 className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-400 text-gray-900 font-bold shadow-2xl shadow-amber-500/50 hover:shadow-amber-500/70 transition-all duration-300 flex items-center justify-center gap-3 group"
               >
                 <Home className="w-5 h-5" />
-                <span>Retour à l'accueil</span>
+                <span>Retour à l&apos;accueil</span>
                 <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
               </motion.button>
             </Link>
@@ -181,7 +181,7 @@ export default function NotFound() {
                 className="w-full sm:w-auto px-8 py-4 rounded-2xl backdrop-blur-2xl bg-white/10 border border-amber-500/30 text-white font-semibold hover:border-amber-500/50 hover:bg-white/20 transition-all duration-300 flex items-center justify-center gap-3 group"
               >
                 <Search className="w-5 h-5" />
-                <span>Demander de l'aide</span>
+                <span>Demander de l&apos;aide</span>
               </motion.button>
             </Link>
           </motion.div>
@@ -201,8 +201,8 @@ export default function NotFound() {
             <div className="grid sm:grid-cols-2 gap-4">
               {[
                 {
-                  title: "Vérifier l'URL",
-                  description: "Assurez-vous que l'adresse est correctement orthographiée",
+                  title: "Vérifier l&apos;URL",
+                  description: "Assurez-vous que l&apos;adresse est correctement orthographiée",
                   color: "from-blue-500/20 to-cyan-500/20",
                   border: "border-blue-500/30"
                 },
@@ -262,8 +262,8 @@ export default function NotFound() {
             </div>
             
             <p className="text-gray-400 text-sm max-w-md mx-auto mb-6">
-              Nous travaillons constamment à améliorer notre plateforme. 
-              Merci de votre compréhension pendant que nous bâtissons l'avenir digital de la construction.
+              Nous travaillons constamment à améliorer notre plateforme.{" "}
+              Merci de votre compréhension pendant que nous bâtissons l&apos;avenir digital de la construction.
             </p>
             
             <div className="text-gray-500 text-xs">

@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+*/node_modules/
+**/node_modules/
+
+# Next.js
+.next/
+**/ .next/
+out/
+
+# NestJS / Build
+dist/
+build/
+*.log
+*.zip
+*.rar
+*.7z
+
+# Databases
+mongodb_data/
+**/mongodb_data/
+
+# Environment
+.env
+.env.local
+.env.production
+.env.development
+
+# OS
+.DS_Store
+Thumbs.db

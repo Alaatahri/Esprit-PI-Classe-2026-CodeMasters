@@ -313,6 +313,7 @@ const ProfileCardComponent = ({
             <div className="pc-shine" />
             <div className="pc-glare" />
             <div className="pc-content pc-avatar-content">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 className="avatar"
                 src={avatarUrl}
@@ -327,6 +328,7 @@ const ProfileCardComponent = ({
                 <div className="pc-user-info">
                   <div className="pc-user-details">
                     <div className="pc-mini-avatar">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={miniAvatarUrl || avatarUrl}
                         alt={`${name || 'User'} mini avatar`}

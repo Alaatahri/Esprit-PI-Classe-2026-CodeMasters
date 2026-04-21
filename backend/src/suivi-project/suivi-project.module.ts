@@ -1,8 +1,11 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { SuiviProjectController } from './suivi-project.controller';
 import { SuiviProjectService } from './suivi-project.service';
-import { SuiviProject, SuiviProjectSchema } from './schemas/suivi-project.schema';
+import {
+  SuiviProject,
+  SuiviProjectSchema,
+} from './schemas/suivi-project.schema';
 import { ProjectModule } from '../project/project.module';
 
 @Module({
@@ -10,7 +13,7 @@ import { ProjectModule } from '../project/project.module';
     MongooseModule.forFeature([
       { name: SuiviProject.name, schema: SuiviProjectSchema },
     ]),
-    ProjectModule,
+    forwardRef(() => ProjectModule),
   ],
   controllers: [SuiviProjectController],
   providers: [SuiviProjectService],

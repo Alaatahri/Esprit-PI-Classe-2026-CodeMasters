@@ -1,11 +1,25 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import projectService, { Project } from '../services/projectService';
+import { useAuth } from '../contexts/AuthContext';
 import './ProjectsList.css';
 
+function isSameId(a: string | undefined, b: string | undefined) {
+  if (!a || !b) return false;
+  return String(a) === String(b);
+}
+
 const ProjectsList = () => {
+  const { user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const visibleProjects = useMemo(() => {
+    if (user?.role === 'client' && user._id) {
+      return projects.filter((p) => isSameId(p.clientId, user._id));
+    }
+    return projects;
+  }, [projects, user]);
 
   useEffect(() => {
     loadProjects();
@@ -39,18 +53,31 @@ const ProjectsList = () => {
     return <div className="loading">Chargement des projets...</div>;
   }
 
+  const isClient = user?.role === 'client';
+
   return (
     <div className="projects-list">
       <div className="page-header">
-        <h1>Liste des Projets</h1>
+        <div>
+          <h1>{isClient ? 'Mes projets' : 'Liste des Projets'}</h1>
+          {isClient && (
+            <p className="page-subtitle-client">
+              Projets dont vous êtes le client — avancement global affiché pour chaque chantier.
+            </p>
+          )}
+        </div>
         <Link to="/projects/add" className="btn btn-primary">
           + Ajouter un Projet
         </Link>
       </div>
 
-      {projects.length === 0 ? (
+      {visibleProjects.length === 0 ? (
         <div className="empty-state">
-          <p>Aucun projet trouvé.</p>
+          <p>
+            {isClient
+              ? 'Vous n’avez aucun projet associé à votre compte pour le moment.'
+              : 'Aucun projet trouvé.'}
+          </p>
           <Link to="/projects/add" className="btn btn-primary">
             Créer le premier projet
           </Link>
@@ -71,7 +98,7 @@ const ProjectsList = () => {
               </tr>
             </thead>
             <tbody>
-              {projects.map((project) => (
+              {visibleProjects.map((project) => (
                 <tr key={project._id}>
                   <td>{project.titre}</td>
                   <td className="description-cell">

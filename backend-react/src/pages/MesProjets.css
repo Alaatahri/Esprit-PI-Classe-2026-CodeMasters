@@ -1,0 +1,219 @@
+.mes-projets-page {
+  padding: 0 0 2rem;
+  max-width: 1100px;
+}
+
+.mes-projets-header h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.75rem;
+  color: #1a1a2e;
+}
+
+.mes-projets-sub {
+  margin: 0;
+  color: #5c5c7a;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  max-width: 52rem;
+}
+
+.mes-projets-muted {
+  color: #666;
+}
+
+.mes-projets-error {
+  background: #fde8e8;
+  color: #b91c1c;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.mes-projets-empty {
+  padding: 2rem;
+  text-align: center;
+  color: #666;
+  background: #f8f9fc;
+  border-radius: 12px;
+}
+
+.mes-projets-grid {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.mes-projets-card {
+  background: #fff;
+  border: 1px solid #e8e8f0;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+.mes-projets-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.mes-projets-card-head h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #1a1a2e;
+}
+
+.mes-projets-status {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: #eef0f7;
+  color: #555;
+}
+
+.mes-projets-status[data-status='progress'] {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.mes-projets-desc {
+  margin: 0.75rem 0 1rem;
+  font-size: 0.85rem;
+  color: #555;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mes-projets-progress-wrap {
+  margin-bottom: 1rem;
+}
+
+.mes-projets-progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #666;
+  margin-bottom: 0.35rem;
+}
+
+.mes-projets-bar {
+  height: 8px;
+  background: #eef0f7;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.mes-projets-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.mes-projets-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.mes-projets-link {
+  font-size: 0.85rem;
+  color: #4f46e5;
+  text-decoration: none;
+}
+
+.mes-projets-link:hover {
+  text-decoration: underline;
+}
+
+.mes-projets-btn-photo {
+  font-size: 0.85rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid #f59e0b;
+  background: #fffbeb;
+  color: #b45309;
+  cursor: pointer;
+}
+
+.mes-projets-btn-photo:hover {
+  background: #fef3c7;
+}
+
+.mes-projets-upload {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed #e0e0ea;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.mes-projets-file input[type='file'] {
+  display: none;
+}
+
+.mes-projets-file span {
+  display: inline-block;
+  padding: 0.45rem 0.85rem;
+  background: #f1f5f9;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.mes-projets-filename {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.mes-projets-upload textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  resize: vertical;
+}
+
+.mes-projets-submit {
+  align-self: flex-start;
+  padding: 0.55rem 1.1rem;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #f59e0b, #eab308);
+  color: #1c1917;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.mes-projets-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.mes-projets-feedback {
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.mes-projets-feedback.ok {
+  color: #15803d;
+}
+
+.mes-projets-feedback.err {
+  color: #b91c1c;
+}
+
+.mes-projets-feedback.warn {
+  color: #b45309;
+}

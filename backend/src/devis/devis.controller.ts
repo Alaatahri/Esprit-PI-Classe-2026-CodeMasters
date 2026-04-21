@@ -1,24 +1,35 @@
-import { Controller, Get, Post, Body, Put, Param, Delete, Query } from '@nestjs/common';
-import { Types } from 'mongoose';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Put,
+  Param,
+  Delete,
+  Query,
+  Headers,
+} from '@nestjs/common';
 import { DevisService } from './devis.service';
-import { Devis } from './schemas/devis.schema';
-import { DevisItem } from './schemas/devis-item.schema';
+import { FacturesService } from '../factures/factures.service';
 
 @Controller('devis')
 export class DevisController {
-  constructor(private readonly devisService: DevisService) {}
+  constructor(
+    private readonly devisService: DevisService,
+    private readonly facturesService: FacturesService,
+  ) {}
 
   @Post()
-  create(@Body() createDevisDto: Partial<Devis>) {
+  create(@Body() createDevisDto: any) {
     return this.devisService.create(createDevisDto);
   }
 
   @Get()
-  findAll(@Query('projectId') projectId?: string) {
-    if (projectId) {
-      return this.devisService.findByProject(projectId);
-    }
-    return this.devisService.findAll();
+  findAll(@Query() query: any, @Headers() headers: any) {
+    const userId = headers['x-user-id'];
+    const userRole = headers['x-user-role'];
+    const userEmail = headers['x-user-email'];
+    return this.devisService.findAll({ ...query, userId, userRole, userEmail });
   }
 
   @Get(':id')
@@ -27,7 +38,7 @@ export class DevisController {
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() updateDevisDto: Partial<Devis>) {
+  update(@Param('id') id: string, @Body() updateDevisDto: any) {
     return this.devisService.update(id, updateDevisDto);
   }
 
@@ -36,27 +47,28 @@ export class DevisController {
     return this.devisService.remove(id);
   }
 
-  // DevisItem endpoints
-  @Post(':id/items')
-  createItem(@Param('id') devisId: string, @Body() createItemDto: Partial<DevisItem>) {
-    return this.devisService.createItem({ 
-      ...createItemDto, 
-      devisId: new Types.ObjectId(devisId) 
-    });
-  }
-
-  @Get(':id/items')
-  findItems(@Param('id') devisId: string) {
-    return this.devisService.findItemsByDevis(devisId);
-  }
-
-  @Put('items/:itemId')
-  updateItem(@Param('itemId') itemId: string, @Body() updateItemDto: Partial<DevisItem>) {
-    return this.devisService.updateItem(itemId, updateItemDto);
-  }
-
-  @Delete('items/:itemId')
-  removeItem(@Param('itemId') itemId: string) {
-    return this.devisService.removeItem(itemId);
+  @Post(':id/:endpoint')
+  async endpointAction(
+    @Param('id') id: string,
+    @Param('endpoint') endpoint: string,
+  ) {
+    const devis = await this.devisService.endpointAction(id, endpoint);
+    if (endpoint === 'accepter') {
+      // Automatiquement generer une facture
+      const facture = await this.facturesService.create({
+        titre: 'Facture pour ' + (devis.titre || 'Devis'),
+        description: devis.description,
+        montant_total: devis.montant_total,
+        projectId: devis.projectId,
+        clientId: devis.clientId,
+        artisanId: devis.artisanId,
+        devisId: devis._id,
+        temp_client_nom: devis.temp_client_nom,
+        temp_client_email: devis.temp_client_email,
+        statut: 'envoyée',
+      });
+      return { devis, facture };
+    }
+    return devis;
   }
 }

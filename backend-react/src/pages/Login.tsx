@@ -83,6 +83,12 @@ const Login = () => {
               disabled={loading}
             />
           </div>
+          <div style={{ textAlign: 'right', marginTop: '6px' }}>
+            <a href="/forgot-password"
+              style={{ color: '#F5A623', fontSize: '13px', textDecoration: 'none' }}>
+              Mot de passe oublié ?
+            </a>
+          </div>
 
           <button 
             type="submit" 

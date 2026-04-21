@@ -5,7 +5,8 @@ import App from './App'
 import './index.css'
 
 const router = createBrowserRouter([{ path: '/*', element: <App /> }], {
-  future: { v7_startTransition: true, v7_relativeSplatPath: true },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- flag v7 absent des types RR 6.28
+  future: { v7_startTransition: true } as any,
 })
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

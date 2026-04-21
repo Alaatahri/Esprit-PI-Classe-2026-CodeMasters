@@ -57,6 +57,7 @@ const UsersList = () => {
               <tr>
                 <th>Nom</th>
                 <th>Email</th>
+                <th>Email vérifié</th>
                 <th>Téléphone</th>
                 <th>Rôle</th>
                 <th>Date de Création</th>
@@ -67,6 +68,22 @@ const UsersList = () => {
                 <tr key={user._id}>
                   <td>{user.nom}</td>
                   <td>{user.email}</td>
+                  <td>
+                    <span
+                      className="role-badge"
+                      style={{
+                        backgroundColor:
+                          user.isEmailVerified === false ? '#e74c3c' : '#27ae60',
+                      }}
+                      title={
+                        user.isEmailVerified === false
+                          ? 'E-mail non vérifié'
+                          : 'E-mail vérifié'
+                      }
+                    >
+                      {user.isEmailVerified === false ? '✗ Non' : '✓ Oui'}
+                    </span>
+                  </td>
                   <td>{user.telephone}</td>
                   <td>
                     <span 

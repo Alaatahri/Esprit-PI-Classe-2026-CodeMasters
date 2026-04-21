@@ -1,89 +1,105 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Devis, DevisDocument } from './schemas/devis.schema';
-import { DevisItem, DevisItemDocument } from './schemas/devis-item.schema';
+import { Project, ProjectDocument } from '../project/schemas/project.schema';
 
 @Injectable()
 export class DevisService {
   constructor(
     @InjectModel(Devis.name) private devisModel: Model<DevisDocument>,
-    @InjectModel(DevisItem.name) private devisItemModel: Model<DevisItemDocument>,
+    @InjectModel(Project.name) private projectModel: Model<ProjectDocument>,
   ) {}
 
-  async create(createDevisDto: Partial<Devis>): Promise<Devis> {
-    const createdDevis = new this.devisModel(createDevisDto);
+  async create(createDevisDto: any): Promise<Devis> {
+    if (!createDevisDto.numero_devis) {
+      createDevisDto.numero_devis = 'DEV-' + Date.now();
+    }
+    
+    // Auto-link clientId from project if missing
+    if (!createDevisDto.clientId && createDevisDto.projectId) {
+       try {
+         const project = await this.projectModel.findById(createDevisDto.projectId);
+         if (project && project.clientId) {
+           createDevisDto.clientId = project.clientId;
+         }
+       } catch (e) {}
+    }
+
+    if (createDevisDto.temp_client_email) {
+      createDevisDto.temp_client_email = createDevisDto.temp_client_email.toLowerCase();
+    }
+
+    const createdDevis = new this.devisModel({
+      ...createDevisDto,
+      statut: createDevisDto.envoyer ? 'envoyé' : 'brouillon',
+      date_creation: new Date(),
+      montant_total: Math.round((createDevisDto.articles?.reduce((sum: number, item: any) => sum + (Number(item.total) || 0), 0) || 0) * 1.19 * 1000) / 1000,
+    });
     return createdDevis.save();
   }
 
-  async findAll(): Promise<Devis[]> {
-    return this.devisModel.find().exec();
-  }
+  async findAll(query?: any): Promise<Devis[]> {
+    const filter: any = {};
+    const { userId, userRole, userEmail, artisanId, clientId, projectId } = query || {};
 
-  async findByProject(projectId: string): Promise<Devis[]> {
-    return this.devisModel.find({ projectId }).exec();
+    if (projectId) filter.projectId = new Types.ObjectId(projectId);
+    
+    // Server-side identity filtering disabled for experts/artisans to show all
+    if (userRole === 'client') {
+      const clientQueries = [];
+      if (userId) clientQueries.push({ clientId: new Types.ObjectId(userId) });
+      if (userEmail) clientQueries.push({ temp_client_email: userEmail.toLowerCase() });
+      
+      if (clientQueries.length > 0) {
+        filter.$or = clientQueries;
+      } else {
+        filter._id = null; // No results
+      }
+      // For clients, only show sent or accepted devis
+      filter.statut = { $in: ['envoyé', 'accepté', 'refusé'] };
+    } else {
+      // Manual query overrides
+      if (clientId) filter.clientId = new Types.ObjectId(clientId);
+      if (artisanId) filter.artisanId = new Types.ObjectId(artisanId);
+    }
+
+    return this.devisModel.find(filter).sort({ date_creation: -1 }).exec();
   }
 
   async findOne(id: string): Promise<Devis> {
     return this.devisModel.findById(id).exec();
   }
 
-  async update(id: string, updateDevisDto: Partial<Devis>): Promise<Devis> {
-    return this.devisModel.findByIdAndUpdate(id, updateDevisDto, { new: true }).exec();
+  async update(id: string, updateDevisDto: any): Promise<Devis> {
+    const total = updateDevisDto.articles?.reduce((sum: number, item: any) => sum + (Number(item.total) || 0), 0) || 0;
+    if (updateDevisDto.articles) {
+       updateDevisDto.montant_total = total;
+    }
+    return this.devisModel
+      .findByIdAndUpdate(id, updateDevisDto, { new: true })
+      .exec();
   }
 
   async remove(id: string): Promise<Devis> {
-    // Also delete related items
-    await this.devisItemModel.deleteMany({ devisId: id }).exec();
     return this.devisModel.findByIdAndDelete(id).exec();
   }
 
-  // DevisItem methods
-  async createItem(createItemDto: Partial<DevisItem>): Promise<DevisItem> {
-    const createdItem = new this.devisItemModel(createItemDto);
-    const savedItem = await createdItem.save();
-
-    // Update devis montant_total
-    await this.updateDevisTotal(createItemDto.devisId.toString());
-
-    return savedItem;
-  }
-
-  async findItemsByDevis(devisId: string): Promise<DevisItem[]> {
-    return this.devisItemModel.find({ devisId }).exec();
-  }
-
-  async updateItem(id: string, updateItemDto: Partial<DevisItem>): Promise<DevisItem> {
-    const updatedItem = await this.devisItemModel.findByIdAndUpdate(
-      id,
-      updateItemDto,
-      { new: true }
-    ).exec();
-
-    if (updatedItem) {
-      await this.updateDevisTotal(updatedItem.devisId.toString());
+  async endpointAction(id: string, endpoint: string): Promise<any> {
+    const devis = await this.devisModel.findById(id);
+    if (!devis) throw new NotFoundException('Devis non trouvé');
+    
+    if (endpoint === 'envoyer') {
+      devis.statut = 'envoyé';
+      devis.date_envoi = new Date();
+    } else if (endpoint === 'accepter') {
+      devis.statut = 'accepté';
+      devis.date_acceptation = new Date();
+      // Facture generation will be handled by the controller
+    } else if (endpoint === 'refuser') {
+      devis.statut = 'refusé';
     }
-
-    return updatedItem;
-  }
-
-  async removeItem(id: string): Promise<DevisItem> {
-    const item = await this.devisItemModel.findById(id).exec();
-    const deletedItem = await this.devisItemModel.findByIdAndDelete(id).exec();
-
-    if (deletedItem && item) {
-      await this.updateDevisTotal(item.devisId.toString());
-    }
-
-    return deletedItem;
-  }
-
-  private async updateDevisTotal(devisId: string): Promise<void> {
-    const items = await this.devisItemModel.find({ devisId }).exec();
-    const total = items.reduce(
-      (sum, item) => sum + item.quantite * item.prix_unitaire,
-      0
-    );
-    await this.devisModel.findByIdAndUpdate(devisId, { montant_total: total }).exec();
+    await devis.save();
+    return devis;
   }
 }

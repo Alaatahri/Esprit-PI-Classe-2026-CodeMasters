@@ -1,12 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import projectService, { Project } from '../services/projectService';
+import suiviProjectService, { SuiviProjectEntry } from '../services/suiviProjectService';
+import { useAuth } from '../contexts/AuthContext';
 import './ProjectDetails.css';
 
 const ProjectDetails = () => {
+  const { user } = useAuth();
   const { id } = useParams<{ id: string }>();
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
+  const [suivis, setSuivis] = useState<SuiviProjectEntry[]>([]);
+  const [suiviLoading, setSuiviLoading] = useState(false);
+  const [suiviError, setSuiviError] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -25,6 +31,38 @@ const ProjectDetails = () => {
     }
   };
 
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    (async () => {
+      setSuiviLoading(true);
+      setSuiviError(null);
+      try {
+        const res = await suiviProjectService.getByProjectId(id);
+        if (!cancelled) {
+          const list = Array.isArray(res.data) ? res.data : [];
+          setSuivis(
+            [...list].sort((a, b) => {
+              const ta = new Date(a.date_suivi || a.createdAt || 0).getTime();
+              const tb = new Date(b.date_suivi || b.createdAt || 0).getTime();
+              return tb - ta;
+            }),
+          );
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setSuiviError('Impossible de charger le journal de suivi.');
+          setSuivis([]);
+        }
+      } finally {
+        if (!cancelled) setSuiviLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
   if (loading) {
     return <div className="loading">Chargement...</div>;
   }
@@ -35,6 +73,21 @@ const ProjectDetails = () => {
         <p>Projet non trouvé.</p>
         <Link to="/projects" className="btn btn-secondary">
           Retour à la liste
+        </Link>
+      </div>
+    );
+  }
+
+  if (
+    user?.role === 'client' &&
+    user._id &&
+    String(project.clientId) !== String(user._id)
+  ) {
+    return (
+      <div className="error-state">
+        <p>Accès refusé : ce projet n’est pas associé à votre compte client.</p>
+        <Link to="/projects" className="btn btn-secondary">
+          Retour à mes projets
         </Link>
       </div>
     );
@@ -100,6 +153,73 @@ const ProjectDetails = () => {
               </div>
             )}
           </div>
+        </div>
+
+        <div className="details-section suivi-section">
+          <h2>Journal de suivi (suiviprojects)</h2>
+          <p className="suivi-intro">
+            Historique des points de contrôle : pourcentage, description, photo et coût actuel
+            tel que stocké en base.
+          </p>
+          {suiviLoading && <p className="suivi-muted">Chargement du suivi…</p>}
+          {suiviError && <p className="suivi-error">{suiviError}</p>}
+          {!suiviLoading && !suiviError && suivis.length === 0 && (
+            <p className="suivi-muted">Aucune entrée de suivi pour ce projet.</p>
+          )}
+          {!suiviLoading && suivis.length > 0 && (
+            <div className="suivi-table-wrap">
+              <table className="suivi-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>%</th>
+                    <th>Description</th>
+                    <th>Coût</th>
+                    <th>Photo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {suivis.map((s) => {
+                    const pct =
+                      typeof s.progressPercent === 'number'
+                        ? s.progressPercent
+                        : s.pourcentage_avancement;
+                    const photo = s.photoUrl || s.photo_url;
+                    return (
+                      <tr key={s._id}>
+                        <td>
+                          {s.date_suivi
+                            ? new Date(s.date_suivi).toLocaleString('fr-FR')
+                            : '-'}
+                        </td>
+                        <td>
+                          <strong>{pct ?? '-'}%</strong>
+                          {typeof s.progressIndex === 'number' && (
+                            <span className="suivi-index"> #{s.progressIndex}</span>
+                          )}
+                        </td>
+                        <td className="suivi-desc">{s.description_progression}</td>
+                        <td>
+                          {typeof s.cout_actuel === 'number'
+                            ? `${s.cout_actuel.toLocaleString('fr-FR')} TND`
+                            : '-'}
+                        </td>
+                        <td>
+                          {photo ? (
+                            <a href={photo} target="_blank" rel="noopener noreferrer" className="suivi-photo-link">
+                              Voir
+                            </a>
+                          ) : (
+                            '-'
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>

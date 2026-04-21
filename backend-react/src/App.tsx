@@ -2,12 +2,19 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './layouts/Layout';
 import Login from './pages/Login';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import ProjectsList from './pages/ProjectsList';
 import ProjectDetails from './pages/ProjectDetails';
 import AddProject from './pages/AddProject';
 import UsersList from './pages/UsersList';
 import Profile from './pages/Profile';
+import MatchingAdmin from './pages/MatchingAdmin';
+import ExpertRequests from './pages/ExpertRequests';
+import MesProjets from './pages/MesProjets';
+import DevisList from './pages/DevisList';
+import GestionPaiements from './pages/GestionPaiements';
 
 const PrivateRoute = ({ children }: { children: React.ReactElement }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -23,6 +30,8 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route
         path="/"
         element={
@@ -79,6 +88,56 @@ function AppRoutes() {
           <PrivateRoute>
             <Layout>
               <Profile />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/admin/matching"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <MatchingAdmin />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/expert/requests"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <ExpertRequests />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/mes-projets"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <MesProjets />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/devis"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <DevisList />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/paiements"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <GestionPaiements />
             </Layout>
           </PrivateRoute>
         }
